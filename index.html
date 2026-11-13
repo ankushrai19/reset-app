@@ -146,6 +146,18 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 .daylinks button{background:none;border:0;color:var(--muted);font-size:.85rem;padding:8px 4px;cursor:pointer;min-height:40px}
 .daylinks button[disabled]{opacity:.35}
 .empty{display:flex;flex-direction:column;gap:10px}
+.ntrow a,.nexttest a{color:var(--sky)}
+.mk.lite{background:var(--done-soft);color:var(--done);margin-left:4px}
+.retest{display:flex;flex-direction:column;gap:3px;text-align:left;background:var(--sky-soft);color:var(--ink);border:1px solid var(--sky);border-radius:16px;padding:12px 14px;cursor:pointer;font:inherit}
+.retest .eyebrow{color:var(--sky)}
+.nexttest{display:flex;flex-direction:column;gap:10px}
+.nexttest .big{font-size:1.4rem;font-weight:800}
+.ntrow{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-top:1px solid var(--line);font-size:.9rem}
+.ntrow:first-of-type{border-top:0}
+.ntrow .top{display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.ntrow .top span:last-child{white-space:nowrap;font-weight:600;color:var(--muted)}
+.ntrow a{font-size:.8rem}
+.dup{background:var(--sun-soft);border:1px solid var(--sun);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 /* report-linked reasons */
 .mk{display:inline-block;margin-top:3px;font-size:.7rem;font-weight:700;letter-spacing:.02em;padding:2px 8px;border-radius:999px;background:var(--sky-soft);color:var(--sky)}
 .next .pw{display:flex;gap:8px;align-items:flex-start;background:#2a3348;border-radius:12px;padding:8px 10px;font-size:.88rem;color:#dfe5ef}
@@ -215,6 +227,7 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips span{font-size:.82rem;padding:4px 10px;border-radius:999px;background:var(--done-soft);color:var(--done)}
+.st-maint .pill2{background:var(--done-soft);color:var(--done)} .st-maint .rbar .pin{background:var(--done)}
 .st-near .pill2{background:var(--sun-soft);color:var(--sun)} .st-near .rbar .pin{background:var(--sun)}
 .bp{display:flex;flex-direction:column;gap:12px}
 .bp-g{display:flex;flex-direction:column;align-items:stretch;gap:0;border-radius:14px;padding:12px;background:var(--soft)}
@@ -256,6 +269,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
     </div>
     <div class="viewing" id="viewing" hidden><span id="viewingTxt"></span><button class="btn" id="todayBtn" type="button">Back to today</button></div>
     <div class="next" id="nextCard" aria-live="polite"></div>
+    <button class="retest" id="retestCard" type="button" hidden></button>
     <div class="sect" id="todoSect">
       <span class="eyebrow" id="todoLbl">Still to do</span>
       <div class="card" style="padding:2px 16px"><ul class="list tight" id="list"></ul></div>
@@ -422,7 +436,16 @@ const PHASES=[
   {id:"dinner",at:"20:30",t:"Dinner by 8:30 pm, no alcohol",w:""},
   {id:"sleep",at:"23:00",t:"7 hours of sleep, screens off before",w:""}]}
 ];
-const MILE={14:"Repeat blood test (CRP, ESR)",21:"Last day for the repeat test",84:"Full blood retest"};
+let MILE={};
+const fmtShort=d=>parse(d).toLocaleDateString(undefined,{day:"numeric",month:"short"});
+function computeMile(){
+  const m={},R=window.ResetRules,reps=state.reports||[];
+  if(!R||!reps.length){m[84]="Repeat your blood tests";return m}
+  const rt=R.retest(reps,TODAY);if(!rt)return m;
+  const items=rt.routine?[{key:null,due:rt.due}]:rt.all;
+  for(const it of items){const n=diff(state.start,it.due)+1;if(n<1||n>TOTAL)continue;
+    const name=it.key?R.CATALOG[it.key].name.replace(/ \(.*\)/,""):"Yearly check-up";m[n]=m[n]?m[n]+", "+name:"Blood test due: "+name}
+  return m}
 const TOTAL=84, KEY="reset84";
 const pad=n=>String(n).padStart(2,"0");
 const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
@@ -446,8 +469,9 @@ window.resetApp={getState:()=>state,applyRemote(s){state={start:s.start,days:s.d
 
 const phaseOf=n=>PHASES.find(p=>n>=p.from&&n<=p.to)||(n<1?PHASES[0]:PHASES[3]);
 function habits(date){const n=diff(state.start,date)+1,p=phaseOf(n),wd=parse(date).getDay();
-  let list=p.habits.filter(h=>!h.days||h.days.includes(wd));
+  let list=p.habits;
   if(window.ResetRules)list=ResetRules.apply(list,n,wd,state.reports);
+  list=list.filter(h=>!h.days||h.days.includes(wd));
   return{n,p,list:list.sort((a,b)=>mins(a.at)-mins(b.at))}}
 function score(date){const{list}=habits(date),d=new Set(state.days[date]||[]);return list.length?list.filter(h=>d.has(h.id)).length/list.length:0}
 
@@ -458,7 +482,7 @@ function rel(at){const d=mins(at)-nowMin();if(d>=-30&&d<=0)return"now";if(d>0){c
 function greeting(){const h=new Date().getHours();return(h<12?"Good morning":h<17?"Good afternoon":"Good evening")+(userName?", "+userName:"")}
 function itemHTML(h,done,isNew,locked,showWhy){const late=!done&&view===TODAY&&mins(h.at)<nowMin()-30;
   return `<li class="item${done?" on":""}${locked?" locked":""}" data-id="${h.id}" role="checkbox" aria-checked="${done}" tabindex="0">
-  <span class="time${late?" late":""}">${fmt(h.at)}</span><span><span class="t">${esc(h.t)}${isNew?'<span class="new">new</span>':""}</span>${showWhy&&h.w?`<span class="w">${esc(h.w)}</span>`:""}${h.pk&&!done?`<span class="mk">${esc(mkName(h.pk))}</span>`:""}</span><span class="box"></span></li>`}
+  <span class="time${late?" late":""}">${fmt(h.at)}</span><span><span class="t">${esc(h.t)}${isNew?'<span class="new">new</span>':""}</span>${showWhy&&h.w?`<span class="w">${esc(h.w)}</span>`:""}${h.pk&&!done?`<span class="mk">${esc(mkName(h.pk))}</span>`:""}${h.maint&&!done?`<span class="mk lite">${h.lite?"lighter for now":"until confirmed"}</span>`:""}</span><span class="box"></span></li>`}
 const mkName=k=>({vitd:"Vitamin D",b12:"B12",hba1c:"Sugar",glucose:"Sugar",hdl:"HDL",tg:"Triglycerides",ldl:"LDL",chol:"Cholesterol",alt:"Liver",ggt:"Liver",ast:"Liver",calcium:"Calcium",phosphorus:"Calcium",hb:"Iron",iron:"Iron",ferritin:"Iron",uric:"Uric acid"})[k]||"Your report";
 function renderToday(){
   const{n,p,list}=habits(view),done=new Set(state.days[view]||[]),future=view>TODAY,isToday=view===TODAY;
@@ -504,6 +528,14 @@ function renderToday(){
   const ch=document.getElementById("cheer");
   ch.hidden=future||!list.length||c/list.length<.7||(isToday&&!nx); ch.textContent="That's a good day. 70% or more counts.";
 
+  // blood test due soon (today only)
+  const rc=document.getElementById("retestCard"),R2=window.ResetRules;
+  const rt=isToday&&R2&&state.reports&&state.reports.length?R2.retest(state.reports,TODAY):null;
+  const soon=rt&&rt.due&&diff(TODAY,rt.due)<=14;
+  rc.hidden=!soon;
+  if(soon){const names=(rt.routine?["Yearly check-up"]:rt.together.map(i=>R2.CATALOG[i.key].name.replace(/ \(.*\)/,"")));const dd=diff(TODAY,rt.due);
+    rc.innerHTML=`<span class="eyebrow">${dd<0?"Blood test overdue":dd===0?"Blood test due today":"Blood test due in "+dd+" day"+(dd>1?"s":"")}</span><b>${esc(names.join(", "))}</b><span class="note">${dd<0?"Was due "+fmtShort(rt.due)+". ":"Around "+fmtShort(rt.due)+". "}Tap to see why and when.</span>`}
+
   // tiles
   const w=(state.water&&state.water[view])||0;
   document.getElementById("waterN").textContent=w;
@@ -539,6 +571,7 @@ document.getElementById("nextCard").addEventListener("click",e=>{const b=e.targe
   else if(act==="stop"){setTimer(null);clearInterval(clockInt);renderToday()}
   else if(act==="done"){if(timer&&timer.id===b.dataset.id){setTimer(null);clearInterval(clockInt)}
     const s=new Set(state.days[TODAY]||[]);s.add(b.dataset.id);state.days[TODAY]=[...s];save({day:TODAY});if(navigator.vibrate)navigator.vibrate(12);render()}});
+document.getElementById("retestCard").onclick=()=>{show("health");const el=document.getElementById("nextTest");if(el)el.scrollIntoView({block:"start"})};
 document.getElementById("doneBar").onclick=()=>{showDone=!showDone;renderToday()};
 function setWater(d){const w=Math.max(0,((state.water&&state.water[view])||0)+d);state.water={...(state.water||{}),[view]:w};save({water:view});renderToday();if(navigator.vibrate)navigator.vibrate(8)}
 document.getElementById("waterPlus").onclick=()=>setWater(1);
@@ -572,12 +605,14 @@ function renderPlan(){
     const pl=R.plan(reps),L=pl.latest;
     const allRemoved=new Map();PHASES.forEach(p=>R.phasePlan(p,reps).removed.forEach(h=>allRemoved.set(h.id,h)));
     const adds=Object.values(pl.adds);
-    const focus=[...new Set(Object.values(pl.tags).map(t=>t.key))].map(k=>R.CATALOG[k].name);
+    const focus=[...new Set(Object.values(pl.tags).filter(t=>!t.maint).map(t=>t.key))].map(k=>R.CATALOG[k].name);
+    const maintNames=Object.entries(L).filter(([k,t])=>t.phase==="maintain").map(([k])=>R.CATALOG[k].name);
     intro=`<div class="card ph cur"><span class="eyebrow">Personalised from your report of ${parse(last.date).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}${reps.length>1?` and ${reps.length-1} earlier`:""}</span>
       <h3>How your results shaped this plan</h3>
       ${focus.length?`<p class="note"><b>Focus:</b> ${esc(focus.join(", "))}.</p>`:`<p class="note">All tracked results are in range, so this is a maintenance plan of core habits.</p>`}
-      ${adds.length?`<p class="note"><b>Added:</b> ${adds.map(a=>esc(a.t)+` (${esc(R.CATALOG[a.because].name)})`).join("; ")}.</p>`:""}
-      ${allRemoved.size?`<p class="note"><b>Left out:</b> ${[...allRemoved.values()].map(h=>`${esc(window.resetHabitName(h.id))} (your ${esc(R.removedReason(h.id,L))} ${R.removedReason(h.id,L).includes(",")?"are":"is"} in range)`).join("; ")}.</p>`:""}
+      ${adds.length?`<p class="note"><b>Added:</b> ${adds.map(a=>esc(a.maint&&R.MAINT[a.id]?R.MAINT[a.id].t:a.t)+` (${esc(R.CATALOG[a.because].name)}${a.maint?", until confirmed":""})`).join("; ")}.</p>`:""}
+      ${maintNames.length?`<p class="note"><b>Lighter for now:</b> ${esc(maintNames.join(", "))} ${maintNames.length>1?"are":"is"} back in range. The habits that helped stay in a lighter form until one more test confirms it.</p>`:""}
+      ${allRemoved.size?`<p class="note"><b>Left out:</b> ${[...allRemoved.values()].map(h=>{const rr=R.removedReason(h.id,L);return `${esc(window.resetHabitName(h.id))} (${rr.resolved.length?`your ${esc(rr.resolved.join(", "))} stayed normal on two tests in a row`:`your ${esc(rr.names)} ${rr.names.includes(",")?"are":"is"} in range`})`}).join("; ")}.</p>`:""}
       <p class="note">Upload a new report and the plan updates by itself.</p></div>`;
   }else{
     intro=`<div class="card"><h3>This is the general plan</h3><p class="note">Upload a blood report on the Health tab and the plan adapts to your results: habits for problems you have get added and explained, and ones you don't need are left out.</p></div>`;
@@ -585,11 +620,11 @@ function renderPlan(){
   document.getElementById("phases").innerHTML=intro+PHASES.map(p=>{
     const pp=personal?R.phasePlan(p,reps):{list:p.habits,removed:[]};
     return `<div class="card ph${p.n===cur?" cur":""}"><span class="eyebrow">Days ${p.from}–${p.to} · ${f(add(state.start,p.from-1))} – ${f(add(state.start,p.to-1))}${p.n===cur?" · now":""}</span><h3>Phase ${p.n}: ${p.name}</h3><p class="note">${p.goal}</p>
-    <ul>${pp.list.map(x=>`<li>${esc(x.t)}${x.extra?` <span class="mk">added for ${esc(mkName(x.pk))}</span>`:x.pk?` <span class="mk">${esc(mkName(x.pk))}</span>`:""}${x.days?` <span class="note">(${x.days.length===6?"not Sunday":x.days.map(d=>DN[d]).join(", ")})</span>`:""}${x.fromDay?` <span class="note">(from day ${x.fromDay})</span>`:""}${x.toDay?` <span class="note">(until day ${x.toDay})</span>`:""}</li>`).join("")}</ul>
+    <ul>${pp.list.map(x=>`<li>${esc(x.t)}${x.extra?` <span class="mk">added for ${esc(mkName(x.pk))}</span>`:x.pk?` <span class="mk">${esc(mkName(x.pk))}</span>`:""}${x.maint?` <span class="mk lite">${x.lite?"lighter for now":"until confirmed"}</span>`:""}${x.days?` <span class="note">(${x.days.length===6?"not Sunday":x.days.map(d=>DN[d]).join(", ")})</span>`:""}${x.fromDay?` <span class="note">(from day ${x.fromDay})</span>`:""}${x.toDay?` <span class="note">(until day ${x.toDay})</span>`:""}</li>`).join("")}</ul>
     ${pp.removed.length?`<p class="note">Not needed for you: ${pp.removed.map(h=>esc(window.resetHabitName(h.id))).join(", ")}</p>`:""}</div>`}).join("");
   document.getElementById("start").value=state.start;
 }
-function render(){renderToday();renderProgress();renderPlan();if(window.HealthUI)HealthUI.render()}
+function render(){MILE=computeMile();renderToday();renderProgress();renderPlan();if(window.HealthUI)HealthUI.render()}
 
 ["list","doneList"].forEach(id=>{const el=document.getElementById(id);
   el.addEventListener("click",e=>{const li=e.target.closest(".item");if(li)tick(li)});
@@ -621,7 +656,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){const now
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="1.6 (13 Nov 2026)";
+const APP_VERSION="1.7 (13 Nov 2026)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});

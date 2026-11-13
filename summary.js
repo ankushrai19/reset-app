@@ -169,11 +169,27 @@
         ${avoid.length ? `<div class="card"><h3 style="color:#c4352b;margin-bottom:6px">Cut down</h3><ul class="clean">${avoid.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}</div>` : ""}
       ${habits.length ? `<div class="card"><h3 style="margin-bottom:6px">Daily habits that help</h3><table><thead><tr><th>Habit</th><th>Target</th></tr></thead><tbody>${habits.map(h => `<tr><td style="color:var(--ink)">${esc(h.habit)}</td><td>${esc(h.target)}</td></tr>`).join("")}</tbody></table>
         <p class="note" style="margin-top:8px">Your Today list already builds these up gradually.</p></div>` : ""}
+      ${retestHTML(R.retest(all.filter(r => r.date <= report.date), report.date), report.date)}
       ${tests.length ? `<div class="card"><h3 style="margin-bottom:6px">Tests to ask your doctor about</h3><ul class="clean">${tests.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
       ${ok.length ? `<div class="card"><h3 style="margin-bottom:8px">Comfortably normal</h3><div class="chips">${ok.map(t => `<span>${esc(R.CATALOG[t.key].name)} ${t.value}</span>`).join("")}</div></div>` : ""}
       <p class="note">Medicines and doses are your doctor's decision. This summary explains your numbers in plain language and doesn't diagnose anything.</p>
       <div class="sfoot"><button class="btn primary" type="button" data-x="close">Done</button></div>`;
   }
 
-  window.ReportSummary = { html, build };
+  // "When to test again" block, used by the Health tab and the summary.
+  function retestHTML(rt, today, id) {
+    if (!rt) return "";
+    const nm = k => R.CATALOG[k].name;
+    const row = i => `<div class="ntrow"><div class="top"><span>${esc(nm(i.key))}</span><span>${i.due < today ? "overdue since " : "around "}${esc(fmtDate(i.due))}</span></div>
+      <span>${esc(i.text)}</span><a href="${esc(i.src.url)}" target="_blank" rel="noopener">Source: ${esc(i.src.name)}</a></div>`;
+    const head = rt.routine ? `<div class="big">Around ${esc(fmtDate(rt.due))}</div><p class="note">Everything the app tracks is in range or has stayed normal on repeat tests. A yearly check-up is common practice.</p>`
+      : rt.due ? `<div class="big">${rt.overdue ? "Overdue since " : "Around "}${esc(fmtDate(rt.due))}</div><p class="note">${rt.together.length > 1 ? "Repeat these together in one blood draw." : "The next test due."}</p>` : "";
+    return `<div class="card nexttest"${id ? ` id="${id}"` : ""}><span class="eyebrow">When to test again</span>${head}
+      ${rt.together.length ? `<div>${rt.together.map(row).join("")}</div>` : ""}
+      ${rt.later.length ? `<span class="eyebrow">Later</span><div>${rt.later.map(row).join("")}</div>` : ""}
+      ${rt.doctor.map(d => `<div class="ntrow"><div class="top"><span>${esc(nm(d.key))}</span><span>doctor's schedule</span></div><span>${esc(d.text)}</span><a href="${esc(d.src.url)}" target="_blank" rel="noopener">Source: ${esc(d.src.name)}</a></div>`).join("")}
+      <p class="note">Or as your doctor advises: their instructions come first. Intervals were checked against the linked sources in November 2026.</p></div>`;
+  }
+
+  window.ReportSummary = { html, build, retestHTML };
 })();

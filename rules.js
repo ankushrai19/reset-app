@@ -97,52 +97,111 @@
     return "ok";
   }
 
-  // latest value per marker (reports sorted by date), plus the one before it for trends
+  // latest value per marker (reports sorted by date), the one before it for trends,
+  // and where the marker stands over time:
+  //   phase "active"   = out of range now
+  //   phase "maintain" = first normal result after being out of range (keep a lighter habit)
+  //   phase "resolved" = normal on the last two tests after being out of range (habit can go)
+  //   phase "never"    = never out of range in any report
   function latest(reports) {
     const out = {};
-    const sorted = [...(reports || [])].sort((a, b) => (a.date < b.date ? -1 : 1));
+    const sorted = [...(reports || [])].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
     for (const r of sorted) for (const t of r.tests || []) {
       if (!t.key) continue;
-      out[t.key] = { ...t, date: r.date, prev: out[t.key] ? { value: out[t.key].value, date: out[t.key].date } : null };
+      const prevT = out[t.key];
+      const hist = prevT ? prevT.hist : [];
+      const cur = { ...t, date: r.date, reportId: r.id, prev: prevT ? { value: prevT.value, date: prevT.date } : null };
+      cur.status = status(cur);
+      cur.hist = [...hist, { date: r.date, value: cur.value, status: cur.status }];
+      out[t.key] = cur;
     }
-    for (const t of Object.values(out)) t.status = status(t);
+    for (const t of Object.values(out)) {
+      const h = t.hist, bad = x => x.status === "low" || x.status === "high";
+      const lastBad = [...h].reverse().find(bad);
+      t.wasStatus = lastBad ? lastBad.status : null;
+      if (bad(t)) t.phase = "active";
+      else if (!lastBad) t.phase = "never";
+      else {
+        let okRun = 0; for (let i = h.length - 1; i >= 0 && !bad(h[i]); i--) okRun++;
+        t.phase = okRun >= 2 ? "resolved" : "maintain";
+      }
+    }
     return out;
   }
 
   const fill = (s, t) => s.replace("{v}", t.value).replace("{lo}", t.low ?? CATALOG[t.key].low).replace("{hi}", t.high ?? CATALOG[t.key].high);
 
+  // Lighter versions used while a result is back in range but not yet confirmed by a second test.
+  const MAINT = {
+    sun: { t: "Midday sun, 3 days a week", days: [1, 3, 5] },
+    meds: { t: "Maintenance dose as prescribed (ask your doctor)" },
+    b12food: { t: "B12 food at lunch, 3 days a week", days: [1, 3, 5] }
+  };
+
   // What the current results ask for: personal reasons per habit id, extra habits, notes.
   function plan(reports) {
     const L = latest(reports), tags = {}, adds = {}, notes = [];
-    for (const [k, t] of Object.entries(L)) {
-      const r = RULES[k] && RULES[k][t.status];
-      if (!r) continue;
-      for (const [hid, msg] of Object.entries(r.tags || {})) if (!tags[hid]) tags[hid] = { text: fill(msg, t), key: k };
-      for (const id of r.add || []) if (!adds[id]) adds[id] = { ...EXTRA[id], because: k };
-      if (r.note) notes.push({ key: k, text: r.note });
+    // active results first, so their reasons win over maintenance ones
+    const order = Object.entries(L).sort((a, b) => (a[1].phase === "active" ? 0 : 1) - (b[1].phase === "active" ? 0 : 1));
+    for (const [k, t] of order) {
+      if (t.phase === "active") {
+        const r = RULES[k] && RULES[k][t.status];
+        if (!r) continue;
+        for (const [hid, msg] of Object.entries(r.tags || {})) if (!tags[hid]) tags[hid] = { text: fill(msg, t), key: k };
+        for (const id of r.add || []) if (!adds[id]) adds[id] = { ...EXTRA[id], because: k };
+        if (r.note) notes.push({ key: k, text: r.note });
+      } else if (t.phase === "maintain") {
+        const r = RULES[k] && RULES[k][t.wasStatus];
+        if (!r) continue;
+        const msg = `${CATALOG[k].name} is back in range (${t.value}). Keep a lighter version until one more test confirms it.`;
+        for (const hid of Object.keys(r.tags || {})) if (!tags[hid]) tags[hid] = { text: msg, key: k, maint: true };
+        for (const id of r.add || []) if (!adds[id]) adds[id] = { ...EXTRA[id], because: k, maint: true };
+      }
     }
     return { tags, adds, notes, latest: L };
   }
 
+  const live = t => t && (t.phase === "active" || t.phase === "maintain");
   function isNeeded(id, L) {
     const need = NEED[id];
     if (!need) return true;
     const tested = need.filter(k => L[k]);
     if (!tested.length) return true;
-    return tested.some(k => L[k].status === "low" || L[k].status === "high");
+    return tested.some(k => live(L[k]));
+  }
+  // true when a conditional habit is kept only because of results in maintenance
+  function maintOnly(id, L) {
+    const need = NEED[id];
+    if (!need) return false;
+    const tested = need.filter(k => L[k]);
+    return tested.length > 0 && !tested.some(k => L[k].phase === "active") && tested.some(k => L[k].phase === "maintain");
+  }
+  // maint: kept because a result is back in range but not yet confirmed; lite: a lighter version exists
+  const lighten = h => MAINT[h.id] ? { ...h, ...MAINT[h.id], maint: true, lite: true, w: "" } : { ...h, maint: true, lite: false };
+
+  function personalise(list, p) {
+    return list.filter(h => isNeeded(h.id, p.latest)).map(h => {
+      let x = maintOnly(h.id, p.latest) ? lighten(h) : h;
+      if (p.tags[h.id]) x = { ...x, pw: p.tags[h.id].text, pk: p.tags[h.id].key };
+      return x;
+    });
+  }
+  function extraItem(x, p) {
+    const t = p.latest[x.because];
+    let item = { ...x, pk: x.because, extra: true, pw: x.maint ? `${CATALOG[x.because].name} is back in range (${t.value}). Keep a lighter version until one more test confirms it.` : `${CATALOG[x.because].name} was ${t.value}${t.unit ? " " + t.unit : ""}.` };
+    if (x.maint) item = { ...lighten(item), pw: item.pw };
+    return item;
   }
 
-  // Apply the plan to one day's habit list.
+  // Apply the plan to one day's habit list (call before filtering by weekday).
   function apply(list, dayN, wd, reports) {
     if (!reports || !reports.length) return list;
     const p = plan(reports);
-    list = list.filter(h => isNeeded(h.id, p.latest));
-    const out = list.map(h => p.tags[h.id] ? { ...h, pw: p.tags[h.id].text, pk: p.tags[h.id].key } : h);
+    const out = personalise(list, p);
     const have = new Set(out.map(h => h.id));
     for (const x of Object.values(p.adds)) {
       if (have.has(x.id) || dayN < x.from || (x.to && dayN > x.to)) continue;
-      const t = p.latest[x.because];
-      out.push({ ...x, pw: `${CATALOG[x.because].name} was ${t.value}${t.unit ? " " + t.unit : ""}.`, pk: x.because, extra: true });
+      out.push(extraItem(x, p));
     }
     return out;
   }
@@ -157,20 +216,80 @@
   // A whole phase, personalised (all weekdays), plus what was removed and why.
   function phasePlan(phase, reports) {
     if (!reports || !reports.length) return { list: phase.habits, removed: [] };
-    const p = plan(reports), removed = [];
-    const kept = phase.habits.filter(h => { const ok = isNeeded(h.id, p.latest); if (!ok) removed.push(h); return ok; })
-      .map(h => p.tags[h.id] ? { ...h, pw: p.tags[h.id].text, pk: p.tags[h.id].key } : h);
+    const p = plan(reports), removed = phase.habits.filter(h => !isNeeded(h.id, p.latest));
+    const kept = personalise(phase.habits, p);
     const have = new Set(kept.map(h => h.id));
     for (const x of Object.values(p.adds)) {
       if (have.has(x.id) || x.from > phase.to || (x.to && x.to < phase.from)) continue;
-      kept.push({ ...x, pk: x.because, extra: true, fromDay: x.from > phase.from ? x.from : null, toDay: x.to && x.to < phase.to ? x.to : null });
+      kept.push({ ...extraItem(x, p), fromDay: x.from > phase.from ? x.from : null, toDay: x.to && x.to < phase.to ? x.to : null });
     }
     return { list: kept, removed };
   }
   function removedReason(id, L) {
     const tested = (NEED[id] || []).filter(k => L[k]);
-    return tested.map(k => CATALOG[k].name).join(", ");
+    const resolved = tested.filter(k => L[k].phase === "resolved");
+    return { names: tested.map(k => CATALOG[k].name).join(", "), resolved: resolved.map(k => CATALOG[k].name) };
   }
 
-  window.ResetRules = { CATALOG, EXTRA, RULES, NEED, keyFor, status, latest, plan, apply, effects, phasePlan, removedReason };
+  // ---------- When to test again ----------
+  // Intervals checked against these sources on 13 Nov 2026. "weeks" drives the due date.
+  const SRC = {
+    fpin: { name: "American Family Physician (FPIN), 2013", url: "https://www.aafp.org/pubs/afp/issues/2013/0215/od2.html" },
+    gpn: { name: "GPnotebook: treatment of B12 deficiency", url: "https://gpnotebook.com/pages/haematology/management/treatment-of-vitamin-b12-deficiency" },
+    ahacdc: { name: "AHA/CDC statement on inflammatory markers, 2003 (via Cleveland Clinic J Med)", url: "https://www.ccjm.org/content/ccjom/70/7/634.full.pdf" },
+    ada: { name: "American Diabetes Association Standards of Care (via AAFP)", url: "https://www.aafp.org/pubs/afp/issues/2018/0801/p187.html" },
+    acc: { name: "ACC/AHA 2018 cholesterol guideline (via AAFP)", url: "https://www.aafp.org/afp/2019/0501/p589.pdf" },
+    acg: { name: "ACG guideline: abnormal liver chemistries, 2017", url: "https://pubmed.ncbi.nlm.nih.gov/27995906/" },
+    nhsiron: { name: "NHS Highland iron deficiency guideline", url: "https://www.rightdecisions.scot.nhs.uk/tam-treatments-and-medicines-nhs-highland/adult-therapeutic-guidelines/haematology/iron-deficiency-guidelines/" },
+    nice: { name: "NICE guideline NG145: thyroid disease", url: "https://www.nice.org.uk/guidance/NG145/chapter/Recommendations" },
+    kdigo: { name: "KDIGO 2024 CKD guideline", url: "https://kdigo.org/wp-content/uploads/2026/05/KDIGO-2024-CKD-Guideline-Summary-Recommendations-and-Practice-Points.pdf" }
+  };
+  const RETEST = {
+    vitd: { weeks: 13, text: "Recheck after about 3 months to make sure treatment is working.", src: "fpin" },
+    calcium: { weeks: 13, text: "Recheck with vitamin D after about 3 months.", src: "fpin" },
+    phosphorus: { weeks: 13, text: "Recheck with vitamin D after about 3 months.", src: "fpin" },
+    b12: { weeks: 9, text: "Recheck B12 and a blood count after 2–3 months of treatment.", src: "gpn" },
+    crp: { weeks: 2, text: "Repeat in about 2 weeks, when you are well; heart risk is judged on the average of two tests.", src: "ahacdc" },
+    esr: { weeks: 2, text: "Repeat with hs-CRP in about 2 weeks.", src: "ahacdc" },
+    hba1c: { weeks: 52, text: "In the prediabetes range, test at least once a year.", src: "ada", diabetes: "In the diabetes range, a repeat test is needed to confirm; your doctor will set the schedule." },
+    glucose: { weeks: 52, text: "With raised sugar, test at least once a year.", src: "ada" },
+    ldl: { weeks: 12, text: "On a statin or after a dose change: 4–12 weeks, then every 3–12 months.", src: "acc" },
+    hdl: { weeks: 12, text: "Recheck the lipid profile after about 3 months of changes.", src: "acc" },
+    tg: { weeks: 12, text: "Recheck the lipid profile after about 3 months of changes.", src: "acc" },
+    chol: { weeks: 12, text: "Recheck the lipid profile after about 3 months of changes.", src: "acc" },
+    alt: { weeks: 13, text: "For mild rises, repeat liver tests over 3–6 months.", src: "acg" },
+    ast: { weeks: 13, text: "For mild rises, repeat liver tests over 3–6 months.", src: "acg" },
+    ggt: { weeks: 13, text: "Repeat with other liver tests over 3–6 months.", src: "acg" },
+    hb: { weeks: 4, text: "On iron: a blood count after about 4 weeks to check the response.", src: "nhsiron" },
+    iron: { weeks: 4, text: "On iron: a blood count after about 4 weeks to check the response.", src: "nhsiron" },
+    ferritin: { weeks: 4, text: "On iron: a blood count after about 4 weeks; treatment usually continues 3 months after anaemia clears.", src: "nhsiron" },
+    tsh: { weeks: 13, text: "Repeat after 3 months to confirm; on treatment, every 3 months until stable.", src: "nice" },
+    egfr: { weeks: 13, text: "Repeat to confirm; a kidney problem counts as long-term only if it lasts 3 months.", src: "kdigo" },
+    creatinine: { weeks: 13, text: "Repeat with eGFR to confirm; long-term only if it lasts 3 months.", src: "kdigo" }
+  };
+  const addDaysIso = (d, n) => { const [y, m, dd] = d.split("-").map(Number); const x = new Date(y, m - 1, dd + n); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); };
+
+  // Next blood test: items due (each with its own date), the earliest date, and what to repeat together.
+  function retest(reports, today) {
+    if (!reports || !reports.length) return null;
+    const L = latest(reports), items = [], doctor = [];
+    for (const [k, t] of Object.entries(L)) {
+      if (!live(t) || !RETEST[k]) continue;
+      const rt = RETEST[k];
+      if (k === "hba1c" && t.value >= 6.5) { doctor.push({ key: k, text: rt.diabetes, src: SRC[rt.src] }); continue; }
+      items.push({ key: k, due: addDaysIso(t.date, rt.weeks * 7), from: t.date, text: t.phase === "maintain" ? "Back in range: one more test confirms it. " + rt.text : rt.text, src: SRC[rt.src], phase: t.phase });
+    }
+    items.sort((a, b) => (a.due < b.due ? -1 : 1));
+    if (!items.length) {
+      if (doctor.length) return { routine: false, due: null, together: [], later: [], doctor, all: [] };
+      const last = [...reports].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+      return { routine: true, due: addDaysIso(last.date, 365), together: [], later: [], doctor, all: [] };
+    }
+    // repeat everything due within 4 weeks of the first date (or of today, if that date has passed) in one blood draw
+    const first = items[0].due, anchor = today && today > first ? today : first, window = addDaysIso(anchor, 28);
+    const together = items.filter(i => i.due <= window);
+    return { routine: false, due: first, overdue: !!(today && first < today), together, later: items.filter(i => i.due > window), doctor, all: items };
+  }
+
+  window.ResetRules = { CATALOG, EXTRA, RULES, NEED, MAINT, RETEST, SRC, keyFor, status, latest, plan, apply, effects, phasePlan, removedReason, retest, addDaysIso };
 })();

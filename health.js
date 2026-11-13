@@ -105,6 +105,7 @@
         <label class="f" for="rvDate">Test date<input type="date" id="rvDate" value="${esc(d.date)}" max="${isoToday()}"></label>
         <label class="f" for="rvLab">Lab<input type="text" id="rvLab" value="${esc(d.lab)}" placeholder="e.g. Thyrocare"></label>
       </div>
+      <div class="dup" id="dupBox" hidden></div>
       <div class="card" style="padding:4px 14px" id="rvList"></div>
       <p class="note" id="rvCount"></p>
       <div class="sfoot"><button class="btn" type="button" data-x="close">Cancel</button><button class="btn primary" type="button" data-x="save">Save report</button></div>`);
@@ -136,6 +137,7 @@
     if (!x) return;
     if (x.dataset.x === "close") closeSheet();
     if (x.dataset.x === "save") saveDraft();
+    if (x.dataset.x === "dupsave") { draft.dupOk = true; saveDraft(); }
   });
   $("sheet").addEventListener("input", e => {
     if (e.target.dataset.i != null) {
@@ -149,6 +151,22 @@
     if (!date) { app.toast("Add the test date first"); $("rvDate").focus(); return; }
     const bad = draft.tests.find(t => t.key && num(t.value) == null);
     if (bad) { app.toast("One value is empty. Fix it or remove that row."); return; }
+    const vals = t => draft.tests.filter(x => x.key).map(x => x.key + "=" + num(x.value)).sort().join("|");
+    if (!draft.dupOk) {
+      const mine = vals(), keysMine = new Set(draft.tests.filter(x => x.key).map(x => x.key + "=" + num(x.value)));
+      const dup = (app.getState().reports || []).find(r => {
+        const theirs = (r.tests || []).map(x => x.key + "=" + x.value);
+        const same = theirs.filter(x => keysMine.has(x)).length, n = Math.max(theirs.length, keysMine.size);
+        return n && (r.date === date ? same / n >= 0.8 : same === n && n >= 5);
+      });
+      if (dup) {
+        $("dupBox").hidden = false;
+        $("dupBox").innerHTML = `<b>Did you already upload this?</b><span>${dup.date === date ? "A report from " + esc(fmtDate(dup.date)) + " with the same results is already saved." : "A report with exactly the same results is already saved for " + esc(fmtDate(dup.date)) + ". Check the test date."}</span>
+          <div class="row"><button class="btn" type="button" data-x="close">Don't save</button><button class="btn primary" type="button" data-x="dupsave">Save anyway</button></div>`;
+        $("dupBox").scrollIntoView({ block: "center" });
+        return;
+      }
+    }
     const report = { id: draft.id, date, lab, tests: draft.tests.filter(t => t.key).map(t => ({ key: t.key, name: t.name, value: num(t.value), unit: t.unit || R.CATALOG[t.key].unit, low: t.low ?? null, high: t.high ?? null })) };
     if (draft.sample) report.sample = true;
     const st = app.getState();
@@ -207,8 +225,10 @@
     const c = R.CATALOG[k], ef = R.effects(k, t.status), isOpen = open === k;
     const habitNames = ef.habits.map(h => window.resetHabitName ? window.resetHabitName(h) : h);
     const plan = [...habitNames.map(h => `Your “${h}” habit now shows why it matters for this.`), ...ef.adds.map(a => `Adds a habit: ${a.t}${a.from > 1 ? ` (from day ${a.from})` : ""}.`)];
-    return `<div class="mcard st-${t.status}"><button type="button" class="mhead" data-m="${k}" aria-expanded="${isOpen}">
-      <div class="mtop"><span class="nm">${esc(c.name)}<span class="pill2">${t.status === "ok" ? "OK" : t.status}</span></span>
+    const maint = t.phase === "maintain";
+    if (maint) { const ef2 = R.effects(k, t.wasStatus); plan.splice(0, plan.length, `Back in range: the habits that helped stay in a lighter form until one more normal test confirms it.`, ...ef2.habits.map(h => `“${window.resetHabitName ? window.resetHabitName(h) : h}” continues in a lighter form.`)); }
+    return `<div class="mcard st-${maint ? "maint" : t.status}"><button type="button" class="mhead" data-m="${k}" aria-expanded="${isOpen}">
+      <div class="mtop"><span class="nm">${esc(c.name)}<span class="pill2">${maint ? "back in range" : t.status === "ok" ? "OK" : t.status}</span></span>
         <span class="mval"><b>${t.value}</b> ${esc(t.unit || c.unit)}</span></div>
       ${bar(t)}${trend(t)}</button>
       ${isOpen ? `<div class="mmore"><p>${esc(c.about)}</p>
@@ -230,7 +250,8 @@
       return;
     }
     const p = R.plan(reports), L = p.latest, keys = Object.keys(L);
-    const bad = keys.filter(k => L[k].status === "low" || L[k].status === "high"), good = keys.filter(k => L[k].status === "ok");
+    const bad = keys.filter(k => L[k].phase === "active"), maint = keys.filter(k => L[k].phase === "maintain"), good = keys.filter(k => L[k].status === "ok" && L[k].phase !== "maintain");
+    const today = isoToday(), rt = R.retest(reports, today);
     const last = [...reports].sort((a, b) => a.date < b.date ? 1 : -1)[0];
     $("hSub").textContent = `Latest: ${fmtDate(last.date)}${last.lab ? " · " + last.lab : ""}`;
     const adds = Object.values(p.adds);
@@ -238,12 +259,14 @@
       <button class="btn primary" type="button" data-sum="${last.id}" style="align-self:flex-start">Read the summary of your latest report</button>
       <div class="hsum">
         <div class="stat"><b>${bad.length}</b><span>need attention</span></div>
-        <div class="stat"><b>${good.length}</b><span>in range</span></div>
+        <div class="stat"><b>${good.length + maint.length}</b><span>in range</span></div>
         <div class="stat"><b>${reports.length}</b><span>report${reports.length > 1 ? "s" : ""}</span></div>
       </div>
+      ${window.ReportSummary ? window.ReportSummary.retestHTML(rt, today, "nextTest") : ""}
       ${p.notes.map(n => `<div class="notice"><span><b>${esc(R.CATALOG[n.key].name)}:</b> ${esc(n.text)}</span></div>`).join("")}
       ${bad.length ? `<div class="sect"><span class="eyebrow">Needs attention</span>${bad.map(k => markerCard(k, L[k], reports)).join("")}</div>` : `<div class="cheer">Everything the app tracks is in range. Keep going.</div>`}
-      ${adds.length ? `<div class="card"><h3 style="margin-bottom:6px">Added to your daily plan</h3><ul style="margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px">${adds.map(a => `<li>${esc(a.t)} <span class="note">(${esc(R.CATALOG[a.because].name)}${a.from > 1 ? `, from day ${a.from}` : ""}${a.to ? `, until day ${a.to}` : ""})</span></li>`).join("")}</ul></div>` : ""}
+      ${maint.length ? `<div class="sect"><span class="eyebrow">Back in range: keep going</span>${maint.map(k => markerCard(k, L[k], reports)).join("")}</div>` : ""}
+      ${adds.length ? `<div class="card"><h3 style="margin-bottom:6px">Added to your daily plan</h3><ul style="margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px">${adds.map(a => `<li>${esc(a.maint && R.MAINT[a.id] ? R.MAINT[a.id].t : a.t)} <span class="note">(${esc(R.CATALOG[a.because].name)}${a.maint ? ", lighter for now" : ""}${a.from > 1 ? `, from day ${a.from}` : ""}${a.to ? `, until day ${a.to}` : ""})</span></li>`).join("")}</ul></div>` : ""}
       ${good.length ? `<div class="sect"><span class="eyebrow">In range</span><div class="card oklist" style="padding:2px 14px">${good.map(k => `<button type="button" class="okrow" data-m="${k}" style="background:none;border:0;border-top:1px solid var(--line);font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%"><span>${esc(R.CATALOG[k].name)}</span><span>${L[k].value} ${esc(L[k].unit || R.CATALOG[k].unit)}</span></button>${open === k ? markerCard(k, L[k], reports) : ""}`).join("")}</div></div>` : ""}
       <div class="sect"><span class="eyebrow">Your reports</span><div class="card" style="padding:2px 14px">
         ${[...reports].sort((a, b) => a.date < b.date ? 1 : -1).map(r => `<div class="rep"><div><b>${esc(fmtDate(r.date))}</b>${r.sample ? '<span class="tag">sample</span>' : ""}<div class="note">${esc(r.lab || "Lab not named")} · ${r.tests.length} results</div></div>
