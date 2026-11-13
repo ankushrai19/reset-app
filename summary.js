@@ -66,6 +66,42 @@
   }
   const uniq = a => [...new Set(a)];
 
+  // ---------- The big picture: group out-of-range results by root cause ----------
+  const ROOTS = [
+    { id: "a", cls: "ra", title: "Low sunlight and nutrient gaps", sub: "Little direct sun, few animal foods, poor absorption",
+      keys: ["vitd", "calcium", "phosphorus", "b12", "hb", "iron", "ferritin"],
+      leads: [{ keys: ["vitd", "calcium", "phosphorus"], text: "Weak bones, aches, fatigue" }, { keys: ["b12"], text: "Tingling, low energy, poor focus" }, { keys: ["hb", "iron", "ferritin"], text: "Tiredness, breathlessness" }] },
+    { id: "b", cls: "rb", title: "Insulin resistance", sub: "Belly fat, refined carbs and sugar, sitting a lot, poor sleep",
+      keys: ["hba1c", "glucose", "tg", "hdl", "ldl", "chol", "alt", "ggt", "ast", "crp", "esr", "uric"],
+      leads: [{ keys: ["hba1c", "glucose"], text: "Type 2 diabetes later" }, { keys: ["tg", "hdl", "ldl", "chol", "crp", "esr"], text: "Higher heart risk" }, { keys: ["alt", "ggt", "ast"], text: "Fatty liver" }, { keys: ["uric"], text: "Gout, kidney stones" }] },
+    { id: "c", cls: "rc", title: "Needs a doctor's check", sub: "These have causes the app can't work on by itself",
+      keys: ["tsh", "egfr", "creatinine"], leads: [{ keys: ["tsh", "egfr", "creatinine"], text: "Discuss with your doctor" }] }
+  ];
+  const SHORTN = { vitd: "Vitamin D", b12: "B12", hba1c: "HbA1c", glucose: "Fasting sugar", chol: "Cholesterol", hdl: "HDL", ldl: "LDL", tg: "Triglycerides", alt: "ALT", ast: "AST", ggt: "GGT", crp: "hs-CRP", esr: "ESR", calcium: "Calcium", phosphorus: "Phosphorus", tsh: "TSH", creatinine: "Creatinine", egfr: "eGFR", uric: "Uric acid", hb: "Haemoglobin", iron: "Iron", ferritin: "Ferritin" };
+  function bigPicture(bad) {
+    if (bad.length < 2) return "";
+    const has = k => bad.find(t => t.key === k);
+    const groups = ROOTS.map(r => ({ r, items: bad.filter(t => r.keys.includes(t.key)) })).filter(g => g.items.length);
+    if (!groups.length) return "";
+    const n = groups.filter(g => g.r.id !== "c").length;
+    const link = has("vitd") && (has("crp") || has("esr")) ? `<p class="bp-link"><span aria-hidden="true">↔</span> Low vitamin D can also add to inflammation, so fixing it may help your ${has("crp") ? "hs-CRP" : "ESR"} too.</p>` : "";
+    return `<div class="card bp"><span class="eyebrow">The big picture</span>
+      <h3 style="margin:4px 0 6px">${n > 1 ? `${n} root causes explain almost everything` : n === 1 ? "One root cause explains most of this" : "What to take to your doctor"}</h3>
+      <p class="note">Your ${bad.length} out-of-range results aren't ${bad.length} separate problems. ${n ? "They trace back to " + (n > 1 ? "a few roots" : "one root") + ". Fix the root and most numbers move together." : ""}</p>
+      ${groups.map(({ r, items }) => {
+        const leads = r.leads.filter(l => l.keys.some(k => items.some(t => t.key === k)));
+        return `<div class="bp-g ${r.cls}">
+          <div class="bp-root"><b>${esc(r.title)}</b><span>${esc(r.sub)}</span></div>
+          <div class="bp-arrow" aria-hidden="true"></div>
+          <div class="bp-items">${items.map(t => `<span class="bp-chip">${esc(SHORTN[t.key] || R.CATALOG[t.key].name)} <b>${t.value}</b> ${t.status === "low" ? "↓" : "↑"}</span>`).join("")}</div>
+          <div class="bp-arrow" aria-hidden="true"></div>
+          <div class="bp-leads"><span class="eyebrow">Can lead to</span>${leads.map(l => `<span class="bp-lead">${esc(l.text)}</span>`).join("")}</div>
+        </div>`;
+      }).join("")}
+      ${link}
+    </div>`;
+  }
+
   function build(report, all) {
     const upto = all.filter(r => r.date <= report.date && (r.date < report.date || r.id === report.id));
     const L = R.latest(upto);
@@ -124,6 +160,7 @@
       ${bad.length ? `<div class="card"><span class="eyebrow">If you read only one thing</span><h3 style="margin:4px 0 8px">What to fix, in order</h3>
         <ol class="prio">${bad.slice(0, 5).map(t => `<li><b>${esc(R.CATALOG[t.key].name)} is ${t.status} (${t.value}, healthy ${esc(rangeText(t))}).</b> ${esc((INFO[t.key] || {}).act || "")}</li>`).join("")}</ol></div>`
         : `<div class="cheer">Everything the app tracks in this report is in range.</div>`}
+      ${bigPicture(bad)}
       ${plan.notes.map(n => `<div class="notice"><span><b>${esc(R.CATALOG[n.key].name)}:</b> ${esc(n.text)}</span></div>`).join("")}
       ${bad.length ? `<div class="sect"><span class="eyebrow">Out of range</span>${bad.map(t => card(t, false)).join("")}</div>` : ""}
       ${close.length ? `<div class="sect"><span class="eyebrow">In range but close to the limit</span>${close.map(t => card(t, true)).join("")}</div>` : ""}
