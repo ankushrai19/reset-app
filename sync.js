@@ -49,8 +49,10 @@ function merge(local, cloud) {
   }
   const water = { ...(cloud.water || {}) };
   for (const [d, n] of Object.entries(local.water || {})) water[d] = Math.max(water[d] || 0, n);
+  const reports = [...(cloud.reports || [])];
+  for (const r of local.reports || []) if (!reports.some(x => x.id === r.id)) reports.push(r);
   const cloudHasData = Object.values(cloud.days || {}).some(a => a.length);
-  return { start: cloudHasData ? cloud.start : (local.start || cloud.start), days, water };
+  return { start: cloudHasData ? cloud.start : (local.start || cloud.start), days, water, reports };
 }
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -73,9 +75,10 @@ async function write(data, mergeIt) {
 window.onResetChange = (change, state) => {
   if (!user) return;
   if (change && change.day) write({ days: { [change.day]: state.days[change.day] || [] } }, true);
+  else if (change && change.reports) write({ reports: state.reports || [] }, true);
   else if (change && change.water) write({ water: { [change.water]: (state.water || {})[change.water] || 0 } }, true);
   else if (change && change.start) write({ start: state.start }, true);
-  else write({ start: state.start, days: state.days, water: state.water || {} }, false);
+  else write({ start: state.start, days: state.days, water: state.water || {}, reports: state.reports || [] }, false);
 };
 
 async function startSync(u) {
@@ -84,7 +87,7 @@ async function startSync(u) {
   try {
     const snap = await getDoc(ref);
     const local = app.getState();
-    const cloud = snap.exists() ? { start: snap.data().start, days: snap.data().days || {}, water: snap.data().water || {} } : { start: local.start, days: {}, water: {} };
+    const cloud = snap.exists() ? { start: snap.data().start, days: snap.data().days || {}, water: snap.data().water || {}, reports: snap.data().reports || [] } : { start: local.start, days: {}, water: {}, reports: [] };
     const merged = merge(local, cloud);
     if (!snap.exists() || !same(merged, cloud)) await write(merged, false);
     app.applyRemote(merged);
@@ -97,7 +100,7 @@ async function startSync(u) {
   unsub = onSnapshot(ref, snap => {
     if (!snap.exists() || snap.metadata.hasPendingWrites) return;
     const d = snap.data();
-    const next = { start: d.start, days: d.days || {}, water: d.water || {} };
+    const next = { start: d.start, days: d.days || {}, water: d.water || {}, reports: d.reports || [] };
     if (!same(next, app.getState())) app.applyRemote(next);
     if (!pending) status(snap.metadata.fromCache ? "Saved offline, will sync" : "Backed up", !snap.metadata.fromCache);
   }, () => status("Not backed up", false));

@@ -146,6 +146,67 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 .daylinks button{background:none;border:0;color:var(--muted);font-size:.85rem;padding:8px 4px;cursor:pointer;min-height:40px}
 .daylinks button[disabled]{opacity:.35}
 .empty{display:flex;flex-direction:column;gap:10px}
+/* report-linked reasons */
+.mk{display:inline-block;margin-top:3px;font-size:.7rem;font-weight:700;letter-spacing:.02em;padding:2px 8px;border-radius:999px;background:var(--sky-soft);color:var(--sky)}
+.next .pw{display:flex;gap:8px;align-items:flex-start;background:#2a3348;border-radius:12px;padding:8px 10px;font-size:.88rem;color:#dfe5ef}
+.next .pw b{color:var(--bar-on);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;padding-top:2px}
+/* health */
+.hsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.notice{display:flex;gap:10px;align-items:flex-start;background:var(--sun-soft);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:.9rem}
+.notice b{color:var(--sun)}
+.mcard{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.mhead{all:unset;display:flex;flex-direction:column;gap:8px;cursor:pointer;width:100%}
+.mhead:focus-visible{outline:3px solid var(--sky);outline-offset:4px;border-radius:8px}
+.mtop{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.mtop .nm{font-weight:750;min-width:0}
+.mval{white-space:nowrap;font-variant-numeric:tabular-nums}
+.mval b{font-size:1.15rem}
+.pill2{font-family:var(--mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:6px;vertical-align:2px}
+.st-low .pill2{background:var(--sky-soft);color:var(--sky)}
+.st-high .pill2{background:#fbe2df;color:#b23b2e}
+.st-ok .pill2{background:var(--done-soft);color:var(--done)}
+.rbar{position:relative;height:10px;border-radius:5px;background:var(--c0)}
+.rbar .band{position:absolute;top:0;bottom:0;background:#bfe3cc;border-radius:5px}
+.rbar .pin{position:absolute;top:-4px;width:4px;height:18px;border-radius:2px;transform:translateX(-50%);background:var(--ink)}
+.st-low .rbar .pin{background:var(--sky)} .st-high .rbar .pin{background:#c4352b}
+.rlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+.trend{font-size:.82rem;color:var(--muted)}
+.trend.better{color:var(--done)} .trend.worse{color:#c4352b}
+.mmore{display:flex;flex-direction:column;gap:8px;font-size:.9rem;border-top:1px solid var(--line);padding-top:10px;cursor:default}
+.mmore ul{margin:0;padding-left:1.1em}
+.hist svg{width:100%;height:auto;display:block}
+.oklist{display:flex;flex-direction:column}
+.okrow{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:.92rem}
+.okrow:first-child{border-top:0}
+.okrow span:last-child{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.rep{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.rep:first-child{border-top:0}
+.rep>div{min-width:0}
+.tag{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:999px;background:var(--c0);color:var(--muted);margin-left:6px}
+.btn.danger{color:#c4352b;border-color:#e9b8b2}
+/* upload sheet */
+.sheet{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet .in{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.shead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.steps li{display:flex;gap:10px;align-items:center}
+.steps i{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.steps li.ok i{background:var(--done);border-color:var(--done)}
+.steps li.ok i::after{content:"";width:5px;height:10px;border:solid var(--paper);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.steps li.run i{border-color:var(--sun);border-top-color:transparent;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.thumb{max-height:160px;border-radius:12px;border:1px solid var(--line);align-self:flex-start}
+.testmode{background:var(--sky-soft);color:var(--sky);border-radius:12px;padding:10px 12px;font-size:.88rem}
+.rv{display:grid;grid-template-columns:1fr 92px 30px;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rv:first-child{border-top:0}
+.rv>div{min-width:0}
+.rv input{width:100%;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px;text-align:right;font-variant-numeric:tabular-nums}
+.rv .x{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--paper);cursor:pointer;color:var(--muted)}
+.rv .sm{font-size:.78rem;color:var(--muted)}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fields input{width:100%;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 10px}
+.sfoot{display:flex;gap:10px;position:sticky;bottom:0;background:var(--bg);padding:10px 0 4px}
+.sfoot .btn{flex:1;min-height:48px;border-radius:14px}
 @media (prefers-reduced-motion:no-preference){.ring circle,.mini-ring circle{transition:stroke-dasharray .4s ease}}
 </style>
 </head>
@@ -197,13 +258,14 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 
   <!-- HEALTH -->
   <section class="view" id="v-health" hidden>
-    <div><span class="eyebrow">Your results</span><h1>Health</h1></div>
-    <div class="card empty">
-      <h2>Read your blood report</h2>
-      <p class="note">Upload a PDF or a photo of a lab report. The app will pick out each result, show which ones are out of range, and adjust your daily habits to match.</p>
-      <button class="btn primary" type="button" disabled>Upload a report</button>
-      <p class="note">Report reading is being set up and will appear in an update.</p>
+    <div><span class="eyebrow">Your results</span><h1>Health</h1><span class="sub" id="hSub"></span></div>
+    <div class="row">
+      <button class="btn primary" id="hUpload" type="button">Upload a report</button>
+      <button class="btn" id="hSample" type="button">Try sample reports</button>
     </div>
+    <input type="file" id="hFile" accept="application/pdf,image/*" hidden>
+    <div id="hBody" class="view"></div>
+    <p class="note">The app reads numbers from your report and compares them with healthy ranges. It doesn't diagnose anything. Please discuss your results with your doctor.</p>
   </section>
 
   <!-- PROGRESS -->
@@ -280,8 +342,10 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
   <button role="tab" id="t-progress" aria-selected="false" data-v="progress" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="4" height="4" rx="1"/><rect x="10" y="4" width="4" height="4" rx="1"/><rect x="16" y="4" width="4" height="4" rx="1"/><rect x="4" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="4" y="16" width="4" height="4" rx="1"/></svg>Progress</button>
   <button role="tab" id="t-plan" aria-selected="false" data-v="plan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Plan</button>
 </nav>
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="in" id="sheetIn"></div></div>
 <div class="toast" id="toast" hidden></div>
 <script type="module" src="sync.js"></script>
+<script src="rules.js"></script>
 
 <script>
 const PHASES=[
@@ -344,15 +408,17 @@ const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&qu
 let TODAY=iso(new Date());
 
 let state=load(); let view=TODAY; let userName=""; let showDone=false;
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.start&&s.days)return{start:s.start,days:s.days,water:s.water||{}}}catch(e){}return{start:TODAY,days:{},water:{}}}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.start&&s.days)return{start:s.start,days:s.days,water:s.water||{},reports:s.reports||[]}}catch(e){}return{start:TODAY,days:{},water:{},reports:[]}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Couldn't save. Is storage full?")}}
 function save(change){persist();if(typeof window.onResetChange==="function")window.onResetChange(change,state)}
 // used by sync.js
-window.resetApp={getState:()=>state,applyRemote(s){state={start:s.start,days:s.days,water:s.water||{}};if(view<state.start)view=state.start;persist();render()},toast:m=>toast(m),setName(n){userName=n||"";renderToday()},showSettings:()=>{show("plan");document.getElementById("acct").scrollIntoView({block:"center"})}};
+window.resetApp={getState:()=>state,applyRemote(s){state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[]};if(view<state.start)view=state.start;persist();render()},toast:m=>toast(m),save:c=>save(c),render:()=>render(),show:v=>show(v),setName(n){userName=n||"";renderToday()},showSettings:()=>{show("plan");document.getElementById("acct").scrollIntoView({block:"center"})}};
 
 const phaseOf=n=>PHASES.find(p=>n>=p.from&&n<=p.to)||(n<1?PHASES[0]:PHASES[3]);
 function habits(date){const n=diff(state.start,date)+1,p=phaseOf(n),wd=parse(date).getDay();
-  return{n,p,list:p.habits.filter(h=>!h.days||h.days.includes(wd)).sort((a,b)=>mins(a.at)-mins(b.at))}}
+  let list=p.habits.filter(h=>!h.days||h.days.includes(wd));
+  if(window.ResetRules)list=ResetRules.apply(list,n,wd,state.reports);
+  return{n,p,list:list.sort((a,b)=>mins(a.at)-mins(b.at))}}
 function score(date){const{list}=habits(date),d=new Set(state.days[date]||[]);return list.length?list.filter(h=>d.has(h.id)).length/list.length:0}
 
 const WATER_GOAL=8, TKEY="reset84timer";
@@ -362,7 +428,8 @@ function rel(at){const d=mins(at)-nowMin();if(d>=-30&&d<=0)return"now";if(d>0){c
 function greeting(){const h=new Date().getHours();return(h<12?"Good morning":h<17?"Good afternoon":"Good evening")+(userName?", "+userName:"")}
 function itemHTML(h,done,isNew,locked,showWhy){const late=!done&&view===TODAY&&mins(h.at)<nowMin()-30;
   return `<li class="item${done?" on":""}${locked?" locked":""}" data-id="${h.id}" role="checkbox" aria-checked="${done}" tabindex="0">
-  <span class="time${late?" late":""}">${fmt(h.at)}</span><span><span class="t">${esc(h.t)}${isNew?'<span class="new">new</span>':""}</span>${showWhy&&h.w?`<span class="w">${esc(h.w)}</span>`:""}</span><span class="box"></span></li>`}
+  <span class="time${late?" late":""}">${fmt(h.at)}</span><span><span class="t">${esc(h.t)}${isNew?'<span class="new">new</span>':""}</span>${showWhy&&h.w?`<span class="w">${esc(h.w)}</span>`:""}${h.pk&&!done?`<span class="mk">${esc(mkName(h.pk))}</span>`:""}</span><span class="box"></span></li>`}
+const mkName=k=>({vitd:"Vitamin D",b12:"B12",hba1c:"Sugar",glucose:"Sugar",hdl:"HDL",tg:"Triglycerides",ldl:"LDL",chol:"Cholesterol",alt:"Liver",ggt:"Liver",ast:"Liver",calcium:"Calcium",phosphorus:"Calcium",hb:"Iron",iron:"Iron",ferritin:"Iron",uric:"Uric acid"})[k]||"Your report";
 function renderToday(){
   const{n,p,list}=habits(view),done=new Set(state.days[view]||[]),future=view>TODAY,isToday=view===TODAY;
   const prevPhase=p.n>1?PHASES[p.n-2]:null, isNew=h=>prevPhase&&n-p.from<7&&!prevPhase.habits.some(o=>o.t===h.t);
@@ -385,7 +452,7 @@ function renderToday(){
   if(isToday&&!nx){card.innerHTML=`<div class="lbl"><span>All done</span><span></span></div><h2>Every habit ticked today.</h2><p>Rest well. Tomorrow's list is ready when you are.</p>`}
   else if(nx){const running=timer&&timer.id===nx.id;
     card.innerHTML=`<div class="lbl"><span>Next up · ${fmt(nx.at)}</span><span>${running?"timer running":rel(nx.at)}</span></div>
-      <div style="display:flex;flex-direction:column;gap:4px"><h2>${esc(nx.t)}</h2>${nx.w?`<p>${esc(nx.w)}</p>`:""}</div>
+      <div style="display:flex;flex-direction:column;gap:6px"><h2>${esc(nx.t)}</h2>${nx.pw?`<div class="pw"><b>Your report</b><span>${esc(nx.pw)}</span></div>`:nx.w?`<p>${esc(nx.w)}</p>`:""}</div>
       ${running?`<div class="clock" id="clock">--:--</div><div class="bar"><i id="clockBar"></i></div>`:""}
       <div class="acts">${nx.min?(running?`<button class="go" type="button" data-act="stop">Stop timer</button>`:`<button class="go" type="button" data-act="start" data-min="${nx.min}">Start ${nx.min}:00 timer</button>`):""}
       <button class="${nx.min?"ok":"go"}" type="button" data-act="done" data-id="${nx.id}">${nx.min?"Done":"Mark done"}</button></div>`;
@@ -419,7 +486,8 @@ function renderToday(){
   document.getElementById("prev").disabled=diff(state.start,view)<=0;
   document.getElementById("next").disabled=diff(state.start,view)>=TOTAL-1;
 }
-const SHORT={water:"water",meds:"supplements",sun:"sun",walk:"walk",chai:"chai",sleep:"sleep",protein:"protein",nuts:"nuts",dinner:"early dinner",strength:"strength",plate:"veg plate",nofried:"no fried food",screens:"screens off",weigh:"weigh-in",millet:"millets"};
+const SHORT={water:"water",meds:"supplements",sun:"sun",walk:"walk",chai:"chai",sleep:"sleep",protein:"protein",nuts:"nuts",dinner:"early dinner",strength:"strength",plate:"veg plate",nofried:"no fried food",screens:"screens off",weigh:"weigh-in",millet:"millets",b12food:"B12 food",noalcohol:"no alcohol",calcium:"calcium food",ironfood:"iron food"};
+window.resetHabitName=id=>SHORT[id]||id;
 const shortName=h=>SHORT[h.id]||h.t;
 function streakNow(){const last=Math.min(diff(state.start,TODAY),TOTAL-1);let s=0;
   for(let i=last;i>=0;i--){if(score(add(state.start,i))>=.7)s++;else if(i===last)continue;else break}return last<0?0:s}
@@ -470,7 +538,7 @@ function renderPlan(){
   document.getElementById("phases").innerHTML=PHASES.map(p=>`<div class="card ph${p.n===cur?" cur":""}"><span class="eyebrow">Days ${p.from}–${p.to} · ${f(add(state.start,p.from-1))} – ${f(add(state.start,p.to-1))}${p.n===cur?" · now":""}</span><h3>Phase ${p.n}: ${p.name}</h3><p class="note">${p.goal}</p><ul>${p.habits.map(x=>`<li>${esc(x.t)}</li>`).join("")}</ul></div>`).join("");
   document.getElementById("start").value=state.start;
 }
-function render(){renderToday();renderProgress();renderPlan()}
+function render(){renderToday();renderProgress();renderPlan();if(window.HealthUI)HealthUI.render()}
 
 ["list","doneList"].forEach(id=>{const el=document.getElementById(id);
   el.addEventListener("click",e=>{const li=e.target.closest(".item");if(li)tick(li)});
@@ -491,7 +559,7 @@ document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dat
 document.getElementById("copyBk").onclick=async()=>{const t=document.getElementById("backup");t.value=JSON.stringify(state);
   try{await navigator.clipboard.writeText(t.value);toast("Backup copied")}catch(e){t.select();toast("Selected. Copy it manually.")}};
 document.getElementById("restoreBk").onclick=()=>{try{const s=JSON.parse(document.getElementById("backup").value);
-  if(!s.start||typeof s.days!=="object")throw 0;state={start:s.start,days:s.days,water:s.water||{}};save({all:true});view=TODAY;render();toast("Restored")}catch(e){toast("That text isn't a valid backup")}};
+  if(!s.start||typeof s.days!=="object")throw 0;state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[]};save({all:true});view=TODAY;render();toast("Restored")}catch(e){toast("That text isn't a valid backup")}};
 
 let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)}
 
@@ -507,5 +575,6 @@ if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catc
 
 render();
 </script>
+<script src="health.js"></script>
 </body>
 </html>
