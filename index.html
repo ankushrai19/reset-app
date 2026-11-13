@@ -351,6 +351,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
           <button class="btn" id="signOut" type="button" hidden>Sign out</button>
         </div>
       </div>
+      <p class="note" id="appVer"></p>
       <label class="f" for="start">Start date<input type="date" id="start"></label>
       <div>
         <h3>Backup</h3>
@@ -599,10 +600,17 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){const now
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+const APP_VERSION="1.4 (13 Nov 2026)";
+if("serviceWorker" in navigator){
+  const hadController=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});
+  // when a new version takes over, reload once so every file is the new one
+  let reloaded=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(hadController&&!reloaded){reloaded=true;location.reload()}});
+}
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 
 render();
+document.getElementById("appVer").textContent="App version "+APP_VERSION;
 </script>
 <script src="summary.js"></script>
 <script src="health.js"></script>
