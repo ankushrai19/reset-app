@@ -16,12 +16,14 @@
   --c0:#ebe6dc; --c1:#f6d9ad; --c2:#efb45e; --c3:#2f8a5b; --bar:#1d2433; --bar-ink:#c9d0dc; --bar-on:#f3a54a;
   --f:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
   --mono:ui-monospace,"Roboto Mono",Menlo,monospace;
+  --ch1:#3a5a9c; --ch2:#c8740f; --chg:#2f8a5b; --chgrid:#e6e1d6;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root{
   --bg:#12151c; --paper:#1a1f29; --ink:#e8ebf1; --muted:#9aa3b2; --line:#2c3341; --soft:#202634;
   --sun:#f3a54a; --sun-soft:#3b2b16; --done:#5cc58c; --done-soft:#17321f; --sky:#8fb0f0; --sky-soft:#1d2840;
-  --c0:#262c38; --c1:#4a3a20; --c2:#9a6a25; --c3:#3fa86f; --bar:#0b0e13; color-scheme:dark}}
+  --c0:#262c38; --c1:#4a3a20; --c2:#9a6a25; --c3:#3fa86f; --bar:#0b0e13;
+  --ch1:#5a82e0; --ch2:#d07a22; --chg:#36a56b; --chgrid:#2c3341; color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5}
@@ -146,6 +148,34 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 .daylinks button{background:none;border:0;color:var(--muted);font-size:.85rem;padding:8px 4px;cursor:pointer;min-height:40px}
 .daylinks button[disabled]{opacity:.35}
 .empty{display:flex;flex-direction:column;gap:10px}
+/* charts */
+#charts{display:flex;flex-direction:column;gap:14px}
+.chart{display:flex;flex-direction:column;gap:8px}
+.chart .lead{color:var(--ink)}
+.chart svg{width:100%;max-width:560px;height:auto;display:block;overflow:visible}
+.chart .grid{stroke:var(--chgrid);stroke-width:1}
+.chart .ref{stroke:var(--muted);stroke-width:1}
+.chart .tick{font-size:10px;fill:var(--muted);font-variant-numeric:tabular-nums;font-family:var(--f)}
+.chart .reflab{font-size:10px;fill:var(--ink);font-family:var(--f);font-weight:600;stroke:var(--paper);stroke-width:4px;paint-order:stroke;stroke-linejoin:round}
+.chart .lab{font-size:11.5px;fill:var(--ink);font-family:var(--f)}
+.chart .val{font-size:11px;fill:var(--muted);font-variant-numeric:tabular-nums;font-family:var(--f)}
+.chart .m1{fill:var(--ch1)} .chart .m2{fill:var(--ch2)} .chart .zero{fill:var(--chgrid)}
+.chart .track{fill:var(--soft)}
+.chart .good{fill:var(--chg)} .chart .miss{fill:none;stroke:var(--muted);stroke-width:2} .chart .none{fill:var(--chgrid)}
+.chart .hit{fill:transparent;cursor:pointer;outline:none}
+.chart .hit.on,.chart .hit:focus-visible{fill:var(--ink);fill-opacity:.06}
+.chart .key{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.chart .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.chart .sw.m1{background:var(--ch1)} .chart .sw.m2{background:var(--ch2)}
+.chart .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.chart .dot.good{background:var(--chg)} .chart .dot.miss{border:2px solid var(--muted)} .chart .dot.none{width:5px;height:5px;background:var(--chgrid)}
+.tview summary{cursor:pointer;font-size:.85rem;color:var(--sky);padding:4px 0}
+.tview .tbl{overflow-x:auto;max-height:240px;overflow-y:auto}
+.tview table{font-size:.85rem}
+.seg{display:flex;gap:0;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:3px;align-self:flex-start}
+.seg button{border:0;background:none;padding:8px 12px;border-radius:9px;font-size:.88rem;cursor:pointer;min-height:38px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.ctip{position:fixed;z-index:30;background:var(--ink);color:var(--paper);font-size:.82rem;padding:6px 10px;border-radius:8px;pointer-events:none;max-width:260px}
 .ntrow a,.nexttest a{color:var(--sky)}
 .mk.lite{background:var(--done-soft);color:var(--done);margin-left:4px}
 .retest{display:flex;flex-direction:column;gap:3px;text-align:left;background:var(--sky-soft);color:var(--ink);border:1px solid var(--sky);border-radius:16px;padding:12px 14px;cursor:pointer;font:inherit}
@@ -327,6 +357,8 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
       </div>
       <p class="note">Tap a day to open it and fill in what you did. A good day is 70% or more.</p>
     </div>
+    <div><span class="eyebrow">Your trends</span><h2 style="margin-top:2px">Graphs</h2></div>
+    <div id="charts"></div>
   </section>
 
   <!-- PLAN -->
@@ -624,7 +656,7 @@ function renderPlan(){
     ${pp.removed.length?`<p class="note">Not needed for you: ${pp.removed.map(h=>esc(window.resetHabitName(h.id))).join(", ")}</p>`:""}</div>`}).join("");
   document.getElementById("start").value=state.start;
 }
-function render(){MILE=computeMile();renderToday();renderProgress();renderPlan();if(window.HealthUI)HealthUI.render()}
+function render(){MILE=computeMile();renderToday();renderProgress();if(window.ResetCharts)ResetCharts.render();renderPlan();if(window.HealthUI)HealthUI.render()}
 
 ["list","doneList"].forEach(id=>{const el=document.getElementById(id);
   el.addEventListener("click",e=>{const li=e.target.closest(".item");if(li)tick(li)});
@@ -656,7 +688,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){const now
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="1.7 (13 Nov 2026)";
+const APP_VERSION="1.8 (13 Nov 2026)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});
@@ -668,6 +700,7 @@ if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catc
 render();
 document.getElementById("appVer").textContent="App version "+APP_VERSION;
 </script>
+<script src="charts.js"></script>
 <script src="summary.js"></script>
 <script src="health.js"></script>
 </body>

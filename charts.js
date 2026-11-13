@@ -1,0 +1,177 @@
+// Progress graphs. Hand-drawn SVG (no library) so they work offline.
+// Uses the app's globals: state, habits, add, diff, parse, TODAY, TOTAL, PHASES, mins, fmt, esc, resetHabitName.
+(function () {
+  const $ = id => document.getElementById(id);
+  const E = x => String(x ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
+  const W = 340, PAD = { l: 34, r: 10, t: 14, b: 26 };
+  let range = "4w";
+  try { range = localStorage.getItem("reset84range") || "4w"; } catch (e) {}
+
+  const shortD = d => parse(d).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+  const pathCol = (x, y, w, h) => { // column with 4px rounded top, square at the baseline
+    const r = Math.min(4, w / 2, h);
+    if (h <= 0) return "";
+    return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+  };
+  const pathBarH = (x, y, w, h) => { // horizontal bar, rounded at the data end
+    const r = Math.min(4, h / 2, w);
+    if (w <= 0) return "";
+    return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+  };
+
+  // ---- data ----
+  function daysIn(r) {
+    const last = Math.min(diff(state.start, TODAY), TOTAL - 1);
+    if (last < 0) return [];
+    const first = r === "2w" ? Math.max(0, last - 13) : r === "4w" ? Math.max(0, last - 27) : 0;
+    const out = [];
+    for (let i = first; i <= last; i++) out.push(add(state.start, i));
+    return out;
+  }
+  function dayStats(d) {
+    const { list } = habits(d), done = new Set(state.days[d] || []);
+    return { d, list, done, total: list.length, n: list.filter(h => done.has(h.id)).length };
+  }
+
+  // ---- chart pieces ----
+  function columns({ values, labels, tips, max, ref, refLabel, highlight, unit, H = 170, empty }) {
+    const n = values.length, pw = W - PAD.l - PAD.r, ph = H - PAD.t - PAD.b;
+    const band = pw / Math.max(n, 1), bw = Math.max(3, Math.min(24, band * 0.62));
+    const y = v => PAD.t + ph * (1 - v / max);
+    const ticks = [0, max / 2, max];
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-hidden="false">`;
+    for (const t of ticks) s += `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(t)}" y2="${y(t)}" class="grid"/><text x="${PAD.l - 6}" y="${y(t) + 4}" class="tick" text-anchor="end">${Math.round(t)}${unit || ""}</text>`;
+    values.forEach((v, i) => {
+      const x = PAD.l + band * i + (band - bw) / 2, h = ph * (Math.max(0, v) / max);
+      const cls = highlight && highlight(i) ? "m2" : v == null ? "" : "m1";
+      if (v != null && v > 0) s += `<path d="${pathCol(x, y(v), bw, h)}" class="${cls}"/>`;
+      else if (v === 0) s += `<rect x="${x}" y="${y(0) - 2}" width="${bw}" height="2" rx="1" class="zero"/>`;
+      // full-height hit target, focusable
+      s += `<rect x="${PAD.l + band * i}" y="${PAD.t}" width="${band}" height="${ph}" class="hit" tabindex="0" data-tip="${E(tips[i])}"/>`;
+    });
+    if (ref != null) s += `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(ref)}" y2="${y(ref)}" class="ref"/><text x="${W - PAD.r}" y="${y(ref) - 4}" class="reflab" text-anchor="end">${E(refLabel)}</text>`;
+    // sparse x labels: first, last, and evenly between
+    const every = Math.max(1, Math.ceil(n / 6)), show = [];
+    for (let i = 0; i < n; i += every) show.push(i);
+    if (show[show.length - 1] !== n - 1) { if (n - 1 - show[show.length - 1] < every * 0.7) show.pop(); show.push(n - 1); }
+    show.forEach(i => { s += `<text x="${PAD.l + band * i + band / 2}" y="${H - 8}" class="tick" text-anchor="${i === n - 1 && n > 1 ? "end" : i === 0 ? "start" : "middle"}" dx="${i === n - 1 && n > 1 ? band / 2 : i === 0 ? -band / 2 : 0}">${E(labels[i])}</text>`; });
+    if (empty) s += `<text x="${W / 2}" y="${PAD.t + ph / 2}" class="tick" text-anchor="middle">${E(empty)}</text>`;
+    return s + `</svg>`;
+  }
+  function hbars(rows) { // rows: {label, v (0-100), right, tip, flag}
+    const rowH = 26, H = rows.length * rowH + 8, lw = 118, pw = W - lw - 64;
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
+    s += `<line x1="${lw}" x2="${lw}" y1="2" y2="${H - 4}" class="grid"/>`;
+    rows.forEach((r, i) => {
+      const y = 6 + i * rowH, w = pw * r.v / 100;
+      s += `<text x="${lw - 8}" y="${y + 13}" class="lab" text-anchor="end">${E(r.label)}</text>`;
+      s += `<rect x="${lw}" y="${y + 3}" width="${pw}" height="12" rx="4" class="track"/>`;
+      if (w > 0) s += `<path d="${pathBarH(lw, y + 3, w, 12)}" class="${r.flag ? "m2" : "m1"}"/>`;
+      s += `<text x="${lw + pw + 6}" y="${y + 13}" class="val">${E(r.right)}</text>`;
+      s += `<rect x="0" y="${y}" width="${W}" height="${rowH}" class="hit" tabindex="0" data-tip="${E(r.tip)}"/>`;
+    });
+    return s + `</svg>`;
+  }
+  const table = (head, rows) => `<details class="tview"><summary>Show as table</summary><div class="tbl"><table><thead><tr>${head.map(h => `<th>${E(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${E(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></details>`;
+  const key = (hi, rest) => `<p class="note key"><i class="sw m1"></i>${E(rest)} <i class="sw m2"></i>${E(hi)}</p>`;
+  const card = (title, lead, body, tbl, id) => `<div class="card chart"${id ? ` id="${id}"` : ""}><h3>${E(title)}</h3><p class="note lead">${lead}</p>${body}${tbl}</div>`;
+
+  // ---- the charts ----
+  function weekly() {
+    const last = Math.min(diff(state.start, TODAY), TOTAL - 1), cur = Math.floor(Math.max(last, 0) / 7);
+    const vals = [], tips = [], rows = [];
+    for (let w = 0; w < 12; w++) {
+      const ds = []; for (let i = w * 7; i < w * 7 + 7 && i <= last; i++) ds.push(dayStats(add(state.start, i)));
+      if (!ds.length) { vals.push(null); tips.push(`Week ${w + 1}: not started`); continue; }
+      const p = Math.round(ds.reduce((a, s) => a + (s.total ? s.n / s.total : 0), 0) / ds.length * 100);
+      vals.push(p); tips.push(`Week ${w + 1}: ${p}% average over ${ds.length} day${ds.length > 1 ? "s" : ""}`); rows.push([`Week ${w + 1}`, shortD(add(state.start, w * 7)), p + "%"]);
+    }
+    const doneW = vals.filter(v => v != null);
+    const lead = last < 0 ? "Your weeks fill in once the plan starts." : doneW.length > 1 ? `This week ${vals[cur]}%, last week ${vals[cur - 1]}%.` : `Week 1 so far: ${vals[0]}% on average.`;
+    return card("Week by week", lead, columns({ values: vals, labels: vals.map((_, i) => "W" + (i + 1)), tips, max: 100, unit: "%", ref: 70, refLabel: "70% good", highlight: i => i === cur }) + key("This week", "Earlier weeks"), table(["Week", "Starts", "Average"], rows));
+  }
+  function daily(days) {
+    const st = days.map(dayStats), vals = st.map(s => pct(s.n, s.total));
+    const good = vals.filter(v => v >= 70).length;
+    const lead = days.length ? `${good} of ${days.length} day${days.length > 1 ? "s" : ""} were good days (70%+).` : "Nothing to show yet.";
+    return card("Daily routine", lead, columns({ values: vals, labels: days.map(d => shortD(d)), tips: st.map((s, i) => `${shortD(s.d)}: ${s.n} of ${s.total} habits (${vals[i]}%)`), max: 100, unit: "%", ref: 70, refLabel: "Good day", highlight: i => days[i] === TODAY }) + key("Today", "Earlier days"),
+      table(["Date", "Done", "Habits", "%"], st.map((s, i) => [shortD(s.d), s.n, s.total, vals[i] + "%"])));
+  }
+  function byHabit(days) {
+    const agg = {};
+    for (const d of days) { const s = dayStats(d); for (const h of s.list) { const a = agg[h.id] || (agg[h.id] = { id: h.id, sched: 0, done: 0 }); a.sched++; if (s.done.has(h.id)) a.done++; } }
+    const rows = Object.values(agg).map(a => ({ ...a, p: pct(a.done, a.sched) })).sort((a, b) => b.p - a.p || b.sched - a.sched);
+    if (!rows.length) return card("Habit by habit", "Nothing to show yet.", "", "");
+    const weak = rows.filter(r => r.p < 50 && r.sched >= 3).slice(-2).map(r => resetHabitName(r.id));
+    const lead = weak.length ? `Needs the most attention: ${E(weak.join(" and "))}.` : `Strongest: ${E(resetHabitName(rows[0].id))} (${rows[0].p}%).`;
+    return card("Habit by habit", lead,
+      hbars(rows.map(r => ({ label: resetHabitName(r.id), v: r.p, right: r.p + "%", flag: r.p < 50 && r.sched >= 3, tip: `${resetHabitName(r.id)}: done ${r.done} of ${r.sched} scheduled days (${r.p}%)` }))) +
+      `<p class="note key"><i class="sw m1"></i>Done on scheduled days <i class="sw m2"></i>Under 50%, needs focus</p>`,
+      table(["Habit", "Done", "Scheduled", "%"], rows.map(r => [resetHabitName(r.id), r.done, r.sched, r.p + "%"])));
+  }
+  const MED_IDS = ["meds"];
+  function medicines(days) {
+    const cells = days.map(d => { const s = dayStats(d), m = s.list.find(h => MED_IDS.includes(h.id)); return { d, sched: !!m, taken: m ? s.done.has(m.id) : false, label: m ? m.t : "" }; });
+    const sched = cells.filter(c => c.sched), taken = sched.filter(c => c.taken).length;
+    if (!sched.length) return card("Medicines and supplements", "No medicines or supplements are in your plan for these days.", "", "");
+    let streak = 0; for (let i = cells.length - 1; i >= 0; i--) { const c = cells[i]; if (!c.sched) continue; if (c.taken) streak++; else if (c.d === TODAY) continue; else break; }
+    const size = Math.min(22, Math.floor((W - 8) / Math.min(cells.length, 14)) - 4), per = Math.min(cells.length, 14), rowsN = Math.ceil(cells.length / per), gap = 4;
+    const H = rowsN * (size + gap) + 4;
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
+    cells.forEach((c, i) => {
+      const x = 4 + (i % per) * (size + gap), y = 2 + Math.floor(i / per) * (size + gap), r = size / 2;
+      if (c.sched && c.taken) s += `<circle cx="${x + r}" cy="${y + r}" r="${r - 1}" class="good"/>`;
+      else if (c.sched) s += `<circle cx="${x + r}" cy="${y + r}" r="${r - 2}" class="miss"/>`;
+      else s += `<circle cx="${x + r}" cy="${y + r}" r="2" class="none"/>`;
+      s += `<rect x="${x - 1}" y="${y - 1}" width="${size + 2}" height="${size + 2}" class="hit" tabindex="0" data-tip="${E(shortD(c.d) + ": " + (c.sched ? (c.taken ? "taken" : c.d === TODAY ? "not ticked yet" : "missed") : "not scheduled"))}"/>`;
+    });
+    s += `</svg>`;
+    const p = pct(taken, sched.length);
+    return card("Medicines and supplements",
+      `Taken on <b>${taken} of ${sched.length}</b> scheduled days (${p}%). Current run: <b>${streak} day${streak === 1 ? "" : "s"}</b>.`,
+      s + `<p class="note key"><i class="dot good"></i>Taken <i class="dot miss"></i>Missed <i class="dot none"></i>Not scheduled</p><p class="note">Counts your "${E(cells.find(c => c.sched).label)}" habit. Prescribed medicines will appear here once that feature is added.</p>`,
+      table(["Date", "Status"], cells.map(c => [shortD(c.d), c.sched ? (c.taken ? "Taken" : c.d === TODAY ? "Not ticked yet" : "Missed") : "Not scheduled"])));
+  }
+  function timeOfDay(days) {
+    const slots = [{ k: "Morning", lab: "before noon", a: 0, b: 720 }, { k: "Afternoon", lab: "noon to 5 pm", a: 720, b: 1020 }, { k: "Evening", lab: "after 5 pm", a: 1020, b: 1440 }].map(x => ({ ...x, sched: 0, done: 0 }));
+    for (const d of days) { const s = dayStats(d); for (const h of s.list) { const sl = slots.find(x => mins(h.at) >= x.a && mins(h.at) < x.b); sl.sched++; if (s.done.has(h.id)) sl.done++; } }
+    const used = slots.filter(x => x.sched);
+    if (!used.length) return card("Time of day", "Nothing to show yet.", "", "");
+    used.forEach(x => x.p = pct(x.done, x.sched));
+    const worst = [...used].sort((a, b) => a.p - b.p)[0], best = [...used].sort((a, b) => b.p - a.p)[0];
+    const lead = worst.p === best.p ? "All parts of the day are even." : `${worst.k} habits slip most (${worst.p}%); ${best.k.toLowerCase()} is strongest (${best.p}%).`;
+    return card("Time of day", lead, hbars(used.map(x => ({ label: x.k, v: x.p, right: x.p + "%", flag: x === worst && worst.p < best.p, tip: `${x.k} (${x.lab}): ${x.done} of ${x.sched} habits done (${x.p}%)` }))),
+      table(["Part of day", "Done", "Scheduled", "%"], used.map(x => [x.k + " (" + x.lab + ")", x.done, x.sched, x.p + "%"])));
+  }
+  function water(days) {
+    const vals = days.map(d => (state.water && state.water[d]) || 0), goal = 8, hit = vals.filter(v => v >= goal).length;
+    const avg = days.length ? (vals.reduce((a, b) => a + b, 0) / days.length).toFixed(1) : 0;
+    return card("Water", days.length ? `Average ${avg} glasses a day; goal reached on ${hit} of ${days.length} days.` : "Nothing to show yet.",
+      columns({ values: vals, labels: days.map(d => shortD(d)), tips: days.map((d, i) => `${shortD(d)}: ${vals[i]} glass${vals[i] === 1 ? "" : "es"}`), max: Math.max(10, ...vals), ref: goal, refLabel: "Goal 8", highlight: i => days[i] === TODAY }) + key("Today", "Earlier days"),
+      table(["Date", "Glasses"], days.map((d, i) => [shortD(d), vals[i]])));
+  }
+
+  function render() {
+    const host = $("charts"); if (!host) return;
+    const days = daysIn(range);
+    host.innerHTML = weekly() +
+      `<div class="seg" role="group" aria-label="Range for the graphs below">${[["2w", "2 weeks"], ["4w", "4 weeks"], ["all", "All days"]].map(([k, l]) => `<button type="button" data-r="${k}" aria-pressed="${range === k}">${l}</button>`).join("")}</div>` +
+      daily(days) + byHabit(days) + medicines(days) + timeOfDay(days) + water(days) +
+      `<p class="note">Result trends from your blood reports are on the Health tab.</p>`;
+  }
+
+  // tooltip: hover, tap or keyboard focus
+  const tip = document.createElement("div"); tip.className = "ctip"; tip.hidden = true; tip.setAttribute("role", "status"); document.body.appendChild(tip);
+  const showTip = (el, x, y) => { tip.textContent = el.dataset.tip; tip.hidden = false; const r = tip.getBoundingClientRect(); tip.style.left = Math.max(8, Math.min(innerWidth - r.width - 8, x - r.width / 2)) + "px"; tip.style.top = Math.max(8, y - r.height - 12) + "px"; };
+  const hide = () => { tip.hidden = true; document.querySelectorAll("#charts .hit.on").forEach(e => e.classList.remove("on")); };
+  document.addEventListener("pointerover", e => { const h = e.target.closest && e.target.closest("#charts .hit"); if (h && e.pointerType === "mouse") { hide(); h.classList.add("on"); showTip(h, e.clientX, e.clientY); } });
+  document.addEventListener("pointermove", e => { const h = e.target.closest && e.target.closest("#charts .hit"); if (h && e.pointerType === "mouse" && !tip.hidden) showTip(h, e.clientX, e.clientY); else if (!h && e.pointerType === "mouse") hide(); });
+  document.addEventListener("click", e => { const h = e.target.closest && e.target.closest("#charts .hit"); if (h) { hide(); h.classList.add("on"); showTip(h, e.clientX, e.clientY); } else if (!e.target.closest("#charts")) hide(); });
+  document.addEventListener("focusin", e => { const h = e.target.closest && e.target.closest("#charts .hit"); if (h) { hide(); h.classList.add("on"); const r = h.getBoundingClientRect(); showTip(h, r.left + r.width / 2, r.top); } });
+  window.addEventListener("scroll", hide, { passive: true });
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("#charts [data-r]"); if (!b) return; range = b.dataset.r; try { localStorage.setItem("reset84range", range); } catch (x) {} render(); });
+
+  window.ResetCharts = { render };
+  render();
+})();
