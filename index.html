@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>12-Week Reset</title>
+<meta name="theme-color" content="#1d2433">
+<meta name="description" content="A daily routine that starts easy and builds up over 12 weeks.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --bg:#f3f1ec; --paper:#fffdf9; --ink:#1d2433; --muted:#636b7a; --line:#e0dcd2; --soft:#f7f4ee;
+  --sun:#c8740f; --sun-soft:#fcebd3; --done:#2f8a5b; --done-soft:#dff1e6; --sky:#3a5a9c; --sky-soft:#e4ebf8;
+  --c0:#ebe6dc; --c1:#f6d9ad; --c2:#efb45e; --c3:#2f8a5b; --bar:#1d2433; --bar-ink:#c9d0dc; --bar-on:#f3a54a;
+  --f:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+  --mono:ui-monospace,"Roboto Mono",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#12151c; --paper:#1a1f29; --ink:#e8ebf1; --muted:#9aa3b2; --line:#2c3341; --soft:#202634;
+  --sun:#f3a54a; --sun-soft:#3b2b16; --done:#5cc58c; --done-soft:#17321f; --sky:#8fb0f0; --sky-soft:#1d2840;
+  --c0:#262c38; --c1:#4a3a20; --c2:#9a6a25; --c3:#3fa86f; --bar:#0b0e13; color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5}
+main{padding:calc(env(safe-area-inset-top,0px) + 18px) max(16px,env(safe-area-inset-right,0px)) calc(86px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:640px;margin:0 auto}
+h1,h2,h3{margin:0;line-height:1.15}
+h1{font-size:1.6rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.25rem;font-weight:750}
+h3{font-size:1.02rem}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.view{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 14px;cursor:pointer;min-height:40px}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn[disabled]{opacity:.35}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* today */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.top>div{min-width:0}
+.pill{display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--sun-soft);color:var(--sun)}
+.daynum{font-size:2.3rem;font-weight:850;color:var(--sun);line-height:1.05;margin-top:4px}
+.date{color:var(--muted);font-size:.9rem}
+.ring{position:relative;width:76px;height:76px;flex:none}
+.ring svg{width:76px;height:76px}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:1rem;font-variant-numeric:tabular-nums}
+.daynav{display:grid;grid-template-columns:1fr auto 1fr;gap:8px}
+.list{list-style:none;margin:0;padding:0}
+.item{display:grid;grid-template-columns:68px 1fr 34px;gap:10px;align-items:center;padding:13px 0;border-top:1px solid var(--line);cursor:pointer}
+.item:first-child{border-top:0}
+.time{font-family:var(--mono);font-size:.74rem;color:var(--muted);white-space:nowrap}
+.item .t{font-weight:650;display:block}
+.item .w{color:var(--muted);font-size:.85rem;display:block}
+.box{width:30px;height:30px;border-radius:9px;border:2px solid var(--line);display:grid;place-items:center;background:var(--paper)}
+.item.on .box{background:var(--done);border-color:var(--done)}
+.item.on .box::after{content:"";width:8px;height:14px;border:solid var(--paper);border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.item.on .t{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--done)}
+.new{margin-left:6px;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:999px;background:var(--sky-soft);color:var(--sky);vertical-align:2px}
+.item.locked{cursor:default}
+.note{font-size:.85rem;color:var(--muted)}
+.cheer{background:var(--done-soft);color:var(--done);border-radius:12px;padding:10px 12px;font-weight:650}
+
+/* progress */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.78rem;color:var(--muted)}
+.wk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;font-family:var(--mono);font-size:.66rem;color:var(--muted);text-align:center}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cell{aspect-ratio:1;border-radius:8px;background:var(--c0);border:2px solid transparent;font-family:var(--mono);font-size:.68rem;color:var(--muted);padding:0;cursor:pointer}
+.cell.l1{background:var(--c1);color:var(--ink)}.cell.l2{background:var(--c2);color:var(--ink)}.cell.l3{background:var(--c3);color:var(--paper)}
+.cell.today{border-color:var(--ink)}.cell.future{opacity:.5}.cell.mile{box-shadow:inset 0 0 0 2px var(--sky)}
+.pb{grid-column:1/-1;font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:6px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.78rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+
+/* plan */
+.ph{display:flex;flex-direction:column;gap:6px}
+.ph.cur{border-color:var(--sun);box-shadow:0 0 0 1px var(--sun)}
+.ph ul{margin:0;padding-left:1.1em;font-size:.92rem;display:flex;flex-direction:column;gap:3px}
+.rule h3{margin-bottom:2px}
+.rule p{color:var(--muted);font-size:.92rem}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+td:first-child{color:var(--muted)}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.88rem;color:var(--muted)}
+input[type=date],textarea{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 10px}
+textarea{width:100%;min-height:90px;font-family:var(--mono);font-size:.75rem}
+
+/* tab bar */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--bar);display:grid;grid-template-columns:repeat(3,1fr);padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));z-index:5}
+nav.tabs button{background:none;border:0;color:var(--bar-ink);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.75rem;padding:6px;cursor:pointer;min-height:52px}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
+.toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:999px;font-size:.85rem;z-index:6}
+#install[hidden],.toast[hidden]{display:none}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:no-preference){.ring circle{transition:stroke-dasharray .4s ease}}
+</style>
+</head>
+<body>
+<main>
+  <!-- TODAY -->
+  <section class="view" id="v-today">
+    <div class="top">
+      <div>
+        <span class="pill" id="pill">Phase 1</span>
+        <div class="daynum" id="daynum">Day 1</div>
+        <div class="date" id="date"></div>
+      </div>
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 76 76"><circle cx="38" cy="38" r="31" fill="none" stroke="var(--c0)" stroke-width="9"/><circle id="arc" cx="38" cy="38" r="31" fill="none" stroke="var(--done)" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 195" transform="rotate(-90 38 38)"/></svg>
+        <b id="ringTxt">0/6</b>
+      </div>
+    </div>
+    <div class="daynav">
+      <button class="btn" id="prev" type="button">← Prev</button>
+      <button class="btn" id="todayBtn" type="button">Today</button>
+      <button class="btn" id="next" type="button">Next →</button>
+    </div>
+    <div class="card"><ul class="list" id="list"></ul></div>
+    <div id="cheer" class="cheer" hidden></div>
+    <div class="card" id="install" hidden>
+      <h3>Install this app</h3>
+      <p class="note" style="margin:4px 0 10px">Adds an icon to your home screen. It opens full screen and works offline.</p>
+      <button class="btn primary" id="installBtn" type="button">Install</button>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="view" id="v-progress" hidden>
+    <div><span class="eyebrow">84 days at a glance</span><h1>Progress</h1></div>
+    <div class="stats">
+      <div class="stat"><b id="sStreak">0</b><span>day streak</span></div>
+      <div class="stat"><b id="sGood">0</b><span>good days</span></div>
+      <div class="stat"><b id="sAvg">0%</b><span>this phase</span></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:8px">
+      <div class="wk" id="wk"></div>
+      <div class="grid" id="grid"></div>
+      <div class="legend">
+        <span><i style="background:var(--c1)"></i>Some</span><span><i style="background:var(--c2)"></i>Most (70%+)</span><span><i style="background:var(--c3)"></i>All</span><span><i style="background:var(--c0);box-shadow:inset 0 0 0 2px var(--sky)"></i>Blood test due</span>
+      </div>
+      <p class="note">Tap a day to open it and fill in what you did. A good day is 70% or more.</p>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="view" id="v-plan" hidden>
+    <div><span class="eyebrow">How it ramps up</span><h1>The plan</h1></div>
+    <div id="phases" class="view" style="gap:10px"></div>
+    <div class="card view" style="gap:12px">
+      <h2>Rules that make it stick</h2>
+      <div class="rule"><h3>70% is a pass</h3><p>Most boxes, not every box. A 5-of-7 day still counts for your streak.</p></div>
+      <div class="rule"><h3>Never miss twice</h3><p>One bad day is normal. After one, do at least the walk the next day.</p></div>
+      <div class="rule"><h3>Don't rush a phase</h3><p>If a phase ends under 60%, move your start date back a week and repeat it.</p></div>
+      <div class="rule"><h3>Attach to anchors</h3><p>Water after brushing, walk after lunch, sun on the way to the canteen.</p></div>
+      <div class="rule"><h3>Medicines are your doctor's call</h3><p>The supplements box is for whatever your doctor prescribes. Don't self-dose high vitamin D.</p></div>
+    </div>
+    <div class="card">
+      <h2 style="margin-bottom:8px">Easy food swaps</h2>
+      <table>
+        <thead><tr><th>Instead of</th><th>Have</th></tr></thead>
+        <tbody>
+          <tr><td>Sugar chai + biscuits</td><td>Chai without sugar + roasted chana or almonds</td></tr>
+          <tr><td>Bread-jam, plain poha</td><td>Eggs, besan chilla or paneer bhurji + 1 roti</td></tr>
+          <tr><td>Maida roti, white bread</td><td>Jowar, bajra, ragi or multigrain roti</td></tr>
+          <tr><td>Big bowl of white rice</td><td>Half the rice + extra dal and sabzi</td></tr>
+          <tr><td>Samosa, namkeen, chips</td><td>Makhana, sprouts chaat, guava or apple</td></tr>
+          <tr><td>Juice, cold drink</td><td>Buttermilk, unsweetened lemon water</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card view" style="gap:12px">
+      <h2>Settings</h2>
+      <label class="f" for="start">Start date<input type="date" id="start"></label>
+      <div>
+        <h3>Backup</h3>
+        <p class="note" style="margin:2px 0 8px">Your ticks are saved on this phone only. Copy a backup now and then, and paste it here to restore on a new phone.</p>
+        <textarea id="backup" aria-label="Backup text"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="copyBk" type="button">Copy backup</button>
+          <button class="btn" id="restoreBk" type="button">Restore from text above</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" id="t-today" aria-selected="true" data-v="today" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg>Today</button>
+  <button role="tab" id="t-progress" aria-selected="false" data-v="progress" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="4" height="4" rx="1"/><rect x="10" y="4" width="4" height="4" rx="1"/><rect x="16" y="4" width="4" height="4" rx="1"/><rect x="4" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="4" y="16" width="4" height="4" rx="1"/></svg>Progress</button>
+  <button role="tab" id="t-plan" aria-selected="false" data-v="plan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Plan</button>
+</nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const PHASES=[
+ {n:1,name:"Easy start",from:1,to:7,goal:"Six small habits. Just show up every day.",habits:[
+  {id:"water",at:"7:00",t:"2 glasses of water after brushing",w:"Replaces the morning sugar craving."},
+  {id:"meds",at:"9:00",t:"Supplements as prescribed",w:"Take vitamin D with a meal that has some fat."},
+  {id:"sun",at:"12:30",t:"10 min of sun on bare arms",w:"Between 11 am and 1 pm."},
+  {id:"walk",at:"13:45",t:"10-min walk after lunch",w:"Blunts the after-meal sugar spike."},
+  {id:"chai",at:"16:30",t:"Chai with half the usual sugar",w:"First step toward no added sugar."},
+  {id:"sleep",at:"23:30",t:"Lights out by 11:30 pm",w:""}]},
+ {n:2,name:"Build",from:8,to:21,goal:"Longer walks and sun, protein at breakfast, no sugar in chai.",habits:[
+  {id:"water",at:"7:00",t:"2 glasses on waking, 2.5 L in the day",w:"Finish a 1 L desk bottle twice."},
+  {id:"protein",at:"8:15",t:"Protein at breakfast",w:"Eggs, paneer, curd, besan chilla or sprouts."},
+  {id:"meds",at:"9:00",t:"Supplements as prescribed",w:""},
+  {id:"sun",at:"12:30",t:"20 min of sun on arms and legs",w:""},
+  {id:"walk",at:"13:45",t:"20-min walk after lunch or dinner",w:"Two 10-min walks also count."},
+  {id:"chai",at:"16:30",t:"Chai without sugar",w:""},
+  {id:"nuts",at:"17:00",t:"Small handful of almonds or walnuts",w:"Instead of biscuits."},
+  {id:"dinner",at:"20:30",t:"Dinner finished by 8:30 pm",w:""},
+  {id:"sleep",at:"23:00",t:"Lights out by 11 pm",w:""}]},
+ {n:3,name:"Strengthen",from:22,to:42,goal:"Brisk walking, two short strength sessions, a better plate.",habits:[
+  {id:"water",at:"7:00",t:"2 glasses on waking, 2.5–3 L in the day",w:""},
+  {id:"walk",at:"7:15",t:"30-min brisk walk",w:"You can talk but not sing.",days:[1,2,3,4,5,6]},
+  {id:"strength",at:"7:15",t:"15-min strength: squats, wall push-ups, plank",w:"Tuesdays and Fridays.",days:[2,5]},
+  {id:"protein",at:"8:15",t:"Protein at every meal",w:""},
+  {id:"meds",at:"9:00",t:"Supplements as prescribed",w:""},
+  {id:"sun",at:"12:30",t:"20–30 min of sun",w:""},
+  {id:"plate",at:"13:00",t:"Half plate vegetables at lunch and dinner",w:""},
+  {id:"nofried",at:"17:00",t:"No fried snacks or sweets",w:"Nuts, makhana, fruit or roasted chana instead."},
+  {id:"dinner",at:"20:30",t:"Dinner by 8:30 pm, no alcohol",w:""},
+  {id:"screens",at:"22:30",t:"Screens off 30 min before bed",w:""},
+  {id:"sleep",at:"23:00",t:"7 hours of sleep",w:""}]},
+ {n:4,name:"Lifestyle",from:43,to:84,goal:"The full routine. Keep it steady to the day-84 blood test.",habits:[
+  {id:"water",at:"7:00",t:"2 glasses on waking, 2.5–3 L in the day",w:""},
+  {id:"walk",at:"7:15",t:"40–45 min brisk walk",w:"Sunday optional.",days:[1,2,3,4,5,6]},
+  {id:"strength",at:"7:15",t:"20–30 min strength training",w:"Mon, Wed, Fri.",days:[1,3,5]},
+  {id:"weigh",at:"8:00",t:"Weigh yourself and measure your waist",w:"Target waist under 90 cm.",days:[0]},
+  {id:"protein",at:"8:15",t:"Protein at every meal",w:""},
+  {id:"meds",at:"9:00",t:"Supplements as prescribed",w:""},
+  {id:"sun",at:"12:30",t:"20–30 min of sun",w:""},
+  {id:"millet",at:"13:00",t:"Millet or whole-grain roti, small rice portion",w:""},
+  {id:"plate",at:"13:00",t:"Half plate vegetables at lunch and dinner",w:""},
+  {id:"nofried",at:"17:00",t:"No fried snacks, sweets or sugary drinks",w:"One planned treat a week is fine."},
+  {id:"dinner",at:"20:30",t:"Dinner by 8:30 pm, no alcohol",w:""},
+  {id:"sleep",at:"23:00",t:"7 hours of sleep, screens off before",w:""}]}
+];
+const MILE={14:"Repeat blood test (CRP, ESR)",21:"Last day for the repeat test",84:"Full blood retest"};
+const TOTAL=84, KEY="reset84";
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const add=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d)};
+const utc=s=>{const[y,m,d]=s.split("-").map(Number);return Date.UTC(y,m-1,d)};
+const diff=(a,b)=>Math.round((utc(b)-utc(a))/864e5);
+const mins=t=>{const[h,m]=t.split(":").map(Number);return h*60+m};
+const fmt=t=>{let[h,m]=t.split(":").map(Number);const ap=h>=12?"pm":"am";h=h%12||12;return h+(m?":"+pad(m):"")+" "+ap};
+const DN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let TODAY=iso(new Date());
+
+let state=load(); let view=TODAY;
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.start&&s.days)return s}catch(e){}return{start:TODAY,days:{}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Couldn't save. Is storage full?")}}
+
+const phaseOf=n=>PHASES.find(p=>n>=p.from&&n<=p.to)||(n<1?PHASES[0]:PHASES[3]);
+function habits(date){const n=diff(state.start,date)+1,p=phaseOf(n),wd=parse(date).getDay();
+  return{n,p,list:p.habits.filter(h=>!h.days||h.days.includes(wd)).sort((a,b)=>mins(a.at)-mins(b.at))}}
+function score(date){const{list}=habits(date),d=new Set(state.days[date]||[]);return list.length?list.filter(h=>d.has(h.id)).length/list.length:0}
+
+function renderToday(){
+  const{n,p,list}=habits(view),done=new Set(state.days[view]||[]),future=view>TODAY;
+  document.getElementById("pill").textContent=`Phase ${p.n} · ${p.name}`;
+  document.getElementById("daynum").textContent=n<1?"Starts soon":n>TOTAL?"Day "+n+" · finished":"Day "+n+" of "+TOTAL;
+  document.getElementById("date").textContent=parse(view).toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"})+(view===TODAY?" · today":"")+(MILE[n]?" · "+MILE[n]:"");
+  const prevPhase=p.n>1?PHASES[p.n-2]:null;
+  document.getElementById("list").innerHTML=list.map(h=>{
+    const isNew=prevPhase&&n-p.from<7&&!prevPhase.habits.some(o=>o.t===h.t);
+    return `<li class="item${done.has(h.id)?" on":""}${future?" locked":""}" data-id="${h.id}" role="checkbox" aria-checked="${done.has(h.id)}" tabindex="0">
+      <span class="time">${fmt(h.at)}</span><span><span class="t">${esc(h.t)}${isNew?'<span class="new">new</span>':""}</span>${h.w?`<span class="w">${esc(h.w)}</span>`:""}</span><span class="box"></span></li>`}).join("")
+    +(future?`<li class="note" style="padding-top:10px">This day hasn't come yet. Here's what it will ask of you.</li>`:"");
+  const c=list.filter(h=>done.has(h.id)).length,C=2*Math.PI*31;
+  document.getElementById("arc").setAttribute("stroke-dasharray",(list.length?c/list.length*C:0)+" "+C);
+  document.getElementById("ringTxt").textContent=c+"/"+list.length;
+  const ch=document.getElementById("cheer");
+  ch.hidden=future||c/list.length<.7; ch.textContent=c===list.length?"Every box ticked. Great day.":"That's a good day. 70% or more counts.";
+  document.getElementById("prev").disabled=diff(state.start,view)<=0;
+  document.getElementById("next").disabled=diff(state.start,view)>=TOTAL-1;
+}
+function renderProgress(){
+  const sw=parse(state.start).getDay();
+  document.getElementById("wk").innerHTML=Array.from({length:7},(_,i)=>`<span>${DN[(sw+i)%7]}</span>`).join("");
+  let h="";
+  PHASES.forEach(p=>{h+=`<div class="pb">Phase ${p.n} · ${p.name}</div>`;
+    for(let n=p.from;n<=p.to;n++){const d=add(state.start,n-1),s=score(d);let c="cell";
+      if(d>TODAY)c+=" future";else if(s>=1)c+=" l3";else if(s>=.7)c+=" l2";else if(s>0)c+=" l1";
+      if(d===TODAY)c+=" today";if(MILE[n])c+=" mile";
+      h+=`<button type="button" class="${c}" data-d="${d}" aria-label="Day ${n}, ${Math.round(s*100)}%${MILE[n]?", "+MILE[n]:""}">${n}</button>`}});
+  document.getElementById("grid").innerHTML=h;
+  const last=Math.min(diff(state.start,TODAY),TOTAL-1);let good=0,streak=0;
+  for(let i=0;i<=last;i++)if(score(add(state.start,i))>=.7)good++;
+  for(let i=last;i>=0;i--){if(score(add(state.start,i))>=.7)streak++;else if(i===last)continue;else break}
+  const cp=phaseOf(last+1);let sum=0,k=0;for(let n=cp.from;n<=Math.min(cp.to,last+1);n++){sum+=score(add(state.start,n-1));k++}
+  document.getElementById("sStreak").textContent=last<0?0:streak;
+  document.getElementById("sGood").textContent=last<0?0:good;
+  document.getElementById("sAvg").textContent=(k&&last>=0?Math.round(sum/k*100):0)+"%";
+}
+function renderPlan(){
+  const cur=phaseOf(diff(state.start,TODAY)+1).n,f=x=>parse(x).toLocaleDateString(undefined,{day:"numeric",month:"short"});
+  document.getElementById("phases").innerHTML=PHASES.map(p=>`<div class="card ph${p.n===cur?" cur":""}"><span class="eyebrow">Days ${p.from}–${p.to} · ${f(add(state.start,p.from-1))} – ${f(add(state.start,p.to-1))}${p.n===cur?" · now":""}</span><h3>Phase ${p.n}: ${p.name}</h3><p class="note">${p.goal}</p><ul>${p.habits.map(x=>`<li>${esc(x.t)}</li>`).join("")}</ul></div>`).join("");
+  document.getElementById("start").value=state.start;
+}
+function render(){renderToday();renderProgress();renderPlan()}
+
+document.getElementById("list").addEventListener("click",e=>{const li=e.target.closest(".item");if(li)tick(li)});
+document.getElementById("list").addEventListener("keydown",e=>{if((e.key===" "||e.key==="Enter")&&e.target.classList.contains("item")){e.preventDefault();tick(e.target)}});
+function tick(li){if(view>TODAY)return;const id=li.dataset.id,s=new Set(state.days[view]||[]);s.has(id)?s.delete(id):s.add(id);
+  state.days[view]=[...s];save();render();if(navigator.vibrate)navigator.vibrate(12);
+  const f=document.querySelector(`.item[data-id="${id}"]`);f&&f.focus({preventScroll:true})}
+document.getElementById("prev").onclick=()=>{view=add(view,-1);render()};
+document.getElementById("next").onclick=()=>{view=add(view,1);render()};
+document.getElementById("todayBtn").onclick=()=>{view=TODAY;render()};
+document.getElementById("grid").addEventListener("click",e=>{const b=e.target.closest(".cell");if(b){view=b.dataset.d;render();show("today")}});
+document.getElementById("start").addEventListener("change",e=>{if(e.target.value){state.start=e.target.value;if(view<state.start)view=state.start;save();render();toast("Start date updated")}});
+
+function show(v){["today","progress","plan"].forEach(x=>{document.getElementById("v-"+x).hidden=x!==v;document.getElementById("t-"+x).setAttribute("aria-selected",x===v)});
+  if(v==="plan")document.getElementById("backup").value=JSON.stringify(state);window.scrollTo(0,0)}
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dataset.v));
+
+document.getElementById("copyBk").onclick=async()=>{const t=document.getElementById("backup");t.value=JSON.stringify(state);
+  try{await navigator.clipboard.writeText(t.value);toast("Backup copied")}catch(e){t.select();toast("Selected. Copy it manually.")}};
+document.getElementById("restoreBk").onclick=()=>{try{const s=JSON.parse(document.getElementById("backup").value);
+  if(!s.start||typeof s.days!=="object")throw 0;state={start:s.start,days:s.days};save();view=TODAY;render();toast("Restored")}catch(e){toast("That text isn't a valid backup")}};
+
+let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)}
+
+// roll over to the new day if the app stays open past midnight
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){const now=iso(new Date());if(now!==TODAY){if(view===TODAY)view=now;TODAY=now;render()}}});
+
+// install prompt + offline
+let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
+document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
+window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+
+render();
+</script>
+</body>
+</html>
