@@ -112,6 +112,12 @@ Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Googl
 
 **Design:** Today = "Next up" card (option A). Tabs: Today, Health, Progress, Trends, Plan. Chart colours validated for colour-blind readers: light `#3a5a9c` / `#c8740f` / `#2f8a5b`, dark `#5a82e0` / `#d07a22` / `#36a56b` (tokens `--ch1 --ch2 --chg`). Every chart has a tooltip, a key for orange, and a table view.
 
+## Related documents (owner's private Claude artifacts; ask the owner if you can't open them)
+
+- Roadmap and open items (Claude Doc): https://claude.ai/artifact/9boCjr8UVbqqUaQkzCMwiq
+- Today screen design options; option A was chosen (design canvas): https://claude.ai/artifact/FWssz4vkqHy6usY2nmChyu
+- History: the app was built in one long claude.ai chat (13 Nov 2026) in the owner's "Personal" project. This file replaces that chat as the source of truth.
+
 ## Status and next steps
 
 Done: Stage 1 report upload in test mode, summaries, personalised plan, maintenance step, retest schedule, Trends graphs, step counting during walks, daily steps from watch, profile, sync.
