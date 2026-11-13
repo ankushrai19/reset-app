@@ -478,7 +478,7 @@ function renderToday(){
   const undone=list.filter(h=>!done.has(h.id));
   let nx=null;
   if(isToday){nx=(timer&&undone.find(h=>h.id===timer.id))||undone.find(h=>mins(h.at)>=nowMin()-30)||undone[0]||null}
-  card.hidden=!isToday; card.classList.toggle("alldone",isToday&&!nx);
+  card.hidden=!isToday; card.classList.toggle("alldone",isToday&&!nx); if(!isToday)card.innerHTML="";
   if(isToday&&!nx){card.innerHTML=`<div class="lbl"><span>All done</span><span></span></div><h2>Every habit ticked today.</h2><p>Rest well. Tomorrow's list is ready when you are.</p>`}
   else if(nx){const running=timer&&timer.id===nx.id;
     card.innerHTML=`<div class="lbl"><span>Next up · ${fmt(nx.at)}</span><span>${running?"timer running":rel(nx.at)}</span></div>
@@ -585,7 +585,7 @@ function renderPlan(){
   document.getElementById("phases").innerHTML=intro+PHASES.map(p=>{
     const pp=personal?R.phasePlan(p,reps):{list:p.habits,removed:[]};
     return `<div class="card ph${p.n===cur?" cur":""}"><span class="eyebrow">Days ${p.from}–${p.to} · ${f(add(state.start,p.from-1))} – ${f(add(state.start,p.to-1))}${p.n===cur?" · now":""}</span><h3>Phase ${p.n}: ${p.name}</h3><p class="note">${p.goal}</p>
-    <ul>${pp.list.map(x=>`<li>${esc(x.t)}${x.extra?` <span class="mk">added for ${esc(mkName(x.pk))}</span>`:x.pk?` <span class="mk">${esc(mkName(x.pk))}</span>`:""}${x.fromDay?` <span class="note">(from day ${x.fromDay})</span>`:""}${x.toDay?` <span class="note">(until day ${x.toDay})</span>`:""}</li>`).join("")}</ul>
+    <ul>${pp.list.map(x=>`<li>${esc(x.t)}${x.extra?` <span class="mk">added for ${esc(mkName(x.pk))}</span>`:x.pk?` <span class="mk">${esc(mkName(x.pk))}</span>`:""}${x.days?` <span class="note">(${x.days.length===6?"not Sunday":x.days.map(d=>DN[d]).join(", ")})</span>`:""}${x.fromDay?` <span class="note">(from day ${x.fromDay})</span>`:""}${x.toDay?` <span class="note">(until day ${x.toDay})</span>`:""}</li>`).join("")}</ul>
     ${pp.removed.length?`<p class="note">Not needed for you: ${pp.removed.map(h=>esc(window.resetHabitName(h.id))).join(", ")}</p>`:""}</div>`}).join("");
   document.getElementById("start").value=state.start;
 }
@@ -621,7 +621,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){const now
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="1.5 (13 Nov 2026)";
+const APP_VERSION="1.6 (13 Nov 2026)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});

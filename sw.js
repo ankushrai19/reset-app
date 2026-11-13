@@ -1,4 +1,4 @@
-const CACHE = "reset-v8";
+const CACHE = "reset-v9";
 const FILES = ["./", "./index.html", "./sync.js", "./firebase.js", "./rules.js", "./summary.js", "./health.js", "./pdftext.js", "./vendor/pdf.min.mjs", "./vendor/pdf.worker.min.mjs", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-192-maskable.png", "./icon-512-maskable.png", "./icon-180.png"];
 
 self.addEventListener("install", e => {
