@@ -101,8 +101,8 @@ input[type=date],textarea{border:1px solid var(--line);background:var(--paper);b
 textarea{width:100%;min-height:90px;font-family:var(--mono);font-size:.75rem}
 
 /* tab bar */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--bar);display:grid;grid-template-columns:repeat(4,1fr);padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));z-index:5}
-nav.tabs button{background:none;border:0;color:var(--bar-ink);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.75rem;padding:6px;cursor:pointer;min-height:52px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--bar);display:grid;grid-template-columns:repeat(5,1fr);padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));z-index:5}
+nav.tabs button{background:none;border:0;color:var(--bar-ink);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.72rem;padding:6px 2px;cursor:pointer;min-height:52px;min-width:0}
 nav.tabs button svg{width:24px;height:24px}
 nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 .toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:999px;font-size:.85rem;z-index:6}
@@ -357,7 +357,12 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
       </div>
       <p class="note">Tap a day to open it and fill in what you did. A good day is 70% or more.</p>
     </div>
-    <div><span class="eyebrow">Your trends</span><h2 style="margin-top:2px">Graphs</h2></div>
+    <button class="btn" type="button" id="toTrends" style="align-self:flex-start">See your trends: graphs by week, habit and time of day</button>
+  </section>
+
+  <!-- TRENDS -->
+  <section class="view" id="v-trends" hidden>
+    <div><span class="eyebrow">How your routine is going</span><h1>Trends</h1></div>
     <div id="charts"></div>
   </section>
 
@@ -416,6 +421,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
   <button role="tab" id="t-today" aria-selected="true" data-v="today" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg>Today</button>
   <button role="tab" id="t-health" aria-selected="false" data-v="health" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>Health</button>
   <button role="tab" id="t-progress" aria-selected="false" data-v="progress" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="4" height="4" rx="1"/><rect x="10" y="4" width="4" height="4" rx="1"/><rect x="16" y="4" width="4" height="4" rx="1"/><rect x="4" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="4" y="16" width="4" height="4" rx="1"/></svg>Progress</button>
+  <button role="tab" id="t-trends" aria-selected="false" data-v="trends" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M5 15l4-4 3 3 7-7"/><path d="M15 7h4v4"/></svg>Trends</button>
   <button role="tab" id="t-plan" aria-selected="false" data-v="plan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Plan</button>
 </nav>
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="in" id="sheetIn"></div></div>
@@ -604,6 +610,7 @@ document.getElementById("nextCard").addEventListener("click",e=>{const b=e.targe
   else if(act==="done"){if(timer&&timer.id===b.dataset.id){setTimer(null);clearInterval(clockInt)}
     const s=new Set(state.days[TODAY]||[]);s.add(b.dataset.id);state.days[TODAY]=[...s];save({day:TODAY});if(navigator.vibrate)navigator.vibrate(12);render()}});
 document.getElementById("retestCard").onclick=()=>{show("health");const el=document.getElementById("nextTest");if(el)el.scrollIntoView({block:"start"})};
+document.getElementById("toTrends").onclick=()=>show("trends");
 document.getElementById("doneBar").onclick=()=>{showDone=!showDone;renderToday()};
 function setWater(d){const w=Math.max(0,((state.water&&state.water[view])||0)+d);state.water={...(state.water||{}),[view]:w};save({water:view});renderToday();if(navigator.vibrate)navigator.vibrate(8)}
 document.getElementById("waterPlus").onclick=()=>setWater(1);
@@ -670,7 +677,7 @@ document.getElementById("todayBtn").onclick=()=>{view=TODAY;render()};
 document.getElementById("grid").addEventListener("click",e=>{const b=e.target.closest(".cell");if(b){view=b.dataset.d;render();show("today")}});
 document.getElementById("start").addEventListener("change",e=>{if(e.target.value){state.start=e.target.value;if(view<state.start)view=state.start;save({start:true});render();toast("Start date updated")}});
 
-function show(v){["today","health","progress","plan"].forEach(x=>{document.getElementById("v-"+x).hidden=x!==v;document.getElementById("t-"+x).setAttribute("aria-selected",x===v)});
+function show(v){["today","health","progress","trends","plan"].forEach(x=>{document.getElementById("v-"+x).hidden=x!==v;document.getElementById("t-"+x).setAttribute("aria-selected",x===v)});
   if(v==="plan")document.getElementById("backup").value=JSON.stringify(state);window.scrollTo(0,0)}
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dataset.v));
 
@@ -688,7 +695,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){const now
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="1.8 (13 Nov 2026)";
+const APP_VERSION="1.9 (13 Nov 2026)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});
