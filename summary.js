@@ -191,5 +191,43 @@
       <p class="note">Or as your doctor advises: their instructions come first. Intervals were checked against the linked sources in November 2026.</p></div>`;
   }
 
-  window.ReportSummary = { html, build, retestHTML };
+  // ---------- pieces for the Health tab (live summary of the latest results) ----------
+  function sortBad(list) { return [...list].sort((a, b) => severity(b) - severity(a)); }
+  function prioHTML(bad, showAll) {
+    if (!bad.length) return `<div class="cheer">Everything the app tracks is in range. Keep going.</div>`;
+    const list = showAll ? bad : bad.slice(0, 3);
+    return `<div class="card"><span class="eyebrow">If you read only one thing</span><h3 style="margin:4px 0 8px">What to fix, in order</h3>
+      <ol class="prio">${list.map(t => `<li><b>${esc(R.CATALOG[t.key].name)} is ${t.status} (${t.value}, healthy ${esc(rangeText(t))}).</b> ${esc((INFO[t.key] || {}).act || "")}</li>`).join("")}</ol>
+      ${bad.length > 3 ? `<button class="linkbtn" type="button" data-x="prio">${showAll ? "Show top 3" : `Show all ${bad.length}`}</button>` : ""}</div>`;
+  }
+  function eatAvoidHTML(bad) {
+    const eat = uniq(bad.flatMap(t => (INFO[t.key] || {}).eat || [])).slice(0, 10);
+    const avoid = uniq(bad.flatMap(t => (INFO[t.key] || {}).avoid || [])).slice(0, 8);
+    const tests = uniq(bad.flatMap(t => (INFO[t.key] || {}).tests || []));
+    const sec = (title, cls, items, open) => items.length ? `<details class="card fold"${open ? " open" : ""}><summary><b class="${cls}">${title}</b><span class="note">${items.length} item${items.length > 1 ? "s" : ""}</span></summary><ul class="clean">${items.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>` : "";
+    return sec("Eat more", "c-good", eat) + sec("Cut down", "c-bad", avoid) + sec("Tests to ask your doctor about", "", tests);
+  }
+  function detailHTML(t, barFn, trendFn, histFn, reports) {
+    const c = R.CATALOG[t.key], info = INFO[t.key] || {}, maint = t.phase === "maintain";
+    const st = maint ? "maint" : t.status;
+    const effStatus = maint ? t.wasStatus : t.status, ef = R.effects(t.key, effStatus);
+    const habitNames = ef.habits.map(h => window.resetHabitName ? window.resetHabitName(h) : h);
+    const planLines = t.status === "ok" && !maint ? [] : [...habitNames.map(h => maint ? `“${h}” continues in a lighter form until one more test confirms it.` : `Your “${h}” habit now shows why it matters for this.`), ...ef.adds.map(a => `Adds a habit: ${a.t}${a.from > 1 ? ` (from day ${a.from})` : ""}.`)];
+    const rt = R.retest(reports, null), due = rt && rt.all ? rt.all.find(i => i.key === t.key) : null;
+    const bad = t.status === "low" || t.status === "high";
+    return `<div class="mcard st-${st}" style="border:0;padding:0;background:none">
+      <div class="mtop"><span class="nm" style="font-size:1.15rem">${esc(c.name)}<span class="pill2">${maint ? "back in range" : t.status === "ok" ? "OK" : t.status}</span></span><span class="mval"><b>${t.value}</b> ${esc(t.unit || c.unit)}</span></div>
+      ${barFn(t)}${trendFn(t)}
+      ${bad ? `<span class="note"><b>${esc(label(t))}</b></span>` : ""}</div>
+      <div class="sx">
+        <div><b>What it means</b><p>${esc(c.about)}</p></div>
+        ${bad || maint ? `<div><b>Why it happens</b><p>${esc(info.why || "")}</p></div><div><b>What it can lead to</b><p>${esc(info.risk || "")}</p></div><div><b>What helps</b><p>${esc(info.act || "")}</p></div>` : ""}
+      </div>
+      ${ef.note && bad ? `<div class="notice"><span>${esc(ef.note)}</span></div>` : ""}
+      ${planLines.length ? `<div><b>What changes in your plan</b><ul class="clean">${planLines.map(p => `<li>${esc(p)}</li>`).join("")}</ul></div>` : ""}
+      ${due ? `<p class="note"><b>Test again:</b> ${due.text} Around ${esc(fmtDate(due.due))}.</p>` : ""}
+      ${histFn(t.key, reports)}`;
+  }
+
+  window.ReportSummary = { html, build, retestHTML, bigPicture, prioHTML, eatAvoidHTML, detailHTML, sortBad, label, rangeText };
 })();

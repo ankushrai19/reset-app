@@ -16,14 +16,14 @@
   --c0:#ebe6dc; --c1:#f6d9ad; --c2:#efb45e; --c3:#2f8a5b; --bar:#1d2433; --bar-ink:#c9d0dc; --bar-on:#f3a54a;
   --f:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
   --mono:ui-monospace,"Roboto Mono",Menlo,monospace;
-  --ch1:#3a5a9c; --ch2:#c8740f; --chg:#2f8a5b; --chgrid:#e6e1d6;
+  --ch1:#3a5a9c; --ch2:#c8740f; --chg:#2f8a5b; --chgrid:#e6e1d6; --band:#bfe3cc;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root{
   --bg:#12151c; --paper:#1a1f29; --ink:#e8ebf1; --muted:#9aa3b2; --line:#2c3341; --soft:#202634;
   --sun:#f3a54a; --sun-soft:#3b2b16; --done:#5cc58c; --done-soft:#17321f; --sky:#8fb0f0; --sky-soft:#1d2840;
   --c0:#262c38; --c1:#4a3a20; --c2:#9a6a25; --c3:#3fa86f; --bar:#0b0e13;
-  --ch1:#5a82e0; --ch2:#d07a22; --chg:#36a56b; --chgrid:#2c3341; color-scheme:dark}}
+  --ch1:#5a82e0; --ch2:#d07a22; --chg:#36a56b; --chgrid:#2c3341; --band:#2b5a3d; color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5}
@@ -148,6 +148,48 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 .daylinks button{background:none;border:0;color:var(--muted);font-size:.85rem;padding:8px 4px;cursor:pointer;min-height:40px}
 .daylinks button[disabled]{opacity:.35}
 .empty{display:flex;flex-direction:column;gap:10px}
+/* health tab (live summary) */
+.banner{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;background:var(--done-soft);color:var(--ink);border:1px solid var(--done);border-radius:14px;padding:12px 14px;font-size:.92rem}
+.banner .x{border:0;background:none;font-size:1.3rem;line-height:1;cursor:pointer;color:var(--muted);min-width:32px;min-height:32px}
+.glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.glance .stat b{font-size:1.5rem}
+.c-bad{color:#c4352b} .c-good{color:var(--done)}
+@media (prefers-color-scheme:dark){.c-bad{color:#ff8a7a}}
+.ntchip{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;text-align:left;background:var(--sky-soft);border:1px solid var(--sky);border-radius:14px;padding:10px 14px;cursor:pointer;font:inherit;color:var(--ink)}
+.ntchip .eyebrow{color:var(--sky)} .ntchip span:last-child{color:var(--muted);font-size:.88rem}
+.linkbtn{background:none;border:0;padding:6px 0;color:var(--sky);font:inherit;font-size:.9rem;cursor:pointer;text-align:left}
+.rgroup>summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:6px 2px;list-style:none}
+.rgroup>summary::-webkit-details-marker{display:none}
+.rgroup>summary::after{content:"▾";color:var(--muted);margin-left:8px}
+.rgroup:not([open])>summary::after{content:"▸"}
+.rgroup>summary .note{margin-left:auto;margin-right:4px}
+.rlist{padding:0 14px}
+.rrow{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;grid-template-areas:"n v" "b p";gap:6px 10px;align-items:center;width:100%;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+.rlist .rrow:first-child{border-top:0}
+.rrow:focus-visible{outline:3px solid var(--sky);outline-offset:2px;border-radius:8px}
+.rrow .rn{grid-area:n;font-weight:650;min-width:0}
+.rrow .rv2{grid-area:v;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rrow .rv2 small{color:var(--muted)}
+.rrow .pill2{grid-area:p;justify-self:end;margin:0}
+.rrow .rb{grid-area:b;min-width:0}
+.rrow .rbar{height:6px}
+.rrow .rbar .pin{height:12px;top:-3px;width:3px}
+.fold>summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none}
+.fold>summary::-webkit-details-marker{display:none}
+.fold[open]>summary{margin-bottom:8px}
+.planline{all:unset;box-sizing:border-box;cursor:pointer;padding:12px 14px;border-radius:14px;background:var(--soft);border:1px solid var(--line);font-size:.92rem}
+.planline b{color:var(--sky)}
+.ntmini{display:flex;flex-direction:column;gap:4px}
+.ntmini .big{font-size:1.3rem;font-weight:800}
+.ntmini details[open] .nexttest{border:0;padding:0;margin-top:6px}
+.ntmini summary{list-style:none} .ntmini summary::-webkit-details-marker{display:none}
+.panelwrap{position:fixed;inset:0;z-index:25}
+.panelwrap .backdrop{position:absolute;inset:0;background:rgba(10,14,20,.45)}
+.panel{position:absolute;left:0;right:0;bottom:0;max-height:88%;overflow-y:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px;max-width:640px;margin:0 auto}
+.panel .grab{width:40px;height:4px;border-radius:2px;background:var(--line);align-self:center}
+.panel .pclose{align-self:flex-end;margin-top:-14px}
+#panelIn{display:flex;flex-direction:column;gap:12px}
+@media (prefers-reduced-motion:no-preference){.panel{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}}
 /* charts */
 #charts{display:flex;flex-direction:column;gap:14px}
 .chart{display:flex;flex-direction:column;gap:8px}
@@ -208,7 +250,7 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 .st-high .pill2{background:#fbe2df;color:#b23b2e}
 .st-ok .pill2{background:var(--done-soft);color:var(--done)}
 .rbar{position:relative;height:10px;border-radius:5px;background:var(--c0)}
-.rbar .band{position:absolute;top:0;bottom:0;background:#bfe3cc;border-radius:5px}
+.rbar .band{position:absolute;top:0;bottom:0;background:var(--band);border-radius:5px}
 .rbar .pin{position:absolute;top:-4px;width:4px;height:18px;border-radius:2px;transform:translateX(-50%);background:var(--ink)}
 .st-low .rbar .pin{background:var(--sky)} .st-high .rbar .pin{background:#c4352b}
 .rlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.68rem;color:var(--muted)}
@@ -695,7 +737,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){const now
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="1.9 (13 Nov 2026)";
+const APP_VERSION="2.0 (13 Nov 2026)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});

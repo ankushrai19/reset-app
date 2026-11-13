@@ -169,9 +169,10 @@
     }
     const report = { id: draft.id, date, lab, tests: draft.tests.filter(t => t.key).map(t => ({ key: t.key, name: t.name, value: num(t.value), unit: t.unit || R.CATALOG[t.key].unit, low: t.low ?? null, high: t.high ?? null })) };
     if (draft.sample) report.sample = true;
-    const st = app.getState();
-    st.reports = [...(st.reports || []), report];
-    app.save({ reports: true }); app.render(); showSummary(report.id); app.toast("Report saved. Your habits are updated.");
+    const st = app.getState(), before = [...(st.reports || [])];
+    st.reports = [...before, report];
+    banner = { date: report.date, ...changesSince(before, st.reports) };
+    app.save({ reports: true }); closeSheet(); app.show("health"); app.render(); window.scrollTo(0, 0);
   }
 
   function showSummary(id) {
@@ -238,10 +239,42 @@
     </div>`;
   }
 
+  // ---------- Health tab: a live summary of the latest results ----------
+  let showAllPrio = false, banner = null;
+  function changesSince(before, after) {
+    const Lb = R.latest(before), La = R.latest(after), out = { improved: 0, worse: 0, back: 0, newOut: 0, first: !before.length };
+    const bad = t => t && (t.status === "low" || t.status === "high");
+    for (const [k, t] of Object.entries(La)) {
+      const b = Lb[k]; if (!b || t.date === b.date && t.value === b.value) { if (!b && bad(t)) out.newOut++; continue; }
+      if (bad(b) && !bad(t)) { out.back++; continue; }
+      if (!bad(b) && bad(t)) { out.worse++; continue; }
+      if (bad(t)) { const c = R.CATALOG[k], d = t.value - b.value, good = c.dir === "low" ? d > 0 : c.dir === "high" ? d < 0 : Math.abs(t.value - (c.low + c.high) / 2) < Math.abs(b.value - (c.low + c.high) / 2); if (Math.abs(d) > 1e-9) good ? out.improved++ : out.worse++; }
+    }
+    out.needs = Object.values(La).filter(bad).length;
+    return out;
+  }
+  function bannerHTML() {
+    if (!banner) return "";
+    const b = banner, parts = [];
+    if (b.first) parts.push(`${b.needs} result${b.needs === 1 ? "" : "s"} need${b.needs === 1 ? "s" : ""} attention. Your plan is now personalised.`);
+    else {
+      if (b.back) parts.push(`${b.back} back in range`);
+      if (b.improved) parts.push(`${b.improved} improved`);
+      if (b.worse) parts.push(`${b.worse} got worse`);
+      if (b.newOut) parts.push(`${b.newOut} new out of range`);
+      if (!parts.length) parts.push("No big changes");
+    }
+    return `<div class="banner" role="status"><div><b>New report saved (${esc(fmtDate(b.date))}).</b> ${esc(b.first ? parts[0] : parts.join(", ") + ". Your plan was updated.")}</div><button class="x" type="button" data-x="banner" aria-label="Close">×</button></div>`;
+  }
+  function row(k, t) {
+    const c = R.CATALOG[k], maint = t.phase === "maintain", st = maint ? "maint" : t.status;
+    return `<button type="button" class="rrow st-${st}" data-m="${k}"><span class="rn">${esc(c.name)}</span><span class="rv2"><b>${t.value}</b> <small>${esc(t.unit || c.unit)}</small></span><span class="pill2">${maint ? "back in range" : t.status === "ok" ? "OK" : t.status}</span><span class="rb">${bar(t).split('<div class="rlab">')[0]}</span></button>`;
+  }
   function render() {
     const st = app.getState(), reports = st.reports || [];
     const hasSample = reports.some(r => r.sample);
     $("hSample").textContent = hasSample ? "Remove sample reports" : "Try sample reports";
+    $("hSample").hidden = reports.length > 0 && !hasSample;
     if (!reports.length) {
       $("hSub").textContent = "";
       $("hBody").innerHTML = `<div class="card empty"><h2>Read your blood report</h2>
@@ -249,41 +282,68 @@
         <p class="note">Want to see how it works first? Tap <b>Try sample reports</b> for two made-up reports.</p></div>`;
       return;
     }
-    const p = R.plan(reports), L = p.latest, keys = Object.keys(L);
-    const bad = keys.filter(k => L[k].phase === "active"), maint = keys.filter(k => L[k].phase === "maintain"), good = keys.filter(k => L[k].status === "ok" && L[k].phase !== "maintain");
-    const today = isoToday(), rt = R.retest(reports, today);
+    const S = window.ReportSummary, p = R.plan(reports), L = p.latest, keys = Object.keys(L);
+    const active = S.sortBad(keys.filter(k => L[k].phase === "active").map(k => ({ ...L[k], key: k })));
+    const maint = keys.filter(k => L[k].phase === "maintain"), normal = keys.filter(k => L[k].status === "ok" && L[k].phase !== "maintain");
     const last = [...reports].sort((a, b) => a.date < b.date ? 1 : -1)[0];
-    $("hSub").textContent = `Latest: ${fmtDate(last.date)}${last.lab ? " · " + last.lab : ""}`;
-    const adds = Object.values(p.adds);
+    $("hSub").textContent = `Based on your report of ${fmtDate(last.date)}${last.lab ? " · " + last.lab : ""}${reports.length > 1 ? ` and ${reports.length - 1} earlier` : ""}`;
+    const today = isoToday(), rt = R.retest(reports, today);
+    const chip = rt && (rt.due || rt.doctor.length) ? `<button type="button" class="ntchip" data-x="nt"><span class="eyebrow">Next test</span><b>${rt.routine ? "Yearly check-up" : rt.due ? esc((n => n.length > 3 ? n.slice(0, 3).join(", ") + " + " + (n.length - 3) + " more" : n.join(", "))(rt.together.map(i => R.CATALOG[i.key].name.replace(/ \(.*\)/, "")))) : "Ask your doctor"}</b><span>${rt.due ? (rt.overdue ? "overdue · " : "around ") + esc(shortDate(rt.due)) : "doctor's schedule"}</span></button>` : "";
+    const adds = Object.values(p.adds), lighter = Object.values(p.tags).filter(t => t.maint).length;
+    const planLine = adds.length || lighter || active.length ? `<button type="button" class="planline" data-x="plan">Your plan follows these results${adds.length ? `: ${adds.length} habit${adds.length > 1 ? "s" : ""} added` : ""}${lighter ? `${adds.length ? "," : ":"} some lighter for now` : ""}. <b>See Plan</b></button>` : "";
+    const group = (title, ks, openIt) => ks.length ? `<details class="rgroup"${openIt ? " open" : ""}><summary><span class="eyebrow">${title}</span><span class="note">${ks.length}</span></summary><div class="card rlist">${ks.map(k => row(k, L[k])).join("")}</div></details>` : "";
+    const rtFull = window.ReportSummary.retestHTML(rt, today, "");
     $("hBody").innerHTML = `
-      <button class="btn primary" type="button" data-sum="${last.id}" style="align-self:flex-start">Read the summary of your latest report</button>
-      <div class="hsum">
-        <div class="stat"><b>${bad.length}</b><span>need attention</span></div>
-        <div class="stat"><b>${good.length + maint.length}</b><span>in range</span></div>
-        <div class="stat"><b>${reports.length}</b><span>report${reports.length > 1 ? "s" : ""}</span></div>
+      ${bannerHTML()}
+      <div class="glance">
+        <div class="stat"><b class="c-bad">${active.length}</b><span>need attention</span></div>
+        <div class="stat"><b class="c-good">${maint.length}</b><span>back in range</span></div>
+        <div class="stat"><b>${normal.length}</b><span>normal</span></div>
+        ${chip}
       </div>
-      ${window.ReportSummary ? window.ReportSummary.retestHTML(rt, today, "nextTest") : ""}
+      ${S.prioHTML(active, showAllPrio)}
       ${p.notes.map(n => `<div class="notice"><span><b>${esc(R.CATALOG[n.key].name)}:</b> ${esc(n.text)}</span></div>`).join("")}
-      ${bad.length ? `<div class="sect"><span class="eyebrow">Needs attention</span>${bad.map(k => markerCard(k, L[k], reports)).join("")}</div>` : `<div class="cheer">Everything the app tracks is in range. Keep going.</div>`}
-      ${maint.length ? `<div class="sect"><span class="eyebrow">Back in range: keep going</span>${maint.map(k => markerCard(k, L[k], reports)).join("")}</div>` : ""}
-      ${adds.length ? `<div class="card"><h3 style="margin-bottom:6px">Added to your daily plan</h3><ul style="margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px">${adds.map(a => `<li>${esc(a.maint && R.MAINT[a.id] ? R.MAINT[a.id].t : a.t)} <span class="note">(${esc(R.CATALOG[a.because].name)}${a.maint ? ", lighter for now" : ""}${a.from > 1 ? `, from day ${a.from}` : ""}${a.to ? `, until day ${a.to}` : ""})</span></li>`).join("")}</ul></div>` : ""}
-      ${good.length ? `<div class="sect"><span class="eyebrow">In range</span><div class="card oklist" style="padding:2px 14px">${good.map(k => `<button type="button" class="okrow" data-m="${k}" style="background:none;border:0;border-top:1px solid var(--line);font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%"><span>${esc(R.CATALOG[k].name)}</span><span>${L[k].value} ${esc(L[k].unit || R.CATALOG[k].unit)}</span></button>${open === k ? markerCard(k, L[k], reports) : ""}`).join("")}</div></div>` : ""}
-      <div class="sect"><span class="eyebrow">Your reports</span><div class="card" style="padding:2px 14px">
+      ${S.bigPicture(active)}
+      <div class="sect"><span class="eyebrow">Your results</span><p class="note" style="margin-top:-4px">Tap a result for what it means, why it happens and what helps.</p>
+        ${group("Needs attention", active.map(t => t.key), true)}${group("Back in range", maint, true)}${group("Normal", normal, false)}</div>
+      ${S.eatAvoidHTML(active)}
+      ${planLine}
+      <div id="nextTest" class="sect"><span class="eyebrow">When to test again</span>
+        ${rt && rt.due ? `<div class="card ntmini"><div class="big">${rt.overdue ? "Overdue since " : "Around "}${esc(fmtDate(rt.due))}</div><p>${rt.routine ? "A yearly check-up is common practice." : esc(rt.together.map(i => R.CATALOG[i.key].name).join(", "))}</p>
+          <details><summary class="linkbtn">See all dates and sources</summary>${rtFull}</details></div>` : rtFull}</div>
+      <details class="rgroup"><summary><span class="eyebrow">Your reports</span><span class="note">${reports.length}</span></summary><div class="card" style="padding:2px 14px">
         ${[...reports].sort((a, b) => a.date < b.date ? 1 : -1).map(r => `<div class="rep"><div><b>${esc(fmtDate(r.date))}</b>${r.sample ? '<span class="tag">sample</span>' : ""}<div class="note">${esc(r.lab || "Lab not named")} · ${r.tests.length} results</div></div>
-          ${confirmDel === r.id ? "" : `<button class="btn" type="button" data-sum="${r.id}">Summary</button>`}
-          ${confirmDel === r.id ? `<div class="row"><button class="btn" type="button" data-del-no>Keep</button><button class="btn danger" type="button" data-del-yes="${r.id}">Delete</button></div>` : `<button class="btn" type="button" data-del="${r.id}" aria-label="Delete report from ${esc(fmtDate(r.date))}">Delete</button>`}</div>`).join("")}
-      </div></div>`;
+          <div class="row">${confirmDel === r.id ? `<button class="btn" type="button" data-del-no>Keep</button><button class="btn danger" type="button" data-del-yes="${r.id}">Delete</button>` : `<button class="btn" type="button" data-sum="${r.id}">Summary</button><button class="btn" type="button" data-del="${r.id}" aria-label="Delete report from ${esc(fmtDate(r.date))}">Delete</button>`}</div></div>`).join("")}
+        <p class="note" style="padding:8px 0">Each report's summary shows it as it was on that date.</p></div></details>`;
   }
 
+  // detail panel that slides up from the bottom
+  const panel = document.createElement("div");
+  panel.className = "panelwrap"; panel.hidden = true;
+  panel.innerHTML = `<div class="backdrop" data-x="pclose"></div><div class="panel" role="dialog" aria-modal="true" aria-label="Result details"><div class="grab" aria-hidden="true"></div><button class="btn pclose" type="button" data-x="pclose">Close</button><div id="panelIn"></div></div>`;
+  document.body.appendChild(panel);
+  function openPanel(k) {
+    const reports = app.getState().reports || [], L = R.latest(reports), t = { ...L[k], key: k };
+    $("panelIn").innerHTML = window.ReportSummary.detailHTML(t, bar, trend, history, reports);
+    panel.hidden = false; document.body.style.overflow = "hidden";
+    panel.querySelector(".panel").scrollTop = 0; panel.querySelector(".pclose").focus();
+  }
+  function closePanel() { panel.hidden = true; document.body.style.overflow = ""; }
+  panel.addEventListener("click", e => { if (e.target.closest("[data-x='pclose']")) closePanel(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !panel.hidden) closePanel(); });
+
   $("hBody").addEventListener("click", e => {
-    const sum = e.target.closest("[data-sum]");
+    const x = e.target.closest("[data-x]"), sum = e.target.closest("[data-sum]");
+    if (x && x.dataset.x === "banner") { banner = null; render(); return; }
+    if (x && x.dataset.x === "prio") { showAllPrio = !showAllPrio; render(); return; }
+    if (x && x.dataset.x === "nt") { $("nextTest").scrollIntoView({ block: "start", behavior: "smooth" }); return; }
+    if (x && x.dataset.x === "plan") { app.show("plan"); return; }
     if (sum) { showSummary(sum.dataset.sum); return; }
     const m = e.target.closest("[data-m]"), del = e.target.closest("[data-del]"), yes = e.target.closest("[data-del-yes]"), no = e.target.closest("[data-del-no]");
-    if (e.target.closest(".mmore")) return;
     if (del) { confirmDel = del.dataset.del; render(); return; }
     if (no) { confirmDel = null; render(); return; }
-    if (yes) { const st = app.getState(); st.reports = st.reports.filter(r => r.id !== yes.dataset.delYes); confirmDel = null; app.save({ reports: true }); app.render(); app.toast("Report deleted"); return; }
-    if (m) { open = open === m.dataset.m ? null : m.dataset.m; render(); }
+    if (yes) { const st = app.getState(); st.reports = st.reports.filter(r => r.id !== yes.dataset.delYes); confirmDel = null; banner = null; app.save({ reports: true }); app.render(); app.toast("Report deleted"); return; }
+    if (m) openPanel(m.dataset.m);
   });
   $("hUpload").onclick = () => { $("hFile").value = ""; $("hFile").click(); };
   $("hFile").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) startUpload(f); });
