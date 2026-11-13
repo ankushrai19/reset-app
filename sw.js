@@ -1,4 +1,4 @@
-const CACHE = "reset-v2";
+const CACHE = "reset-v3";
 const FILES = ["./", "./index.html", "./sync.js", "./firebase.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-192-maskable.png", "./icon-512-maskable.png", "./icon-180.png"];
 
 self.addEventListener("install", e => {
