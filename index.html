@@ -64,6 +64,10 @@ button,input,textarea{font:inherit;color:inherit}
 .new{margin-left:6px;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:999px;background:var(--sky-soft);color:var(--sky);vertical-align:2px}
 .item.locked{cursor:default}
 .note{font-size:.85rem;color:var(--muted)}
+.sync{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:.8rem;color:var(--muted);background:none;border:0;padding:0;cursor:pointer}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--c2)}
+.sync.ok i{background:var(--done)}
+.acct{display:flex;flex-direction:column;gap:8px}
 .cheer{background:var(--done-soft);color:var(--done);border-radius:12px;padding:10px 12px;font-weight:650}
 
 /* progress */
@@ -114,6 +118,7 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
         <span class="pill" id="pill">Phase 1</span>
         <div class="daynum" id="daynum">Day 1</div>
         <div class="date" id="date"></div>
+        <button class="sync" id="syncChip" type="button"><i></i><span id="syncTxt">Saved on this phone</span></button>
       </div>
       <div class="ring" aria-hidden="true">
         <svg viewBox="0 0 76 76"><circle cx="38" cy="38" r="31" fill="none" stroke="var(--c0)" stroke-width="9"/><circle id="arc" cx="38" cy="38" r="31" fill="none" stroke="var(--done)" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 195" transform="rotate(-90 38 38)"/></svg>
@@ -180,10 +185,18 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
     </div>
     <div class="card view" style="gap:12px">
       <h2>Settings</h2>
+      <div class="acct" id="acct">
+        <h3>Backup and sync</h3>
+        <p class="note" id="acctMsg">Sign in with Google to back up your progress and use it on more than one device.</p>
+        <div class="row">
+          <button class="btn primary" id="signIn" type="button">Sign in with Google</button>
+          <button class="btn" id="signOut" type="button" hidden>Sign out</button>
+        </div>
+      </div>
       <label class="f" for="start">Start date<input type="date" id="start"></label>
       <div>
         <h3>Backup</h3>
-        <p class="note" style="margin:2px 0 8px">Your ticks are saved on this phone only. Copy a backup now and then, and paste it here to restore on a new phone.</p>
+        <p class="note" style="margin:2px 0 8px">A manual copy of your progress, for use without signing in. Copy it now and then, and paste it here to restore.</p>
         <textarea id="backup" aria-label="Backup text"></textarea>
         <div class="row" style="margin-top:8px">
           <button class="btn" id="copyBk" type="button">Copy backup</button>
@@ -200,6 +213,7 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
   <button role="tab" id="t-plan" aria-selected="false" data-v="plan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Plan</button>
 </nav>
 <div class="toast" id="toast" hidden></div>
+<script type="module" src="sync.js"></script>
 
 <script>
 const PHASES=[
@@ -256,13 +270,17 @@ const utc=s=>{const[y,m,d]=s.split("-").map(Number);return Date.UTC(y,m-1,d)};
 const diff=(a,b)=>Math.round((utc(b)-utc(a))/864e5);
 const mins=t=>{const[h,m]=t.split(":").map(Number);return h*60+m};
 const fmt=t=>{let[h,m]=t.split(":").map(Number);const ap=h>=12?"pm":"am";h=h%12||12;return h+(m?":"+pad(m):"")+" "+ap};
+document.addEventListener("click",e=>{if(e.target.closest("#syncChip"))window.resetApp.showSettings()});
 const DN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let TODAY=iso(new Date());
 
 let state=load(); let view=TODAY;
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.start&&s.days)return s}catch(e){}return{start:TODAY,days:{}}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Couldn't save. Is storage full?")}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Couldn't save. Is storage full?")}}
+function save(change){persist();if(typeof window.onResetChange==="function")window.onResetChange(change,state)}
+// used by sync.js
+window.resetApp={getState:()=>state,applyRemote(s){state={start:s.start,days:s.days};if(view<state.start)view=state.start;persist();render()},toast:m=>toast(m),showSettings:()=>{show("plan");document.getElementById("acct").scrollIntoView({block:"center"})}};
 
 const phaseOf=n=>PHASES.find(p=>n>=p.from&&n<=p.to)||(n<1?PHASES[0]:PHASES[3]);
 function habits(date){const n=diff(state.start,date)+1,p=phaseOf(n),wd=parse(date).getDay();
@@ -316,13 +334,13 @@ function render(){renderToday();renderProgress();renderPlan()}
 document.getElementById("list").addEventListener("click",e=>{const li=e.target.closest(".item");if(li)tick(li)});
 document.getElementById("list").addEventListener("keydown",e=>{if((e.key===" "||e.key==="Enter")&&e.target.classList.contains("item")){e.preventDefault();tick(e.target)}});
 function tick(li){if(view>TODAY)return;const id=li.dataset.id,s=new Set(state.days[view]||[]);s.has(id)?s.delete(id):s.add(id);
-  state.days[view]=[...s];save();render();if(navigator.vibrate)navigator.vibrate(12);
+  state.days[view]=[...s];save({day:view});render();if(navigator.vibrate)navigator.vibrate(12);
   const f=document.querySelector(`.item[data-id="${id}"]`);f&&f.focus({preventScroll:true})}
 document.getElementById("prev").onclick=()=>{view=add(view,-1);render()};
 document.getElementById("next").onclick=()=>{view=add(view,1);render()};
 document.getElementById("todayBtn").onclick=()=>{view=TODAY;render()};
 document.getElementById("grid").addEventListener("click",e=>{const b=e.target.closest(".cell");if(b){view=b.dataset.d;render();show("today")}});
-document.getElementById("start").addEventListener("change",e=>{if(e.target.value){state.start=e.target.value;if(view<state.start)view=state.start;save();render();toast("Start date updated")}});
+document.getElementById("start").addEventListener("change",e=>{if(e.target.value){state.start=e.target.value;if(view<state.start)view=state.start;save({start:true});render();toast("Start date updated")}});
 
 function show(v){["today","progress","plan"].forEach(x=>{document.getElementById("v-"+x).hidden=x!==v;document.getElementById("t-"+x).setAttribute("aria-selected",x===v)});
   if(v==="plan")document.getElementById("backup").value=JSON.stringify(state);window.scrollTo(0,0)}
@@ -331,7 +349,7 @@ document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dat
 document.getElementById("copyBk").onclick=async()=>{const t=document.getElementById("backup");t.value=JSON.stringify(state);
   try{await navigator.clipboard.writeText(t.value);toast("Backup copied")}catch(e){t.select();toast("Selected. Copy it manually.")}};
 document.getElementById("restoreBk").onclick=()=>{try{const s=JSON.parse(document.getElementById("backup").value);
-  if(!s.start||typeof s.days!=="object")throw 0;state={start:s.start,days:s.days};save();view=TODAY;render();toast("Restored")}catch(e){toast("That text isn't a valid backup")}};
+  if(!s.start||typeof s.days!=="object")throw 0;state={start:s.start,days:s.days};save({all:true});view=TODAY;render();toast("Restored")}catch(e){toast("That text isn't a valid backup")}};
 
 let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)}
 
