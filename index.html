@@ -379,7 +379,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
 
 <script>
 const PHASES=[
- {n:1,name:"Easy start",from:1,to:7,goal:"Six small habits. Just show up every day.",habits:[
+ {n:1,name:"Easy start",from:1,to:7,goal:"A few small habits. Just show up every day.",habits:[
   {id:"water",at:"7:00",t:"2 glasses of water after brushing",w:"Replaces the morning sugar craving."},
   {id:"meds",at:"9:00",t:"Supplements as prescribed",w:"Take vitamin D with a meal that has some fat."},
   {id:"sun",at:"12:30",min:10,t:"10 min of sun on bare arms",w:"Between 11 am and 1 pm."},
@@ -565,7 +565,28 @@ function renderProgress(){
 }
 function renderPlan(){
   const cur=phaseOf(diff(state.start,TODAY)+1).n,f=x=>parse(x).toLocaleDateString(undefined,{day:"numeric",month:"short"});
-  document.getElementById("phases").innerHTML=PHASES.map(p=>`<div class="card ph${p.n===cur?" cur":""}"><span class="eyebrow">Days ${p.from}–${p.to} · ${f(add(state.start,p.from-1))} – ${f(add(state.start,p.to-1))}${p.n===cur?" · now":""}</span><h3>Phase ${p.n}: ${p.name}</h3><p class="note">${p.goal}</p><ul>${p.habits.map(x=>`<li>${esc(x.t)}</li>`).join("")}</ul></div>`).join("");
+  const reps=state.reports||[], R=window.ResetRules, personal=!!(R&&reps.length);
+  const last=personal?[...reps].sort((a,b)=>a.date<b.date?1:-1)[0]:null;
+  let intro="";
+  if(personal){
+    const pl=R.plan(reps),L=pl.latest;
+    const allRemoved=new Map();PHASES.forEach(p=>R.phasePlan(p,reps).removed.forEach(h=>allRemoved.set(h.id,h)));
+    const adds=Object.values(pl.adds);
+    const focus=[...new Set(Object.values(pl.tags).map(t=>t.key))].map(k=>R.CATALOG[k].name);
+    intro=`<div class="card ph cur"><span class="eyebrow">Personalised from your report of ${parse(last.date).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}${reps.length>1?` and ${reps.length-1} earlier`:""}</span>
+      <h3>How your results shaped this plan</h3>
+      ${focus.length?`<p class="note"><b>Focus:</b> ${esc(focus.join(", "))}.</p>`:`<p class="note">All tracked results are in range, so this is a maintenance plan of core habits.</p>`}
+      ${adds.length?`<p class="note"><b>Added:</b> ${adds.map(a=>esc(a.t)+` (${esc(R.CATALOG[a.because].name)})`).join("; ")}.</p>`:""}
+      ${allRemoved.size?`<p class="note"><b>Left out:</b> ${[...allRemoved.values()].map(h=>`${esc(window.resetHabitName(h.id))} (your ${esc(R.removedReason(h.id,L))} ${R.removedReason(h.id,L).includes(",")?"are":"is"} in range)`).join("; ")}.</p>`:""}
+      <p class="note">Upload a new report and the plan updates by itself.</p></div>`;
+  }else{
+    intro=`<div class="card"><h3>This is the general plan</h3><p class="note">Upload a blood report on the Health tab and the plan adapts to your results: habits for problems you have get added and explained, and ones you don't need are left out.</p></div>`;
+  }
+  document.getElementById("phases").innerHTML=intro+PHASES.map(p=>{
+    const pp=personal?R.phasePlan(p,reps):{list:p.habits,removed:[]};
+    return `<div class="card ph${p.n===cur?" cur":""}"><span class="eyebrow">Days ${p.from}–${p.to} · ${f(add(state.start,p.from-1))} – ${f(add(state.start,p.to-1))}${p.n===cur?" · now":""}</span><h3>Phase ${p.n}: ${p.name}</h3><p class="note">${p.goal}</p>
+    <ul>${pp.list.map(x=>`<li>${esc(x.t)}${x.extra?` <span class="mk">added for ${esc(mkName(x.pk))}</span>`:x.pk?` <span class="mk">${esc(mkName(x.pk))}</span>`:""}${x.fromDay?` <span class="note">(from day ${x.fromDay})</span>`:""}${x.toDay?` <span class="note">(until day ${x.toDay})</span>`:""}</li>`).join("")}</ul>
+    ${pp.removed.length?`<p class="note">Not needed for you: ${pp.removed.map(h=>esc(window.resetHabitName(h.id))).join(", ")}</p>`:""}</div>`}).join("");
   document.getElementById("start").value=state.start;
 }
 function render(){renderToday();renderProgress();renderPlan();if(window.HealthUI)HealthUI.render()}
@@ -600,7 +621,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){const now
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="1.4 (13 Nov 2026)";
+const APP_VERSION="1.5 (13 Nov 2026)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});

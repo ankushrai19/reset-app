@@ -62,6 +62,19 @@
     creatinine: { high: { note: "Please see your doctor about kidney function." } }
   };
 
+  // Habits that only make sense when a matching result is out of range.
+  // A habit is removed only if at least one of its markers was tested and none is out of range.
+  // Habits not listed here (water, walk, sleep, protein, plate, strength, screens, weigh-in) are core: always kept.
+  const NEED = {
+    sun: ["vitd", "calcium", "phosphorus"],
+    meds: ["vitd", "b12", "calcium", "phosphorus", "iron", "hb", "ferritin"],
+    chai: ["hba1c", "glucose", "tg"],
+    millet: ["hba1c", "glucose", "tg"],
+    nuts: ["hdl", "ldl", "chol", "tg"],
+    nofried: ["ldl", "chol", "tg", "hdl", "alt", "hba1c", "crp"],
+    dinner: ["alt", "ggt", "tg", "hba1c", "glucose"]
+  };
+
   const norm = s => String(s || "").toLowerCase();
   function keyFor(name) {
     const n = norm(name);
@@ -111,10 +124,19 @@
     return { tags, adds, notes, latest: L };
   }
 
+  function isNeeded(id, L) {
+    const need = NEED[id];
+    if (!need) return true;
+    const tested = need.filter(k => L[k]);
+    if (!tested.length) return true;
+    return tested.some(k => L[k].status === "low" || L[k].status === "high");
+  }
+
   // Apply the plan to one day's habit list.
   function apply(list, dayN, wd, reports) {
     if (!reports || !reports.length) return list;
     const p = plan(reports);
+    list = list.filter(h => isNeeded(h.id, p.latest));
     const out = list.map(h => p.tags[h.id] ? { ...h, pw: p.tags[h.id].text, pk: p.tags[h.id].key } : h);
     const have = new Set(out.map(h => h.id));
     for (const x of Object.values(p.adds)) {
@@ -132,5 +154,23 @@
     return { habits: Object.keys(r.tags || {}), adds: (r.add || []).map(id => EXTRA[id]), note: r.note || null };
   }
 
-  window.ResetRules = { CATALOG, EXTRA, RULES, keyFor, status, latest, plan, apply, effects };
+  // A whole phase, personalised (all weekdays), plus what was removed and why.
+  function phasePlan(phase, reports) {
+    if (!reports || !reports.length) return { list: phase.habits, removed: [] };
+    const p = plan(reports), removed = [];
+    const kept = phase.habits.filter(h => { const ok = isNeeded(h.id, p.latest); if (!ok) removed.push(h); return ok; })
+      .map(h => p.tags[h.id] ? { ...h, pw: p.tags[h.id].text, pk: p.tags[h.id].key } : h);
+    const have = new Set(kept.map(h => h.id));
+    for (const x of Object.values(p.adds)) {
+      if (have.has(x.id) || x.from > phase.to || (x.to && x.to < phase.from)) continue;
+      kept.push({ ...x, pk: x.because, extra: true, fromDay: x.from > phase.from ? x.from : null, toDay: x.to && x.to < phase.to ? x.to : null });
+    }
+    return { list: kept, removed };
+  }
+  function removedReason(id, L) {
+    const tested = (NEED[id] || []).filter(k => L[k]);
+    return tested.map(k => CATALOG[k].name).join(", ");
+  }
+
+  window.ResetRules = { CATALOG, EXTRA, RULES, NEED, keyFor, status, latest, plan, apply, effects, phasePlan, removedReason };
 })();
