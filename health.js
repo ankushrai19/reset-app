@@ -153,7 +153,14 @@
     if (draft.sample) report.sample = true;
     const st = app.getState();
     st.reports = [...(st.reports || []), report];
-    app.save({ reports: true }); closeSheet(); app.render(); app.toast("Report saved. Your habits are updated.");
+    app.save({ reports: true }); app.render(); showSummary(report.id); app.toast("Report saved. Your habits are updated.");
+  }
+
+  function showSummary(id) {
+    const all = app.getState().reports || [], r = all.find(x => x.id === id);
+    if (!r || !window.ReportSummary) { closeSheet(); return; }
+    openSheet(window.ReportSummary.html(r, all, bar));
+    $("sheet").scrollTop = 0;
   }
 
   // ---------- Health tab ----------
@@ -228,6 +235,7 @@
     $("hSub").textContent = `Latest: ${fmtDate(last.date)}${last.lab ? " · " + last.lab : ""}`;
     const adds = Object.values(p.adds);
     $("hBody").innerHTML = `
+      <button class="btn primary" type="button" data-sum="${last.id}" style="align-self:flex-start">Read the summary of your latest report</button>
       <div class="hsum">
         <div class="stat"><b>${bad.length}</b><span>need attention</span></div>
         <div class="stat"><b>${good.length}</b><span>in range</span></div>
@@ -239,11 +247,14 @@
       ${good.length ? `<div class="sect"><span class="eyebrow">In range</span><div class="card oklist" style="padding:2px 14px">${good.map(k => `<button type="button" class="okrow" data-m="${k}" style="background:none;border:0;border-top:1px solid var(--line);font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%"><span>${esc(R.CATALOG[k].name)}</span><span>${L[k].value} ${esc(L[k].unit || R.CATALOG[k].unit)}</span></button>${open === k ? markerCard(k, L[k], reports) : ""}`).join("")}</div></div>` : ""}
       <div class="sect"><span class="eyebrow">Your reports</span><div class="card" style="padding:2px 14px">
         ${[...reports].sort((a, b) => a.date < b.date ? 1 : -1).map(r => `<div class="rep"><div><b>${esc(fmtDate(r.date))}</b>${r.sample ? '<span class="tag">sample</span>' : ""}<div class="note">${esc(r.lab || "Lab not named")} · ${r.tests.length} results</div></div>
+          ${confirmDel === r.id ? "" : `<button class="btn" type="button" data-sum="${r.id}">Summary</button>`}
           ${confirmDel === r.id ? `<div class="row"><button class="btn" type="button" data-del-no>Keep</button><button class="btn danger" type="button" data-del-yes="${r.id}">Delete</button></div>` : `<button class="btn" type="button" data-del="${r.id}" aria-label="Delete report from ${esc(fmtDate(r.date))}">Delete</button>`}</div>`).join("")}
       </div></div>`;
   }
 
   $("hBody").addEventListener("click", e => {
+    const sum = e.target.closest("[data-sum]");
+    if (sum) { showSummary(sum.dataset.sum); return; }
     const m = e.target.closest("[data-m]"), del = e.target.closest("[data-del]"), yes = e.target.closest("[data-del-yes]"), no = e.target.closest("[data-del-no]");
     if (e.target.closest(".mmore")) return;
     if (del) { confirmDel = del.dataset.del; render(); return; }
