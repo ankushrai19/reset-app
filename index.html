@@ -575,9 +575,11 @@ function save(change){persist();if(typeof window.onResetChange==="function")wind
 window.resetApp={getState:()=>state,applyRemote(s){state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[],steps:s.steps||{},walks:s.walks||[],profile:s.profile||{}};if(view<state.start)view=state.start;persist();render()},toast:m=>toast(m),save:c=>save(c),render:()=>render(),show:v=>show(v),setName(n){userName=n||"";renderToday()},showSettings:()=>{show("plan");document.getElementById("acct").scrollIntoView({block:"center"})}};
 
 const phaseOf=n=>PHASES.find(p=>n>=p.from&&n<=p.to)||(n<1?PHASES[0]:PHASES[3]);
+// A day uses the reports that were in the app on that day, so a new report never re-scores past days.
+const repsOn=date=>(state.reports||[]).filter(r=>(r.added||r.date)<=date);
 function habits(date){const n=diff(state.start,date)+1,p=phaseOf(n),wd=parse(date).getDay();
   let list=p.habits;
-  if(window.ResetRules)list=ResetRules.apply(list,n,wd,state.reports);
+  if(window.ResetRules)list=ResetRules.apply(list,n,wd,repsOn(date));
   list=list.filter(h=>!h.days||h.days.includes(wd));
   return{n,p,list:list.sort((a,b)=>mins(a.at)-mins(b.at))}}
 function score(date){const{list}=habits(date),d=new Set(state.days[date]||[]);return list.length?list.filter(h=>d.has(h.id)).length/list.length:0}
@@ -593,7 +595,9 @@ function itemHTML(h,done,isNew,locked,showWhy){const late=!done&&view===TODAY&&m
 const mkName=k=>({vitd:"Vitamin D",b12:"B12",hba1c:"Sugar",glucose:"Sugar",hdl:"HDL",tg:"Triglycerides",ldl:"LDL",chol:"Cholesterol",alt:"Liver",ggt:"Liver",ast:"Liver",calcium:"Calcium",phosphorus:"Calcium",hb:"Iron",iron:"Iron",ferritin:"Iron",uric:"Uric acid"})[k]||"Your report";
 function renderToday(){
   const{n,p,list}=habits(view),done=new Set(state.days[view]||[]),future=view>TODAY,isToday=view===TODAY;
-  const prevPhase=p.n>1?PHASES[p.n-2]:null, isNew=h=>prevPhase&&n-p.from<7&&!prevPhase.habits.some(o=>o.t===h.t);
+  const prevPhase=p.n>1?PHASES[p.n-2]:null;
+  const prevTexts=prevPhase?new Set((window.ResetRules?ResetRules.apply(prevPhase.habits,prevPhase.to,0,repsOn(view)):prevPhase.habits).map(o=>o.t)):null;
+  const isNew=h=>prevPhase&&n-p.from<7&&!prevTexts.has(h.t);
   const dateTxt=parse(view).toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
   document.getElementById("sub").textContent=`${dateTxt} · Phase ${p.n}, ${p.name}`+(MILE[n]?" · "+MILE[n]:"");
   document.getElementById("greet").textContent=isToday?greeting():(n<1?"Before your start":"Day "+n);
@@ -682,7 +686,7 @@ function startCounting(){const S=window.ResetSteps;if(!S||!timer||!COUNTS(timer.
   S.start(timer.steps||0,n=>{timer.steps=n;liveSteps();if(Date.now()-lastPersist>5000){lastPersist=Date.now();setTimer(timer)}}).then(ok=>{if(!ok){timer.noSensor=true;liveSteps();const w=document.getElementById("liveWarn");if(w){w.hidden=false;w.textContent="Motion access was not allowed, so steps can't be counted here. Allow it in Chrome's site settings, or enter your steps from your watch."}}});}
 function stopCounting(){const S=window.ResetSteps;if(!S||!timer||!COUNTS(timer.id))return null;
   const n=S.active?S.stop():(timer.steps||0);if(n>0){const pf=state.profile||{};
-    state.walks=[...(state.walks||[]),{id:"w"+Date.now().toString(36),date:TODAY,start:timer.start,end:Date.now(),steps:n,km:+S.km(n,pf).toFixed(2),kcal:S.kcal(n,pf)}];save({walks:true})}
+    state.walks=[...(state.walks||[]),{id:"w"+Date.now().toString(36),date:iso(new Date(timer.start)),start:timer.start,end:Date.now(),steps:n,km:+S.km(n,pf).toFixed(2),kcal:S.kcal(n,pf)}];save({walks:true})}
   return n}
 function tickClock(){clearInterval(clockInt);startCounting();const upd=()=>{if(!timer)return clearInterval(clockInt);
   const left=Math.max(0,timer.end-Date.now()),tot=timer.min*60000,el=document.getElementById("clock"),b=document.getElementById("clockBar");
@@ -691,8 +695,8 @@ function tickClock(){clearInterval(clockInt);startCounting();const upd=()=>{if(!
   liveSteps();
   if(left<=0)finishTimer()};upd();clockInt=setInterval(upd,1000)}
 function setTimer(t){timer=t;try{t?localStorage.setItem(TKEY,JSON.stringify(t)):localStorage.removeItem(TKEY)}catch(e){}}
-function finishTimer(){const id=timer.id,n=stopCounting();setTimer(null);clearInterval(clockInt);
-  if(view!==TODAY)view=TODAY;const s=new Set(state.days[TODAY]||[]);s.add(id);state.days[TODAY]=[...s];save({day:TODAY});
+function finishTimer(){const id=timer.id,d=iso(new Date(timer.start)),n=stopCounting();setTimer(null);clearInterval(clockInt);
+  if(view!==TODAY)view=TODAY;const s=new Set(state.days[d]||[]);s.add(id);state.days[d]=[...s];save({day:d});
   if(navigator.vibrate)navigator.vibrate([200,100,200]);toast(n?`Time's up: ${n.toLocaleString()} steps. Ticked off.`:"Time's up. Ticked off.");render()}
 document.getElementById("nextCard").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
   const act=b.dataset.act;
@@ -715,7 +719,8 @@ document.getElementById("stepsForm").addEventListener("submit",e=>{e.preventDefa
 function setWater(d){const w=Math.max(0,((state.water&&state.water[view])||0)+d);state.water={...(state.water||{}),[view]:w};save({water:view});renderToday();if(navigator.vibrate)navigator.vibrate(8)}
 document.getElementById("waterPlus").onclick=()=>setWater(1);
 document.getElementById("waterMinus").onclick=()=>setWater(-1);
-setInterval(()=>{if(view===TODAY&&!timer&&!document.hidden)renderToday()},60000);
+function rollDay(){const now=iso(new Date());if(now===TODAY)return false;if(view===TODAY)view=now;TODAY=now;render();return true}
+setInterval(()=>{if(document.hidden)return;if(!rollDay()&&view===TODAY&&!timer)renderToday()},60000);
 
 function renderProgress(){
   const sw=parse(state.start).getDay();
@@ -791,13 +796,13 @@ document.getElementById("restoreBk").onclick=()=>{try{const s=JSON.parse(documen
 let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)}
 
 // roll over to the new day if the app stays open past midnight
-document.addEventListener("visibilitychange",()=>{if(!document.hidden){const now=iso(new Date());if(now!==TODAY){if(view===TODAY)view=now;TODAY=now;render()}}});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)rollDay()});
 
 // install prompt + offline
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="2.1 (13 Nov 2026)";
+const APP_VERSION="2.2 (13 Nov 2026)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});

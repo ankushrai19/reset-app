@@ -3,7 +3,7 @@
 A habit app that turns a blood report into a 12-week daily routine that starts easy and builds up. Installable web app (PWA) for Android, hosted on GitHub Pages. Owner: Anki (GitHub `ankushrai19`).
 
 - Live: https://ankushrai19.github.io/reset-app/
-- Current version: 2.1 (13 Nov 2026), offline cache `reset-v14`
+- Current version: 2.2 (13 Nov 2026), offline cache `reset-v15`
 - Owner's phone: Android, Samsung Galaxy Watch
 
 ## How to work on this repo
@@ -16,11 +16,12 @@ A habit app that turns a blood report into a 12-week daily routine that starts e
 ## Checks to run before every release
 
 ```
+node tests/rules-check.js                         # report name matching, chai taper
 node tests/steps-check.js                         # step detection on simulated movement
 python3 -m http.server 8790 &                     # then:
-node tests/plan-sync-check.js                     # Plan and Today match on all 84 days, 7 result sets
+node tests/plan-sync-check.js                     # Plan and Today match, past days keep their plan, 8 result sets
 ```
-Both use made-up data and must print only PASS. Also take light and dark screenshots of anything you changed.
+All use made-up data and must print only PASS. Also take light and dark screenshots of anything you changed.
 
 ## Releasing (do all of these every time)
 
@@ -63,7 +64,7 @@ One object in `localStorage` (`reset84`) and, when signed in, one Firestore doc 
 { start: "YYYY-MM-DD",
   days:   { "YYYY-MM-DD": [habitIds ticked] },
   water:  { date: glasses },
-  reports:[{ id, date, lab, sample?, tests:[{ key, name, value, unit, low, high }] }],
+  reports:[{ id, date, added?, lab, sample?, tests:[{ key, name, value, unit, low, high }] }],
   steps:  { date: total from watch },          // a watch total wins over counted walks
   walks:  [{ id, date, start, end, steps, km, kcal }],
   profile:{ weight, height, age, sex } }
@@ -88,6 +89,8 @@ service cloud.firestore {
 
 Adding a new top-level key means: update load/applyRemote/restore in `index.html`, merge + write in `sync.js`, and tell the owner to update these rules.
 
+Sync: a phone with no unsent changes (`reset84insync` in localStorage = account id) takes the cloud copy as it is on start, so deletions and un-ticks made on another device stick; a phone with unsent changes merges both (union).
+
 Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Google sign-in, authorized domain `ankushrai19.github.io`. The web config in `sync.js` is public by design.
 
 ## Product rules (decided with the owner)
@@ -100,7 +103,11 @@ Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Googl
 - Extras added for problems: B12 food, No alcohol (days 1–21), Calcium at dinner (from day 8), Iron food (from day 8).
 - History per marker: `active` (out of range), `maintain` (first normal after out of range → lighter version: sun 3 days a week, "maintenance dose as prescribed", B12 food 3 days a week), `resolved` (normal on two tests in a row → removed), `never`.
 - Newest result per test wins; a later report that skips a test keeps the earlier value.
-- Plan and Today must always show the same habits for every day. There is a test for this (compare `habits(date)` with `ResetRules.phasePlan` filtered by weekday and extra day ranges, over all 84 days and several result sets). Run it after any rules change.
+- Past days keep the plan they had: a day uses only reports whose `added` date (save day; falls back to test `date` for older reports) is on or before it, so a new report never re-scores history or breaks a streak.
+- Plan and Today must show the same habits for today and every later day. There is a test for this (compare `habits(date)` with `ResetRules.phasePlan` filtered by weekday and extra day ranges, over all 84 days and several result sets, plus a report added mid-programme). Run it after any rules change.
+- After a new report the 12 weeks continue (no restart); the plan updates from that day on.
+- Chai with high sugar (HbA1c or fasting glucose out of range): half sugar days 1–3, a quarter days 4–6, none from day 7. Otherwise half in week 1, none from day 8.
+- Report name matching (`keyFor`) ignores look-alike tests (MCH/MCHC, non-HDL, VLDL, TIBC, ionised calcium, urine creatinine, 1,25-dihydroxy vitamin D, ratios such as AST/ALT). If a report lists a test twice, the first value counts. Add new names to `tests/rules-check.js`.
 
 **Retest intervals (checked against sources, Nov 2026)** are in `rules.js` → `RETEST` and `SRC`, shown with links in the app. Vitamin D ~3 months (AAFP/FPIN 2013), B12 2–3 months (GPnotebook), hs-CRP ~2 weeks (AHA/CDC), HbA1c prediabetes yearly (ADA), lipids ~3 months (ACC/AHA 2018), ALT 3–6 months (ACG 2017), Hb/iron ~4 weeks on iron (NHS), TSH 3 months to confirm (NICE NG145), kidney 3 months (KDIGO 2024). Diabetes-range HbA1c → "doctor sets the schedule". Always "or as your doctor advises".
 
@@ -125,6 +132,6 @@ Done: Stage 1 report upload in test mode, summaries, personalised plan, maintena
 Open (owner decides order):
 1. **Stage 2, real report reading:** a Firebase Cloud Function (Blaze plan is on) that sends the trimmed PDF text or photo to Claude and returns `{date, lab, tests:[{name, value, unit, low, high}]}`; the Anthropic API key goes in Firebase Secret Manager, never in the repo or chat. Then set `READER_MODE = "live"` in `health.js`. Owner still needs to add API credit.
 2. **Option B, Android app with Health Connect:** wrap the app with Capacitor + `@capgo/capacitor-health` to read steps, distance, active calories and heart rate (Galaxy Watch via Samsung Health). Exact steps for Start walk even with the screen off. Build the APK with GitHub Actions (this environment can't download the Android SDK). This replaces the PWABuilder route for the Play Store.
-3. Pending small decisions: chai sugar taper for high sugar (none by day 7 vs none from day 1); after a new report, continue or restart at day 1; past days show the plan of that time or the current plan.
+3. (Decided in 2.2, see Product rules: chai taper, continue after a new report, past days keep their plan.) Idea for later: when day 84 has passed, offer "Start a new 12 weeks".
 4. Public readiness: first-launch disclaimer, privacy policy page, Play Console health/data-safety declarations, 12 testers for 14 days.
 5. Roadmap (after the base app is final): doctor's prescriptions in the plan; repeat-test comparison report.

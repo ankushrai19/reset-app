@@ -1,4 +1,4 @@
-const CACHE = "reset-v14";
+const CACHE = "reset-v15";
 const FILES = ["./", "./index.html", "./sync.js", "./firebase.js", "./rules.js", "./steps.js", "./charts.js", "./summary.js", "./health.js", "./pdftext.js", "./vendor/pdf.min.mjs", "./vendor/pdf.worker.min.mjs", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-192-maskable.png", "./icon-512-maskable.png", "./icon-180.png"];
 
 self.addEventListener("install", e => {
@@ -13,7 +13,7 @@ self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (url.origin !== location.origin) return;
   if (e.request.mode === "navigate") {
-    e.respondWith(fetch(e.request, { cache: "no-cache" }).then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put("./index.html", copy)); return r; })
+    e.respondWith(fetch(e.request, { cache: "no-cache" }).then(r => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put("./index.html", copy)); } return r; })
       .catch(() => caches.match("./index.html")));
     return;
   }

@@ -13,16 +13,25 @@ const URL = process.env.URL || "http://localhost:8790/";
     onlyHighSugar: [["Vitamin D", 45, 30, 100], ["HbA1c", 6.3, null, 5.7]],
     allNormal: [["Vitamin D", 45, 30, 100], ["HbA1c", 5.2, null, 5.7], ["HDL", 55, 40, 60], ["LDL", 90, null, 100], ["Triglycerides", 120, null, 150], ["SGPT", 30, null, 45], ["B12", 400, 197, 771], ["Calcium", 9.5, 8.8, 10.6]],
     anaemia: [["Haemoglobin", 11.2, 13, 17], ["Ferritin", 12, 30, 400]],
-    history: "H"
+    history: "H",
+    addedMidway: "M"   // report added on day 21: days before it keep the general plan
   };
   let fail = 0;
   for (const [name, rows] of Object.entries(scen)) {
     const r = await p.evaluate(rows => {
       const R = ResetRules, mk = (id, date, rr) => ({ id, date, lab: "T", tests: rr.map(([n, v, lo, hi]) => ({ key: R.keyFor(n), name: n, value: v, low: lo, high: hi })) });
-      state.reports = rows === "H" ? [mk("a", "2026-08-20", [["Vitamin D", 5, 30, 100], ["B12", 180, 197, 771], ["SGPT", 60, null, 45]]), mk("b", "2026-11-09", [["Vitamin D", 34, 30, 100], ["B12", 420, 197, 771], ["SGPT", 38, null, 45], ["HbA1c", 5.9, null, 5.7]])] : rows ? [mk("t", "2026-11-09", rows)] : [];
-      let plan = 0, screen = 0;
+      const start0 = state.start;
+      if (rows === "M") state.start = add(TODAY, -20);
+      state.reports = rows === "M" ? [{ ...mk("m", add(TODAY, -40), [["Vitamin D", 45, 30, 100], ["HbA1c", 5.2, null, 5.7], ["Haemoglobin", 11, 13, 17]]), added: TODAY }] : rows === "H" ? [mk("a", "2026-08-20", [["Vitamin D", 5, 30, 100], ["B12", 180, 197, 771], ["SGPT", 60, null, 45]]), mk("b", "2026-11-09", [["Vitamin D", 34, 30, 100], ["B12", 420, 197, 771], ["SGPT", 38, null, 45], ["HbA1c", 5.9, null, 5.7]])] : rows ? [mk("t", "2026-11-09", rows)] : [];
+      let plan = 0, screen = 0, past = 0;
       for (let n = 1; n <= 84; n++) {
         const date = add(state.start, n - 1), wd = parse(date).getDay(), today = habits(date).list.map(h => h.id).sort();
+        if (rows === "M" && date < TODAY) {
+          // before the report was added: the general plan, unchanged
+          const gen = phaseOf(n).habits.filter(h => !h.days || h.days.includes(wd)).map(h => h.id).sort();
+          if (today.join() !== gen.join()) past++;
+          continue;
+        }
         const pp = R.phasePlan(phaseOf(n), state.reports);
         const pl = pp.list.filter(h => (!h.days || h.days.includes(wd)) && (!h.extra || (n >= h.from && (!h.to || n <= h.to)))).map(h => h.id).sort();
         if (today.join() !== pl.join()) plan++;
@@ -30,10 +39,10 @@ const URL = process.env.URL || "http://localhost:8790/";
         const shown = [...document.querySelectorAll('#nextCard:not([hidden]) [data-act="done"],#list .item,#doneList .item')].map(e => e.dataset.id).sort();
         if (shown.join() !== today.join()) screen++;
       }
-      view = TODAY; render(); return { plan, screen };
+      state.start = start0; view = TODAY; render(); return { plan, screen, past };
     }, rows);
-    const ok = !r.plan && !r.screen; if (!ok) fail++;
-    console.log((ok ? "PASS " : "FAIL ") + name.padEnd(14), "plan≠today days:", r.plan, "screen≠today days:", r.screen);
+    const ok = !r.plan && !r.screen && !r.past; if (!ok) fail++;
+    console.log((ok ? "PASS " : "FAIL ") + name.padEnd(14), "plan≠today days:", r.plan, "screen≠today days:", r.screen, "past days changed:", r.past);
   }
   console.log("page errors:", errs.length ? errs : "none"); await b.close(); process.exit(fail || errs.length ? 1 : 0);
 })();

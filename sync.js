@@ -27,6 +27,13 @@ catch (e) { db = initializeFirestore(fb, {}); }
 
 let user = null, ref = null, unsub = null, pending = 0;
 
+// "In step" = this phone has no changes the cloud is missing (stores the account id).
+// When in step, the cloud copy is taken as it is on the next start, so a report deleted or a tick
+// removed on another device stays gone. Only a phone with unsent changes merges both copies.
+const STEP = "reset84insync";
+const inStep = uid => { try { return localStorage.getItem(STEP) === uid; } catch (e) { return false; } };
+const setInStep = uid => { try { uid ? localStorage.setItem(STEP, uid) : localStorage.removeItem(STEP); } catch (e) {} };
+
 function status(text, ok) {
   $("syncTxt").textContent = text;
   $("syncChip").classList.toggle("ok", !!ok);
@@ -67,7 +74,7 @@ async function write(data, mergeIt) {
   try {
     await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: mergeIt });
     pending--;
-    if (!pending) status("Backed up", true);
+    if (!pending) { status("Backed up", true); if (user) setInStep(user.uid); }
   } catch (e) {
     pending--;
     status("Not backed up", false);
@@ -77,6 +84,7 @@ async function write(data, mergeIt) {
 
 // Called by the app after every local change.
 window.onResetChange = (change, state) => {
+  setInStep(null);
   if (!user) return;
   if (change && change.day) write({ days: { [change.day]: state.days[change.day] || [] } }, true);
   else if (change && change.reports) write({ reports: state.reports || [] }, true);
@@ -95,9 +103,10 @@ async function startSync(u) {
     const snap = await getDoc(ref);
     const local = app.getState();
     const cloud = snap.exists() ? { start: snap.data().start, days: snap.data().days || {}, water: snap.data().water || {}, reports: snap.data().reports || [], steps: snap.data().steps || {}, walks: snap.data().walks || [], profile: snap.data().profile || {} } : { start: local.start, days: {}, water: {}, reports: [], steps: {}, walks: [], profile: {} };
-    const merged = merge(local, cloud);
+    const merged = snap.exists() && inStep(u.uid) ? cloud : merge(local, cloud);
     if (!snap.exists() || !same(merged, cloud)) await write(merged, false);
     app.applyRemote(merged);
+    setInStep(u.uid);
     status("Backed up", true);
   } catch (e) {
     status("Not backed up", false);
@@ -109,6 +118,7 @@ async function startSync(u) {
     const d = snap.data();
     const next = { start: d.start, days: d.days || {}, water: d.water || {}, reports: d.reports || [], steps: d.steps || {}, walks: d.walks || [], profile: d.profile || {} };
     if (!same(next, app.getState())) app.applyRemote(next);
+    if (!pending) setInStep(user && user.uid);
     if (!pending) status(snap.metadata.fromCache ? "Saved offline, will sync" : "Backed up", !snap.metadata.fromCache);
   }, () => status("Not backed up", false));
 }

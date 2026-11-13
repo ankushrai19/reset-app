@@ -167,7 +167,7 @@
         return;
       }
     }
-    const report = { id: draft.id, date, lab, tests: draft.tests.filter(t => t.key).map(t => ({ key: t.key, name: t.name, value: num(t.value), unit: t.unit || R.CATALOG[t.key].unit, low: t.low ?? null, high: t.high ?? null })) };
+    const report = { id: draft.id, date, added: isoToday(), lab, tests: draft.tests.filter(t => t.key).map(t => ({ key: t.key, name: t.name, value: num(t.value), unit: t.unit || R.CATALOG[t.key].unit, low: t.low ?? null, high: t.high ?? null })) };
     if (draft.sample) report.sample = true;
     const st = app.getState(), before = [...(st.reports || [])];
     st.reports = [...before, report];
@@ -350,7 +350,7 @@
   $("hSample").onclick = () => {
     const st = app.getState();
     if ((st.reports || []).some(r => r.sample)) { st.reports = st.reports.filter(r => !r.sample); app.save({ reports: true }); app.render(); app.toast("Sample reports removed"); return; }
-    st.reports = [...(st.reports || []), { id: rid(), date: SAMPLE_A.date, lab: SAMPLE_A.lab, sample: true, tests: toTests(SAMPLE_A) }, { id: rid(), date: SAMPLE_B.date, lab: SAMPLE_B.lab, sample: true, tests: toTests(SAMPLE_B) }];
+    st.reports = [...(st.reports || []), { id: rid(), date: SAMPLE_A.date, added: isoToday(), lab: SAMPLE_A.lab, sample: true, tests: toTests(SAMPLE_A) }, { id: rid(), date: SAMPLE_B.date, added: isoToday(), lab: SAMPLE_B.lab, sample: true, tests: toTests(SAMPLE_B) }];
     app.save({ reports: true }); app.render(); app.toast("Two sample reports added");
   };
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("sheet").hidden) closeSheet(); });

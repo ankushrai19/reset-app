@@ -5,7 +5,7 @@
   const CATALOG = {
     vitd:      { name: "Vitamin D", unit: "ng/mL", low: 30, high: 100, dir: "low", aka: ["vitamin d", "25-oh", "25 oh", "25-hydroxy", "cholecalciferol"], about: "Helps you absorb calcium for strong bones, and supports muscles and immunity. Made by your skin in sunlight." },
     b12:       { name: "Vitamin B12", unit: "pg/mL", low: 197, high: 771, dir: "low", aka: ["b12", "b-12", "cobalamin"], about: "Keeps nerves and red blood cells healthy. Found only in animal foods: eggs, dairy, fish, meat." },
-    hba1c:     { name: "HbA1c", unit: "%", low: 4, high: 5.7, dir: "high", aka: ["hba1c", "glycated", "glycosylated"], about: "Your average blood sugar over the last 3 months. 5.7 to 6.4 is prediabetes; 6.5 and above is diabetes." },
+    hba1c:     { name: "HbA1c", unit: "%", low: 4, high: 5.7, dir: "high", aka: ["hba1c", "hb a1c", "a1c", "glycated", "glycosylated"], about: "Your average blood sugar over the last 3 months. 5.7 to 6.4 is prediabetes; 6.5 and above is diabetes." },
     glucose:   { name: "Fasting glucose", unit: "mg/dL", low: 70, high: 100, dir: "high", aka: ["fasting blood sugar", "fasting glucose", "glucose fasting", "fbs"], about: "Blood sugar after not eating overnight." },
     chol:      { name: "Total cholesterol", unit: "mg/dL", low: 0, high: 200, dir: "high", aka: ["total cholesterol", "cholesterol total", "cholesterol - total"], about: "All the cholesterol in your blood. The balance between HDL and LDL matters more than the total." },
     hdl:       { name: "HDL (good) cholesterol", unit: "mg/dL", low: 40, high: 60, dir: "low", aka: ["hdl"], about: "The clean-up cholesterol that carries fat away from arteries. Higher is better." },
@@ -75,14 +75,24 @@
     dinner: ["alt", "ggt", "tg", "hba1c", "glucose"]
   };
 
-  const norm = s => String(s || "").toLowerCase();
-  function keyFor(name) {
-    const n = norm(name);
-    // exact-ish matches first, so "hdl / ldl ratio" doesn't count as HDL
-    if (/\bratio\b/.test(n)) return null;
-    const hit = a => a.length <= 4 ? new RegExp("(^|[^a-z0-9])" + a.replace(/[-]/g, "\\-") + "([^a-z0-9]|$)").test(n) : n.includes(a);
+  // Lower-case, punctuation to spaces, so "Cholesterol, Total" and "Glucose - Fasting" match too.
+  const clean = s => String(s || "").toLowerCase().replace(/[^a-z0-9µ]+/g, " ").trim();
+  // Tests that share a word with a tracked marker but are different tests (different ranges).
+  const NOT_TRACKED = /\b(ratio|mch|mchc|mean corpuscular|corp|non hdl|vldl|tibc|uibc|binding|saturation|ioni[sz]ed|urine|urinary|clearance|dihydroxy|holo|microalbumin)\b/;
+  function match(n) {
+    const hit = a => { a = clean(a); return a.length <= 4 ? (" " + n + " ").includes(" " + a + " ") : n.includes(a); };
     for (const [k, c] of Object.entries(CATALOG)) if (c.aka.some(hit)) return k;
     return null;
+  }
+  function keyFor(name) {
+    const raw = String(name || ""), n = clean(raw);
+    if (!n || NOT_TRACKED.test(n)) return null;
+    // "SGPT/ALT" is one test; "AST/ALT" or "Microalbumin/Creatinine" compares two tests
+    if (raw.includes("/")) {
+      const ks = [...new Set(raw.split("/").map(x => match(clean(x))).filter(Boolean))];
+      if (ks.length > 1) return null;
+    }
+    return match(n);
   }
 
   // status of one test row: uses the lab's own range when present, else the catalog's
@@ -106,15 +116,17 @@
   function latest(reports) {
     const out = {};
     const sorted = [...(reports || [])].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-    for (const r of sorted) for (const t of r.tests || []) {
-      if (!t.key) continue;
+    for (const r of sorted) { const seen = new Set(); for (const t of r.tests || []) {
+      // one value per test per report: if a report lists a test twice, the first one counts
+      if (!t.key || seen.has(t.key)) continue;
+      seen.add(t.key);
       const prevT = out[t.key];
       const hist = prevT ? prevT.hist : [];
       const cur = { ...t, date: r.date, reportId: r.id, prev: prevT ? { value: prevT.value, date: prevT.date } : null };
       cur.status = status(cur);
       cur.hist = [...hist, { date: r.date, value: cur.value, status: cur.status }];
       out[t.key] = cur;
-    }
+    } }
     for (const t of Object.values(out)) {
       const h = t.hist, bad = x => x.status === "low" || x.status === "high";
       const lastBad = [...h].reverse().find(bad);
@@ -193,11 +205,18 @@
     return item;
   }
 
+  // With high sugar, week 1 tapers chai sugar to none by day 7 (everyone else: half in week 1, none from day 8).
+  const sugarHigh = L => ["hba1c", "glucose"].some(k => L[k] && L[k].phase === "active");
+  const TAPER = n => n <= 3 ? "Chai with half the usual sugar" : n <= 6 ? "Chai with a quarter of the usual sugar" : "Chai without sugar";
+  const TAPER_PLAN = "Chai sugar: half (days 1–3), a quarter (days 4–6), none from day 7";
+  const taperW = "Cutting down over a week is easier to stick with than stopping at once.";
+
   // Apply the plan to one day's habit list (call before filtering by weekday).
   function apply(list, dayN, wd, reports) {
     if (!reports || !reports.length) return list;
     const p = plan(reports);
-    const out = personalise(list, p);
+    let out = personalise(list, p);
+    if (dayN <= 7 && sugarHigh(p.latest)) out = out.map(h => h.id === "chai" ? { ...h, t: TAPER(Math.max(1, dayN)), w: taperW } : h);
     const have = new Set(out.map(h => h.id));
     for (const x of Object.values(p.adds)) {
       if (have.has(x.id) || dayN < x.from || (x.to && dayN > x.to)) continue;
@@ -217,7 +236,8 @@
   function phasePlan(phase, reports) {
     if (!reports || !reports.length) return { list: phase.habits, removed: [] };
     const p = plan(reports), removed = phase.habits.filter(h => !isNeeded(h.id, p.latest));
-    const kept = personalise(phase.habits, p);
+    let kept = personalise(phase.habits, p);
+    if (phase.from === 1 && sugarHigh(p.latest)) kept = kept.map(h => h.id === "chai" ? { ...h, t: TAPER_PLAN, w: taperW } : h);
     const have = new Set(kept.map(h => h.id));
     for (const x of Object.values(p.adds)) {
       if (have.has(x.id) || x.from > phase.to || (x.to && x.to < phase.from)) continue;
