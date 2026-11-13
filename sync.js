@@ -51,8 +51,12 @@ function merge(local, cloud) {
   for (const [d, n] of Object.entries(local.water || {})) water[d] = Math.max(water[d] || 0, n);
   const reports = [...(cloud.reports || [])];
   for (const r of local.reports || []) if (!reports.some(x => x.id === r.id)) reports.push(r);
+  const steps = { ...(cloud.steps || {}), ...(local.steps || {}) };
+  const walks = [...(cloud.walks || [])];
+  for (const w of local.walks || []) if (!walks.some(x => x.id === w.id)) walks.push(w);
+  const profile = { ...(cloud.profile || {}), ...(local.profile || {}) };
   const cloudHasData = Object.values(cloud.days || {}).some(a => a.length);
-  return { start: cloudHasData ? cloud.start : (local.start || cloud.start), days, water, reports };
+  return { start: cloudHasData ? cloud.start : (local.start || cloud.start), days, water, reports, steps, walks, profile };
 }
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -76,9 +80,12 @@ window.onResetChange = (change, state) => {
   if (!user) return;
   if (change && change.day) write({ days: { [change.day]: state.days[change.day] || [] } }, true);
   else if (change && change.reports) write({ reports: state.reports || [] }, true);
+  else if (change && change.steps) write({ steps: { [change.steps]: (state.steps || {})[change.steps] ?? null } }, true);
+  else if (change && change.walks) write({ walks: state.walks || [] }, true);
+  else if (change && change.profile) write({ profile: state.profile || {} }, true);
   else if (change && change.water) write({ water: { [change.water]: (state.water || {})[change.water] || 0 } }, true);
   else if (change && change.start) write({ start: state.start }, true);
-  else write({ start: state.start, days: state.days, water: state.water || {}, reports: state.reports || [] }, false);
+  else write({ start: state.start, days: state.days, water: state.water || {}, reports: state.reports || [], steps: state.steps || {}, walks: state.walks || [], profile: state.profile || {} }, false);
 };
 
 async function startSync(u) {
@@ -87,7 +94,7 @@ async function startSync(u) {
   try {
     const snap = await getDoc(ref);
     const local = app.getState();
-    const cloud = snap.exists() ? { start: snap.data().start, days: snap.data().days || {}, water: snap.data().water || {}, reports: snap.data().reports || [] } : { start: local.start, days: {}, water: {}, reports: [] };
+    const cloud = snap.exists() ? { start: snap.data().start, days: snap.data().days || {}, water: snap.data().water || {}, reports: snap.data().reports || [], steps: snap.data().steps || {}, walks: snap.data().walks || [], profile: snap.data().profile || {} } : { start: local.start, days: {}, water: {}, reports: [], steps: {}, walks: [], profile: {} };
     const merged = merge(local, cloud);
     if (!snap.exists() || !same(merged, cloud)) await write(merged, false);
     app.applyRemote(merged);
@@ -100,7 +107,7 @@ async function startSync(u) {
   unsub = onSnapshot(ref, snap => {
     if (!snap.exists() || snap.metadata.hasPendingWrites) return;
     const d = snap.data();
-    const next = { start: d.start, days: d.days || {}, water: d.water || {}, reports: d.reports || [] };
+    const next = { start: d.start, days: d.days || {}, water: d.water || {}, reports: d.reports || [], steps: d.steps || {}, walks: d.walks || [], profile: d.profile || {} };
     if (!same(next, app.getState())) app.applyRemote(next);
     if (!pending) status(snap.metadata.fromCache ? "Saved offline, will sync" : "Backed up", !snap.metadata.fromCache);
   }, () => status("Not backed up", false));

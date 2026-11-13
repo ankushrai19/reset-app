@@ -219,6 +219,15 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 .seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .ctip{position:fixed;z-index:30;background:var(--ink);color:var(--paper);font-size:.82rem;padding:6px 10px;border-radius:8px;pointer-events:none;max-width:260px}
 .ntrow a,.nexttest a{color:var(--sky)}
+.stepst{grid-column:1/-1}
+.pbar{height:8px;border-radius:4px;background:var(--c0);overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--ch1);border-radius:4px}
+.next .live{font-size:1.1rem;color:#fffdf9}
+.next .live b{font-size:1.6rem}
+.next .livenote{font-size:.8rem;color:var(--bar-ink)}
+.next .livewarn{font-size:.85rem;color:var(--bar-on)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+select{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 10px;width:100%}
 .mk.lite{background:var(--done-soft);color:var(--done);margin-left:4px}
 .retest{display:flex;flex-direction:column;gap:3px;text-align:left;background:var(--sky-soft);color:var(--ink);border:1px solid var(--sky);border-radius:16px;padding:12px 14px;cursor:pointer;font:inherit}
 .retest .eyebrow{color:var(--sky)}
@@ -350,6 +359,13 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
     <div class="card" id="doneWrap" style="padding:2px 16px" hidden><ul class="list tight" id="doneList"></ul></div>
     <div id="cheer" class="cheer" hidden></div>
     <div class="tiles">
+      <div class="tile stepst">
+        <div class="row" style="justify-content:space-between"><span class="k">Steps today</span><button class="linkbtn" type="button" id="stepsEdit">Enter total from watch</button></div>
+        <span class="v"><span id="stepsN">0</span> <small>/ <span id="stepsGoal">5,000</span> goal</small></span>
+        <div class="pbar" aria-hidden="true"><i id="stepsBar"></i></div>
+        <span class="note" id="stepsMeta"></span>
+        <form class="row" id="stepsForm" hidden><label class="sr" for="stepsInput">Today's steps from your watch</label><input type="number" inputmode="numeric" min="0" max="100000" id="stepsInput" placeholder="e.g. 7420" style="flex:1;min-width:0"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" id="stepsCancel">Cancel</button></form>
+      </div>
       <div class="tile">
         <span class="k">Water today</span>
         <span class="v"><span id="waterN">0</span> <small>/ <span id="waterGoal">8</span> glasses</small></span>
@@ -444,6 +460,16 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
           <button class="btn" id="signOut" type="button" hidden>Sign out</button>
         </div>
       </div>
+      <div class="acct">
+        <h3>Your profile</h3>
+        <p class="note">Used only to estimate distance and calories from steps. Saved with your progress.</p>
+        <div class="fields">
+          <label class="f" for="pfWeight">Weight (kg)<input type="number" inputmode="decimal" id="pfWeight" min="25" max="250" step="0.1"></label>
+          <label class="f" for="pfHeight">Height (cm)<input type="number" inputmode="numeric" id="pfHeight" min="100" max="230"></label>
+          <label class="f" for="pfAge">Age<input type="number" inputmode="numeric" id="pfAge" min="13" max="100"></label>
+          <label class="f" for="pfSex">Sex<select id="pfSex"><option value="">Choose</option><option value="m">Male</option><option value="f">Female</option></select></label>
+        </div>
+      </div>
       <p class="note" id="appVer"></p>
       <label class="f" for="start">Start date<input type="date" id="start"></label>
       <div>
@@ -470,17 +496,18 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
 <div class="toast" id="toast" hidden></div>
 <script type="module" src="sync.js"></script>
 <script src="rules.js"></script>
+<script src="steps.js"></script>
 
 <script>
 const PHASES=[
- {n:1,name:"Easy start",from:1,to:7,goal:"A few small habits. Just show up every day.",habits:[
+ {n:1,name:"Easy start",from:1,to:7,steps:5000,goal:"A few small habits. Just show up every day.",habits:[
   {id:"water",at:"7:00",t:"2 glasses of water after brushing",w:"Replaces the morning sugar craving."},
   {id:"meds",at:"9:00",t:"Supplements as prescribed",w:"Take vitamin D with a meal that has some fat."},
   {id:"sun",at:"12:30",min:10,t:"10 min of sun on bare arms",w:"Between 11 am and 1 pm."},
   {id:"walk",at:"13:45",min:10,t:"10-min walk after lunch",w:"Blunts the after-meal sugar spike."},
   {id:"chai",at:"16:30",t:"Chai with half the usual sugar",w:"First step toward no added sugar."},
   {id:"sleep",at:"23:30",t:"Lights out by 11:30 pm",w:""}]},
- {n:2,name:"Build",from:8,to:21,goal:"Longer walks and sun, protein at breakfast, no sugar in chai.",habits:[
+ {n:2,name:"Build",from:8,to:21,steps:6500,goal:"Longer walks and sun, protein at breakfast, no sugar in chai.",habits:[
   {id:"water",at:"7:00",t:"2 glasses on waking, 2.5 L in the day",w:"Finish a 1 L desk bottle twice."},
   {id:"protein",at:"8:15",t:"Protein at breakfast",w:"Eggs, paneer, curd, besan chilla or sprouts."},
   {id:"meds",at:"9:00",t:"Supplements as prescribed",w:""},
@@ -490,7 +517,7 @@ const PHASES=[
   {id:"nuts",at:"17:00",t:"Small handful of almonds or walnuts",w:"Instead of biscuits."},
   {id:"dinner",at:"20:30",t:"Dinner finished by 8:30 pm",w:""},
   {id:"sleep",at:"23:00",t:"Lights out by 11 pm",w:""}]},
- {n:3,name:"Strengthen",from:22,to:42,goal:"Brisk walking, two short strength sessions, a better plate.",habits:[
+ {n:3,name:"Strengthen",from:22,to:42,steps:8000,goal:"Brisk walking, two short strength sessions, a better plate.",habits:[
   {id:"water",at:"7:00",t:"2 glasses on waking, 2.5–3 L in the day",w:""},
   {id:"walk",at:"7:15",min:30,t:"30-min brisk walk",w:"You can talk but not sing.",days:[1,2,3,4,5,6]},
   {id:"strength",at:"7:15",min:15,t:"15-min strength: squats, wall push-ups, plank",w:"Tuesdays and Fridays.",days:[2,5]},
@@ -502,7 +529,7 @@ const PHASES=[
   {id:"dinner",at:"20:30",t:"Dinner by 8:30 pm, no alcohol",w:""},
   {id:"screens",at:"22:30",t:"Screens off 30 min before bed",w:""},
   {id:"sleep",at:"23:00",t:"7 hours of sleep",w:""}]},
- {n:4,name:"Lifestyle",from:43,to:84,goal:"The full routine. Keep it steady to the day-84 blood test.",habits:[
+ {n:4,name:"Lifestyle",from:43,to:84,steps:9000,goal:"The full routine. Keep it steady to the day-84 blood test.",habits:[
   {id:"water",at:"7:00",t:"2 glasses on waking, 2.5–3 L in the day",w:""},
   {id:"walk",at:"7:15",min:40,t:"40–45 min brisk walk",w:"Sunday optional.",days:[1,2,3,4,5,6]},
   {id:"strength",at:"7:15",min:20,t:"20–30 min strength training",w:"Mon, Wed, Fri.",days:[1,3,5]},
@@ -541,11 +568,11 @@ const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&qu
 let TODAY=iso(new Date());
 
 let state=load(); let view=TODAY; let userName=""; let showDone=false;
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.start&&s.days)return{start:s.start,days:s.days,water:s.water||{},reports:s.reports||[]}}catch(e){}return{start:TODAY,days:{},water:{},reports:[]}}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.start&&s.days)return{start:s.start,days:s.days,water:s.water||{},reports:s.reports||[],steps:s.steps||{},walks:s.walks||[],profile:s.profile||{}}}catch(e){}return{start:TODAY,days:{},water:{},reports:[],steps:{},walks:[],profile:{}}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Couldn't save. Is storage full?")}}
 function save(change){persist();if(typeof window.onResetChange==="function")window.onResetChange(change,state)}
 // used by sync.js
-window.resetApp={getState:()=>state,applyRemote(s){state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[]};if(view<state.start)view=state.start;persist();render()},toast:m=>toast(m),save:c=>save(c),render:()=>render(),show:v=>show(v),setName(n){userName=n||"";renderToday()},showSettings:()=>{show("plan");document.getElementById("acct").scrollIntoView({block:"center"})}};
+window.resetApp={getState:()=>state,applyRemote(s){state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[],steps:s.steps||{},walks:s.walks||[],profile:s.profile||{}};if(view<state.start)view=state.start;persist();render()},toast:m=>toast(m),save:c=>save(c),render:()=>render(),show:v=>show(v),setName(n){userName=n||"";renderToday()},showSettings:()=>{show("plan");document.getElementById("acct").scrollIntoView({block:"center"})}};
 
 const phaseOf=n=>PHASES.find(p=>n>=p.from&&n<=p.to)||(n<1?PHASES[0]:PHASES[3]);
 function habits(date){const n=diff(state.start,date)+1,p=phaseOf(n),wd=parse(date).getDay();
@@ -587,8 +614,8 @@ function renderToday(){
   else if(nx){const running=timer&&timer.id===nx.id;
     card.innerHTML=`<div class="lbl"><span>Next up · ${fmt(nx.at)}</span><span>${running?"timer running":rel(nx.at)}</span></div>
       <div style="display:flex;flex-direction:column;gap:6px"><h2>${esc(nx.t)}</h2>${nx.pw?`<div class="pw"><b>Your report</b><span>${esc(nx.pw)}</span></div>`:nx.w?`<p>${esc(nx.w)}</p>`:""}</div>
-      ${running?`<div class="clock" id="clock">--:--</div><div class="bar"><i id="clockBar"></i></div>`:""}
-      <div class="acts">${nx.min?(running?`<button class="go" type="button" data-act="stop">Stop timer</button>`:`<button class="go" type="button" data-act="start" data-min="${nx.min}">Start ${nx.min}:00 timer</button>`):""}
+      ${running?`<div class="clock" id="clock">--:--</div><div class="bar"><i id="clockBar"></i></div>${COUNTS(nx.id)?`<div class="live" id="liveSteps"><b>0</b> steps</div><p class="livenote">Counting with your phone's motion sensor. Keep the app open; the screen stays on while you walk.</p><p class="livewarn" id="liveWarn" hidden>No movement detected yet. Hold the phone or keep it in a pocket with the screen on.</p>`:""}`:""}
+      <div class="acts">${nx.min?(running?`<button class="go" type="button" data-act="stop">Stop timer</button>`:`<button class="go" type="button" data-act="start" data-min="${nx.min}">${COUNTS(nx.id)?"Start walk":"Start "+nx.min+":00 timer"}</button>`):""}
       <button class="${nx.min?"ok":"go"}" type="button" data-act="done" data-id="${nx.id}">${nx.min?"Done":"Mark done"}</button></div>`;
     if(running)tickClock()}
 
@@ -616,6 +643,15 @@ function renderToday(){
   if(soon){const names=(rt.routine?["Yearly check-up"]:rt.together.map(i=>R2.CATALOG[i.key].name.replace(/ \(.*\)/,"")));const dd=diff(TODAY,rt.due);
     rc.innerHTML=`<span class="eyebrow">${dd<0?"Blood test overdue":dd===0?"Blood test due today":"Blood test due in "+dd+" day"+(dd>1?"s":"")}</span><b>${esc(names.join(", "))}</b><span class="note">${dd<0?"Was due "+fmtShort(rt.due)+". ":"Around "+fmtShort(rt.due)+". "}Tap to see why and when.</span>`}
 
+  // steps
+  const ds=daySteps(view),goal=p.steps||5000,pf=state.profile||{},S=window.ResetSteps;
+  document.getElementById("stepsN").textContent=ds.n.toLocaleString();
+  document.getElementById("stepsGoal").textContent=goal.toLocaleString();
+  document.getElementById("stepsBar").style.width=Math.min(100,ds.n/goal*100)+"%";
+  const kc=S?S.kcal(ds.n,pf):null;
+  document.getElementById("stepsMeta").textContent=ds.n?`${S?S.km(ds.n,pf).toFixed(1):"?"} km${kc!=null?` · about ${kc} kcal burned walking (estimate)`:" · add your weight in Settings for calories"} · ${ds.src==="watch"?"from your watch total":"from walks counted by the app"}`:(future?"":"Tap Start walk on a walking habit to count steps, or enter today's total from your watch.");
+  document.getElementById("stepsEdit").hidden=future;
+
   // tiles
   const w=(state.water&&state.water[view])||0;
   document.getElementById("waterN").textContent=w;
@@ -636,24 +672,46 @@ function streakNow(){const last=Math.min(diff(state.start,TODAY),TOTAL-1);let s=
 
 // timers
 let clockInt=null;
-function tickClock(){clearInterval(clockInt);const upd=()=>{if(!timer)return clearInterval(clockInt);
+const COUNTS=id=>id==="walk";   // habits whose timer counts steps
+let lastPersist=0;
+function liveSteps(){const n=timer&&timer.steps||0,pf=state.profile||{},S=window.ResetSteps;
+  const el=document.getElementById("liveSteps");if(!el||!S)return;
+  const k=S.kcal(n,pf);el.innerHTML=`<b>${n.toLocaleString()}</b> steps · ${S.km(n,pf).toFixed(2)} km${k!=null?` · ~${k} kcal`:""}`;
+  const w=document.getElementById("liveWarn");if(w)w.hidden=S.sensorSeen||!S.active||Date.now()-timer.start<5000;}
+function startCounting(){const S=window.ResetSteps;if(!S||!timer||!COUNTS(timer.id)||S.active)return;
+  S.start(timer.steps||0,n=>{timer.steps=n;liveSteps();if(Date.now()-lastPersist>5000){lastPersist=Date.now();setTimer(timer)}}).then(ok=>{if(!ok){timer.noSensor=true;liveSteps();const w=document.getElementById("liveWarn");if(w){w.hidden=false;w.textContent="Motion access was not allowed, so steps can't be counted here. Allow it in Chrome's site settings, or enter your steps from your watch."}}});}
+function stopCounting(){const S=window.ResetSteps;if(!S||!timer||!COUNTS(timer.id))return null;
+  const n=S.active?S.stop():(timer.steps||0);if(n>0){const pf=state.profile||{};
+    state.walks=[...(state.walks||[]),{id:"w"+Date.now().toString(36),date:TODAY,start:timer.start,end:Date.now(),steps:n,km:+S.km(n,pf).toFixed(2),kcal:S.kcal(n,pf)}];save({walks:true})}
+  return n}
+function tickClock(){clearInterval(clockInt);startCounting();const upd=()=>{if(!timer)return clearInterval(clockInt);
   const left=Math.max(0,timer.end-Date.now()),tot=timer.min*60000,el=document.getElementById("clock"),b=document.getElementById("clockBar");
   if(el)el.textContent=pad(Math.floor(left/60000))+":"+pad(Math.floor(left/1000)%60);
   if(b)b.style.width=(100-left/tot*100)+"%";
+  liveSteps();
   if(left<=0)finishTimer()};upd();clockInt=setInterval(upd,1000)}
 function setTimer(t){timer=t;try{t?localStorage.setItem(TKEY,JSON.stringify(t)):localStorage.removeItem(TKEY)}catch(e){}}
-function finishTimer(){const id=timer.id;setTimer(null);clearInterval(clockInt);
+function finishTimer(){const id=timer.id,n=stopCounting();setTimer(null);clearInterval(clockInt);
   if(view!==TODAY)view=TODAY;const s=new Set(state.days[TODAY]||[]);s.add(id);state.days[TODAY]=[...s];save({day:TODAY});
-  if(navigator.vibrate)navigator.vibrate([200,100,200]);toast("Time's up. Ticked off.");render()}
+  if(navigator.vibrate)navigator.vibrate([200,100,200]);toast(n?`Time's up: ${n.toLocaleString()} steps. Ticked off.`:"Time's up. Ticked off.");render()}
 document.getElementById("nextCard").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
   const act=b.dataset.act;
-  if(act==="start"){const hid=document.querySelector('#nextCard [data-act="done"]').dataset.id;setTimer({id:hid,min:+b.dataset.min,end:Date.now()+b.dataset.min*60000});renderToday()}
-  else if(act==="stop"){setTimer(null);clearInterval(clockInt);renderToday()}
-  else if(act==="done"){if(timer&&timer.id===b.dataset.id){setTimer(null);clearInterval(clockInt)}
-    const s=new Set(state.days[TODAY]||[]);s.add(b.dataset.id);state.days[TODAY]=[...s];save({day:TODAY});if(navigator.vibrate)navigator.vibrate(12);render()}});
+  if(act==="start"){const hid=document.querySelector('#nextCard [data-act="done"]').dataset.id;setTimer({id:hid,min:+b.dataset.min,start:Date.now(),end:Date.now()+b.dataset.min*60000,steps:0});renderToday()}
+  else if(act==="stop"){const n=stopCounting();setTimer(null);clearInterval(clockInt);renderToday();if(n)toast(`${n.toLocaleString()} steps saved to today`)}
+  else if(act==="done"){let n=null;if(timer&&timer.id===b.dataset.id){n=stopCounting();setTimer(null);clearInterval(clockInt)}
+    const s=new Set(state.days[TODAY]||[]);s.add(b.dataset.id);state.days[TODAY]=[...s];save({day:TODAY});if(navigator.vibrate)navigator.vibrate(12);render();if(n)toast(`${n.toLocaleString()} steps saved to today`)}});
 document.getElementById("retestCard").onclick=()=>{show("health");const el=document.getElementById("nextTest");if(el)el.scrollIntoView({block:"start"})};
 document.getElementById("toTrends").onclick=()=>show("trends");
 document.getElementById("doneBar").onclick=()=>{showDone=!showDone;renderToday()};
+// daily steps: a total entered from the watch wins; otherwise the sum of walks counted by the app
+function daySteps(d){const man=state.steps&&state.steps[d];const walked=(state.walks||[]).filter(w=>w.date===d).reduce((a,w)=>a+w.steps,0);
+  return man!=null?{n:man,src:"watch",walked}:{n:walked,src:"walks",walked}}
+window.resetDaySteps=daySteps;
+document.getElementById("stepsEdit").onclick=()=>{const f=document.getElementById("stepsForm");f.hidden=!f.hidden;if(!f.hidden){const i=document.getElementById("stepsInput");i.value=(state.steps&&state.steps[view])??"";i.focus()}};
+document.getElementById("stepsCancel").onclick=()=>{document.getElementById("stepsForm").hidden=true};
+document.getElementById("stepsForm").addEventListener("submit",e=>{e.preventDefault();const v=document.getElementById("stepsInput").value.trim();const st={...(state.steps||{})};
+  if(v===""){delete st[view]}else{const n=Math.round(Number(v));if(!(n>=0&&n<=100000)){toast("Enter a number of steps, for example 7420");return}st[view]=n}
+  state.steps=st;save({steps:view});document.getElementById("stepsForm").hidden=true;renderToday();toast(v===""?"Watch total removed":"Steps saved")});
 function setWater(d){const w=Math.max(0,((state.water&&state.water[view])||0)+d);state.water={...(state.water||{}),[view]:w};save({water:view});renderToday();if(navigator.vibrate)navigator.vibrate(8)}
 document.getElementById("waterPlus").onclick=()=>setWater(1);
 document.getElementById("waterMinus").onclick=()=>setWater(-1);
@@ -700,10 +758,11 @@ function renderPlan(){
   }
   document.getElementById("phases").innerHTML=intro+PHASES.map(p=>{
     const pp=personal?R.phasePlan(p,reps):{list:p.habits,removed:[]};
-    return `<div class="card ph${p.n===cur?" cur":""}"><span class="eyebrow">Days ${p.from}–${p.to} · ${f(add(state.start,p.from-1))} – ${f(add(state.start,p.to-1))}${p.n===cur?" · now":""}</span><h3>Phase ${p.n}: ${p.name}</h3><p class="note">${p.goal}</p>
+    return `<div class="card ph${p.n===cur?" cur":""}"><span class="eyebrow">Days ${p.from}–${p.to} · ${f(add(state.start,p.from-1))} – ${f(add(state.start,p.to-1))}${p.n===cur?" · now":""}</span><h3>Phase ${p.n}: ${p.name}</h3><p class="note">${p.goal} <b>Daily step goal: ${p.steps.toLocaleString()}.</b></p>
     <ul>${pp.list.map(x=>`<li>${esc(x.t)}${x.extra?` <span class="mk">added for ${esc(mkName(x.pk))}</span>`:x.pk?` <span class="mk">${esc(mkName(x.pk))}</span>`:""}${x.maint?` <span class="mk lite">${x.lite?"lighter for now":"until confirmed"}</span>`:""}${x.days?` <span class="note">(${x.days.length===6?"not Sunday":x.days.map(d=>DN[d]).join(", ")})</span>`:""}${x.fromDay?` <span class="note">(from day ${x.fromDay})</span>`:""}${x.toDay?` <span class="note">(until day ${x.toDay})</span>`:""}</li>`).join("")}</ul>
     ${pp.removed.length?`<p class="note">Not needed for you: ${pp.removed.map(h=>esc(window.resetHabitName(h.id))).join(", ")}</p>`:""}</div>`}).join("");
   document.getElementById("start").value=state.start;
+  const pf=state.profile||{};[["pfWeight","weight"],["pfHeight","height"],["pfAge","age"],["pfSex","sex"]].forEach(([id,k])=>{const el=document.getElementById(id);if(document.activeElement!==el)el.value=pf[k]??""});
 }
 function render(){MILE=computeMile();renderToday();renderProgress();if(window.ResetCharts)ResetCharts.render();renderPlan();if(window.HealthUI)HealthUI.render()}
 
@@ -717,6 +776,7 @@ document.getElementById("prev").onclick=()=>{view=add(view,-1);render()};
 document.getElementById("next").onclick=()=>{view=add(view,1);render()};
 document.getElementById("todayBtn").onclick=()=>{view=TODAY;render()};
 document.getElementById("grid").addEventListener("click",e=>{const b=e.target.closest(".cell");if(b){view=b.dataset.d;render();show("today")}});
+[["pfWeight","weight"],["pfHeight","height"],["pfAge","age"],["pfSex","sex"]].forEach(([id,k])=>document.getElementById(id).addEventListener("change",e=>{const v=e.target.value;state.profile={...(state.profile||{}),[k]:k==="sex"?v:(v===""?"":Number(v))};save({profile:true});renderToday();toast("Profile saved")}));
 document.getElementById("start").addEventListener("change",e=>{if(e.target.value){state.start=e.target.value;if(view<state.start)view=state.start;save({start:true});render();toast("Start date updated")}});
 
 function show(v){["today","health","progress","trends","plan"].forEach(x=>{document.getElementById("v-"+x).hidden=x!==v;document.getElementById("t-"+x).setAttribute("aria-selected",x===v)});
@@ -726,7 +786,7 @@ document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dat
 document.getElementById("copyBk").onclick=async()=>{const t=document.getElementById("backup");t.value=JSON.stringify(state);
   try{await navigator.clipboard.writeText(t.value);toast("Backup copied")}catch(e){t.select();toast("Selected. Copy it manually.")}};
 document.getElementById("restoreBk").onclick=()=>{try{const s=JSON.parse(document.getElementById("backup").value);
-  if(!s.start||typeof s.days!=="object")throw 0;state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[]};save({all:true});view=TODAY;render();toast("Restored")}catch(e){toast("That text isn't a valid backup")}};
+  if(!s.start||typeof s.days!=="object")throw 0;state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[],steps:s.steps||{},walks:s.walks||[],profile:s.profile||{}};save({all:true});view=TODAY;render();toast("Restored")}catch(e){toast("That text isn't a valid backup")}};
 
 let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)}
 
@@ -737,7 +797,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){const now
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="2.0 (13 Nov 2026)";
+const APP_VERSION="2.1 (13 Nov 2026)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});

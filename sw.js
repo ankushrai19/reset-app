@@ -1,5 +1,5 @@
-const CACHE = "reset-v13";
-const FILES = ["./", "./index.html", "./sync.js", "./firebase.js", "./rules.js", "./charts.js", "./summary.js", "./health.js", "./pdftext.js", "./vendor/pdf.min.mjs", "./vendor/pdf.worker.min.mjs", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-192-maskable.png", "./icon-512-maskable.png", "./icon-180.png"];
+const CACHE = "reset-v14";
+const FILES = ["./", "./index.html", "./sync.js", "./firebase.js", "./rules.js", "./steps.js", "./charts.js", "./summary.js", "./health.js", "./pdftext.js", "./vendor/pdf.min.mjs", "./vendor/pdf.worker.min.mjs", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-192-maskable.png", "./icon-512-maskable.png", "./icon-180.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

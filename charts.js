@@ -35,13 +35,13 @@
   }
 
   // ---- chart pieces ----
-  function columns({ values, labels, tips, max, ref, refLabel, highlight, unit, H = 170, empty }) {
+  function columns({ values, labels, tips, max, ref, refLabel, highlight, unit, H = 170, empty, fmt }) {
     const n = values.length, pw = W - PAD.l - PAD.r, ph = H - PAD.t - PAD.b;
     const band = pw / Math.max(n, 1), bw = Math.max(3, Math.min(24, band * 0.62));
     const y = v => PAD.t + ph * (1 - v / max);
     const ticks = [0, max / 2, max];
     let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-hidden="false">`;
-    for (const t of ticks) s += `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(t)}" y2="${y(t)}" class="grid"/><text x="${PAD.l - 6}" y="${y(t) + 4}" class="tick" text-anchor="end">${Math.round(t)}${unit || ""}</text>`;
+    for (const t of ticks) s += `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(t)}" y2="${y(t)}" class="grid"/><text x="${PAD.l - 6}" y="${y(t) + 4}" class="tick" text-anchor="end">${fmt ? fmt(Math.round(t)) : Math.round(t)}${unit || ""}</text>`;
     values.forEach((v, i) => {
       const x = PAD.l + band * i + (band - bw) / 2, h = ph * (Math.max(0, v) / max);
       const cls = highlight && highlight(i) ? "m2" : v == null ? "" : "m1";
@@ -152,12 +152,34 @@
       table(["Date", "Glasses"], days.map((d, i) => [shortD(d), vals[i]])));
   }
 
+  function goalFor(d) { const n = diff(state.start, d) + 1, p = PHASES.find(x => n >= x.from && n <= x.to) || PHASES[PHASES.length - 1]; return p.steps || 5000; }
+  function steps(days) {
+    const st = days.map(d => window.resetDaySteps(d)), vals = st.map(s => s.n), goals = days.map(goalFor);
+    const met = vals.filter((v, i) => v >= goals[i]).length, logged = vals.filter(v => v > 0).length;
+    const avg = logged ? Math.round(vals.reduce((a, b) => a + b, 0) / logged) : 0, goalNow = goals[goals.length - 1] || 5000;
+    const max = Math.ceil(Math.max(goalNow * 1.25, ...vals) / 1000) * 1000;
+    const lead = logged ? `Average ${avg.toLocaleString()} steps on ${logged} day${logged > 1 ? "s" : ""} with steps; goal reached on ${met}.` : "No steps yet. Use Start walk on a walking habit, or enter today's total from your watch on the Today screen.";
+    return card("Steps", lead,
+      columns({ values: vals, labels: days.map(d => shortD(d)), tips: st.map((s, i) => `${shortD(days[i])}: ${vals[i].toLocaleString()} steps (goal ${goals[i].toLocaleString()})${s.n ? (s.src === "watch" ? ", from your watch" : ", counted by the app") : ""}`), max, ref: goalNow, refLabel: "Goal " + goalNow.toLocaleString(), highlight: i => days[i] === TODAY, fmt: v => v >= 1000 ? (v / 1000) + "k" : String(v) }) + key("Today", "Earlier days"),
+      table(["Date", "Steps", "Goal", "Source"], st.map((s, i) => [shortD(days[i]), vals[i].toLocaleString(), goals[i].toLocaleString(), s.n ? (s.src === "watch" ? "Watch total" : "Counted walks") : "-"])));
+  }
+  function calories(days) {
+    const pf = state.profile || {}, S = window.ResetSteps;
+    if (!pf.weight) return card("Calories burned walking", "Add your weight and height in Plan → Settings to see estimated calories.", "", "");
+    const vals = days.map(d => S.kcal(window.resetDaySteps(d).n, pf) || 0), total = vals.reduce((a, b) => a + b, 0), logged = vals.filter(v => v > 0).length;
+    const max = Math.ceil(Math.max(100, ...vals) / 50) * 50;
+    return card("Calories burned walking", logged ? `About ${total.toLocaleString()} kcal over ${logged} day${logged > 1 ? "s" : ""}, ${Math.round(total / logged)} a day on average. Estimated from steps, height and weight.` : "No steps yet.",
+      columns({ values: vals, labels: days.map(d => shortD(d)), tips: days.map((d, i) => `${shortD(d)}: about ${vals[i]} kcal`), max, highlight: i => days[i] === TODAY }) + key("Today", "Earlier days") +
+      `<p class="note">An estimate (about 0.5 kcal per kg per km walked). Your Galaxy Watch measures this more closely; the Android app version will read it directly.</p>`,
+      table(["Date", "kcal (estimate)"], days.map((d, i) => [shortD(d), vals[i]])));
+  }
+
   function render() {
     const host = $("charts"); if (!host) return;
     const days = daysIn(range);
     host.innerHTML = weekly() +
       `<div class="seg" role="group" aria-label="Range for the graphs below">${[["2w", "2 weeks"], ["4w", "4 weeks"], ["all", "All days"]].map(([k, l]) => `<button type="button" data-r="${k}" aria-pressed="${range === k}">${l}</button>`).join("")}</div>` +
-      daily(days) + byHabit(days) + medicines(days) + timeOfDay(days) + water(days) +
+      daily(days) + steps(days) + calories(days) + byHabit(days) + medicines(days) + timeOfDay(days) + water(days) +
       `<p class="note">Result trends from your blood reports are on the Health tab.</p>`;
   }
 
