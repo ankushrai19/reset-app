@@ -3,7 +3,7 @@
 A habit app that turns a blood report into a 12-week daily routine that starts easy and builds up. Installable web app (PWA) for Android, hosted on GitHub Pages. Owner: Anki (GitHub `ankushrai19`).
 
 - Live: https://ankushrai19.github.io/reset-app/
-- Current version: 2.2 (13 Nov 2026), offline cache `reset-v15`
+- Current version: 2.3 (14 Nov 2026), offline cache `reset-v16`
 - Owner's phone: Android, Samsung Galaxy Watch
 
 ## How to work on this repo
@@ -17,6 +17,7 @@ A habit app that turns a blood report into a 12-week daily routine that starts e
 
 ```
 node tests/rules-check.js                         # report name matching, chai taper
+node tests/search-check.js                        # Health tab search: everyday questions, misspellings, missing tests
 node tests/steps-check.js                         # step detection on simulated movement
 python3 -m http.server 8790 &                     # then:
 node tests/plan-sync-check.js                     # Plan and Today match, past days keep their plan, 8 result sets
@@ -45,6 +46,7 @@ The GitHub API through this environment can't create repos or change Pages setti
 | `index.html` | All markup, CSS (tokens at the top, light + dark), and the main script: `PHASES` (habits per phase, step goals), state, Today, Progress grid, Plan, Settings, timers, water, steps tile, tab navigation. |
 | `rules.js` | `ResetRules`: results catalog (22 markers, ranges, aliases), name matching, status, history phases, rules that turn results into habits, maintenance versions, retest intervals with sources. |
 | `health.js` | Health tab (live summary of latest results), upload flow, review screen, duplicate check, slide-up result panel, after-upload "What changed" banner. `READER_MODE = "test"`. |
+| `search.js` | `ResetSearch`: "Ask about your results" box on the Health tab. Fixed answers (no AI): everyday words and misspellings → tests (`MARKER`, `TOPICS`), untracked tests (`OTHER`), test to ask for when missing (`TEST_NAME`), overview, "which tests haven't I done" (`BASIC`). `answer()` returns plain data; the screen part is separate. |
 | `summary.js` | `ReportSummary`: per-report summary sheet, big-picture cause map, "What to fix" list, eat/avoid, result detail panel content, "When to test again" block. |
 | `charts.js` | `ResetCharts`: Trends tab graphs, hand-drawn SVG, range switch, tooltips, table views. |
 | `steps.js` | `ResetSteps`: motion-sensor step counting during walk timers, screen wake lock, stride/distance/calorie estimates. |
@@ -54,7 +56,7 @@ The GitHub API through this environment can't create repos or change Pages setti
 | `vendor/` | pdf.js 4.10.38 (`pdf.min.mjs`, `pdf.worker.min.mjs`). |
 | `sw.js` | Service worker: offline cache, network-first for app files. |
 
-Script order in `index.html`: `sync.js` (module), `rules.js`, `steps.js`, main inline script, `charts.js`, `summary.js`, `health.js`. Top-level `const`s in the main script (`state`, `habits`, `add`, `diff`, `parse`, `TODAY`, `PHASES`, `mins`, `esc`...) are used by the later scripts.
+Script order in `index.html`: `sync.js` (module), `rules.js`, `steps.js`, main inline script, `charts.js`, `summary.js`, `health.js`, `search.js` (uses `HealthUI.openPanel/bar/fmtDate`). Top-level `const`s in the main script (`state`, `habits`, `add`, `diff`, `parse`, `TODAY`, `PHASES`, `mins`, `esc`...) are used by the later scripts.
 
 ## Data model
 
@@ -115,6 +117,8 @@ Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Googl
 
 **Health tab** is a live summary of the latest results: glance counts + next test chip → What to fix (top 3) → big picture cause map → results grouped (Needs attention / Back in range / Normal) with a slide-up detail panel → eat/avoid/tests (folded) → link to Plan → When to test again → reports history. After an upload, return to Health with a "What changed" banner.
 
+**Health search (decided: fixed answers now, AI later):** answers come from the user's latest results plus fixed text. "Do I have…" questions always show a note that one test can't confirm or rule out a condition; never yes/no on a condition. Medicine or dose questions → "ask your doctor". A test not in the reports → its healthy range and the test to ask for, "Ask your doctor whether you need it". After Stage 2, AI may answer only the questions the fixed answers can't match (`kind: "unknown"`).
+
 **Safety and tone:** general wellness, not diagnosis. Never suggest medicines or doses. Plain language, no emoji, keep "not medical advice" notes.
 
 **Design:** Today = "Next up" card (option A). Tabs: Today, Health, Progress, Trends, Plan. Chart colours validated for colour-blind readers: light `#3a5a9c` / `#c8740f` / `#2f8a5b`, dark `#5a82e0` / `#d07a22` / `#36a56b` (tokens `--ch1 --ch2 --chg`). Every chart has a tooltip, a key for orange, and a table view.
@@ -127,7 +131,7 @@ Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Googl
 
 ## Status and next steps
 
-Done: Stage 1 report upload in test mode, summaries, personalised plan, maintenance step, retest schedule, Trends graphs, step counting during walks, daily steps from watch, profile, sync.
+Done: Health tab search (2.3), Stage 1 report upload in test mode, summaries, personalised plan, maintenance step, retest schedule, Trends graphs, step counting during walks, daily steps from watch, profile, sync.
 
 Open (owner decides order):
 1. **Stage 2, real report reading:** a Firebase Cloud Function (Blaze plan is on) that sends the trimmed PDF text or photo to Claude and returns `{date, lab, tests:[{name, value, unit, low, high}]}`; the Anthropic API key goes in Firebase Secret Manager, never in the repo or chat. Then set `READER_MODE = "live"` in `health.js`. Owner still needs to add API credit.

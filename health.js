@@ -355,6 +355,6 @@
   };
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("sheet").hidden) closeSheet(); });
 
-  window.HealthUI = { render };
+  window.HealthUI = { render, openPanel, bar, rangeText, fmtDate };
   render();
 })();
