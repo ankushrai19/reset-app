@@ -3,7 +3,7 @@
 A habit app that turns a blood report into a 12-week daily routine that starts easy and builds up. Installable web app (PWA) for Android, hosted on GitHub Pages. Owner: Anki (GitHub `ankushrai19`).
 
 - Live: https://ankushrai19.github.io/reset-app/
-- Current version: 3.1 (14 Nov 2026), offline cache `reset-v18`
+- Current version: 3.2 (14 Nov 2026), offline cache `reset-v19`
 - Owner's phone: Android, Samsung Galaxy Watch
 
 ## How to work on this repo
@@ -21,7 +21,7 @@ node tests/search-check.js                        # Health tab search: everyday 
 node tests/steps-check.js                         # step detection on simulated movement
 python3 -m http.server 8790 &                     # then:
 node tests/plan-sync-check.js                     # Plan and Today match, past days keep their plan, 8 result sets
-node tests/i18n-check.js                          # Hindi: no English left on translated screens; switching back is clean
+node tests/i18n-check.js                          # Hindi: no English left on any screen (incl. panels, summary, upload, Ask, Trends); switching back is clean
 ```
 All use made-up data and must print only PASS. Also take light and dark screenshots of anything you changed.
 
@@ -122,7 +122,7 @@ Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Googl
 
 **Health search (decided: fixed answers now, AI later):** answers come from the user's latest results plus fixed text. "Do I have…" questions always show a note that one test can't confirm or rule out a condition; never yes/no on a condition. Medicine or dose questions → "ask your doctor". A test not in the reports → its healthy range and the test to ask for, "Ask your doctor whether you need it". After Stage 2, AI may answer only the questions the fixed answers can't match (`kind: "unknown"`).
 
-**Languages (3.1: English and Hindi, first version):** the app is written in English. When Hindi is on, `i18n.js` swaps every on-screen phrase that has an entry in `i18n-hi.js`; anything without one stays English. So **any new or changed English text on screen needs a matching Hindi entry** (same exact English, `{name}` for numbers, dates and names), then run `tests/i18n-check.js`. Text the app builds can also go through `T()` / `I18N.t()`. Dates use `toLocaleDateString(I18N.loc, …)`. Translated now: navigation, Today, Plan (habits, phases, rules, food swaps), "Your report" reasons, Progress days, Settings, + menu, Results labels, Ask labels, sync messages and toasts. Not yet (next round, stays English): test names and health explanations (catalog `about`, summary.js content, result panel), Ask answers and Hindi/Hinglish search words, Trends graph sentences, upload and review screens. Hindi is a draft: a native speaker should review it, especially health text, before a public release. Simple everyday Hindi; keep common words (वॉक, प्रोटीन, विटामिन D, HbA1c).
+**Languages (3.2: English and Hindi, whole app):** the app is written in English. When Hindi is on, `i18n.js` swaps every on-screen phrase that has an entry in `i18n-hi.js`; anything without one stays English. So **any new or changed English text on screen needs a matching Hindi entry** (same exact English, `{name}` for numbers, dates and names), then run `tests/i18n-check.js`. Text the app builds can also go through `T()` / `I18N.t()`. Dates use `toLocaleDateString(I18N.loc, …)`. Everything on screen is translated: navigation, Today, Plan, habits and report reasons, Results (test names, what each result means, causes, what can follow, what helps, eat/avoid, big picture, when to test again), result panel, report summary, upload and review, Ask answers, Trends sentences and tooltips, Settings, messages. Lists of known phrases ("A, B, C.") are translated part by part; general templates like `{a} to {b}` can catch more than intended, so prefer exact entries. Ask understands Hindi and Hinglish words (`MARKER`/`TOPICS` in `search.js`, Hindi letters kept, nukta ignored) and Hindi/Hinglish "do I have", medicine and "which tests" questions; add new words with a case in `tests/search-check.js`. Owner-chosen wording: "{n} मुख्य कारण लगभग हर बात को स्पष्ट कर देते हैं". Source titles on citation links stay in English. Hindi is a draft: a native speaker should review it, especially health text, before a public release. Simple everyday Hindi; keep common words (वॉक, प्रोटीन, विटामिन D, HbA1c).
 
 **Safety and tone:** general wellness, not diagnosis. Never suggest medicines or doses. Plain language, no emoji, keep "not medical advice" notes.
 

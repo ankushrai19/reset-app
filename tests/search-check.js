@@ -29,7 +29,20 @@ const CASES = [
   ["do i have anemia", "hb", "ferritin,iron"],
   ["bones", "vitd", "calcium,phosphorus"],
   ["sgpt", "", "alt"],
-  ["good cholesterol", "hdl", ""]
+  ["good cholesterol", "hdl", ""],
+  // Hindi and Hinglish
+  ["क्या मुझे थायरॉइड की समस्या है?", "", "tsh"],
+  ["मेरे विटामिन के नतीजे?", "b12,vitd", ""],
+  ["हीमोग्लोबिन की सीमा", "hb", ""],
+  ["विटामिन डी की कमी", "vitd", ""],
+  ["vitamin ki kami hai kya", "b12,vitd", ""],
+  ["thyroid hai kya", "", "tsh"],
+  ["sugar kitni hai", "hba1c", "glucose"],
+  ["khoon ki kami", "hb", "ferritin,iron"],
+  ["कोलेस्ट्रॉल", "hdl", "chol,ldl,tg"],
+  ["लिवर कैसा है", "", "alt,ast,ggt"],
+  ["किडनी", "", "creatinine,egfr"],
+  ["haddi", "vitd", "calcium,phosphorus"]
 ];
 for (const [q, f, m] of CASES) { const r = keys(q); check(`"${q}"`, r.found === f && r.missing === m, { found: r.found, missing: r.missing }); }
 
@@ -58,5 +71,10 @@ check("untracked test is answered honestly", S.answer("folate").kind === "other"
 check("Free T4 also shows the thyroid answer", S.answer("free t4", reports).missing.some(m => m.keys.includes("tsh")));
 check("medicine question gets the doctor note", S.answer("which vitamin d tablet should i take", reports).meds === true);
 check("nonsense gets the try-these message", S.answer("hello there", reports).kind === "unknown");
+check("Hindi 'do I have' adds the can't-diagnose note", S.answer("क्या मुझे थायरॉइड की समस्या है?", reports).understood.condition === true);
+check("Hinglish 'kami hai kya' adds the note", S.answer("vitamin ki kami hai kya", reports).understood.condition === true);
+check("Hindi medicine question gets the doctor note", S.answer("विटामिन डी की कौन सी गोली लूँ", reports).meds === true);
+check("Hindi 'what does my report say' gives an overview", S.answer("मेरी रिपोर्ट क्या कहती है?", reports).kind === "overview");
+check("Hindi 'which tests' lists tests not done", S.answer("कौन से टेस्ट नहीं हुए?", reports).kind === "tests");
 check("ordinary words are not corrected", ["level", "range", "what", "have", "tired"].every(w => S.correct(w) === w));
 process.exit(fail ? 1 : 0);

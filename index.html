@@ -547,7 +547,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
           <button type="button" role="radio" data-lang-set="en" lang="en" translate="no">English</button>
           <button type="button" role="radio" data-lang-set="hi" lang="hi" translate="no">हिंदी</button>
         </div>
-        <p class="note">Hindi is a first version. Health explanations and Ask answers are still in English.</p>
+        <p class="note">Hindi is a first version. Tell us if any wording reads oddly.</p>
       </div>
       <div class="card acct">
         <h3>Theme</h3>
@@ -904,7 +904,7 @@ function renderPlan(){
     intro=`<div class="card ph cur"><span class="eyebrow">Personalised from your report of ${parse(last.date).toLocaleDateString(window.I18N&&I18N.loc,{day:"numeric",month:"short",year:"numeric"})}${reps.length>1?` and ${reps.length-1} earlier`:""}</span>
       <h3>How your results shaped this plan</h3>
       ${focus.length?`<p class="note"><b>Focus:</b> ${esc(focus.join(", "))}.</p>`:`<p class="note">All tracked results are in range, so this is a maintenance plan of core habits.</p>`}
-      ${adds.length?`<p class="note"><b>Added:</b> ${adds.map(a=>`<span>${esc(T(a.maint&&R.MAINT[a.id]?R.MAINT[a.id].t:a.t))}</span> (${esc(R.CATALOG[a.because].name)}${a.maint?", "+esc(T("until confirmed")):""})`).join("; ")}.</p>`:""}
+      ${adds.length?`<p class="note"><b>Added:</b> ${adds.map(a=>`<span>${esc(T(a.maint&&R.MAINT[a.id]?R.MAINT[a.id].t:a.t))}</span> (${esc(T(R.CATALOG[a.because].name))}${a.maint?", "+esc(T("until confirmed")):""})`).join("; ")}.</p>`:""}
       ${maintNames.length?`<p class="note"><b>Lighter for now:</b> ${esc(maintNames.join(", "))} ${maintNames.length>1?"are":"is"} back in range. The habits that helped stay in a lighter form until one more test confirms it.</p>`:""}
       ${allRemoved.size?`<p class="note"><b>Left out:</b> ${[...allRemoved.values()].map(h=>{const rr=R.removedReason(h.id,L);return `${esc(window.resetHabitName(h.id))} (${rr.resolved.length?`your ${esc(rr.resolved.join(", "))} stayed normal on two tests in a row`:`your ${esc(rr.names)} ${rr.names.includes(",")?"are":"is"} in range`})`}).join("; ")}.</p>`:""}
       <p class="note">Upload a new report and the plan updates by itself.</p></div>`;
@@ -987,7 +987,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){applyThem
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="3.1 (14 Nov 2026)";
+const APP_VERSION="3.2 (2026-11-14)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});

@@ -15,7 +15,9 @@
       if (!/\{\w+\}/.test(en)) { exact.set(en, hi); continue; }
       const names = [];
       const src = en.replace(/[.*+?^$()|[\]\\]/g, "\\$&").replace(/\\?\{(\w+)\\?\}|\{(\w+)\}/g, (m, a, b) => { names.push(a || b); return "(.+?)"; });
-      patterns.push({ re: new RegExp("^" + src + "$"), names, hi });
+      const i = patterns.findIndex(p => p.en === en);   // a later entry for the same phrase replaces the earlier one
+      if (i >= 0) patterns.splice(i, 1);
+      patterns.push({ en, re: new RegExp("^" + src + "$"), names, hi });
     }
     patterns.sort((a, b) => b.re.source.length - a.re.source.length);   // most specific first
   }
@@ -29,6 +31,12 @@
       const v = {};
       p.names.forEach((n, i) => { const c = m[i + 1]; v[n] = tr(c, (depth || 0) + 1) ?? c; });
       return p.hi.replace(/\{(\w+)\}/g, (x, n) => v[n] ?? x);
+    }
+    // a list of known phrases ("Vitamin D, HbA1c, Triglycerides."): translate each part when all parts are known
+    const m = /^(.+?)(\.?)$/.exec(s);
+    if (m && /, |; /.test(m[1])) {
+      const sep = m[1].includes("; ") ? "; " : ", ", parts = m[1].split(sep), out = parts.map(x => tr(x.trim(), (depth || 0) + 1));
+      if (out.every(x => x != null)) return out.join(sep) + (m[2] ? "।" : "");
     }
     return null;
   }

@@ -270,7 +270,8 @@
       if (b.newOut) parts.push(`${b.newOut} new out of range`);
       if (!parts.length) parts.push("No big changes");
     }
-    return `<div class="banner" role="status"><div><b>New report saved (${esc(fmtDate(b.date))}).</b> ${esc(b.first ? parts[0] : parts.join(", ") + ". Your plan was updated.")}</div><button class="x" type="button" data-x="banner" aria-label="Close">×</button></div>`;
+    const T = x => (window.I18N ? I18N.t(x) : x);
+    return `<div class="banner" role="status"><div><b>New report saved (${esc(fmtDate(b.date))}).</b> ${esc(b.first ? T(parts[0]) : parts.map(T).join(", ") + T(". Your plan was updated."))}</div><button class="x" type="button" data-x="banner" aria-label="Close">×</button></div>`;
   }
   function row(k, t) {
     const c = R.CATALOG[k], maint = t.phase === "maintain", st = maint ? "maint" : t.status;

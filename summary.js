@@ -171,7 +171,7 @@
         <p class="note" style="margin-top:8px">Your Today list already builds these up gradually.</p></div>` : ""}
       ${retestHTML(R.retest(all.filter(r => r.date <= report.date), report.date), report.date)}
       ${tests.length ? `<div class="card"><h3 style="margin-bottom:6px">Tests to ask your doctor about</h3><ul class="clean">${tests.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-      ${ok.length ? `<div class="card"><h3 style="margin-bottom:8px">Comfortably normal</h3><div class="chips">${ok.map(t => `<span>${esc(R.CATALOG[t.key].name)} ${t.value}</span>`).join("")}</div></div>` : ""}
+      ${ok.length ? `<div class="card"><h3 style="margin-bottom:8px">Comfortably normal</h3><div class="chips">${ok.map(t => `<span>${esc(window.I18N ? I18N.t(R.CATALOG[t.key].name) : R.CATALOG[t.key].name)} ${t.value}</span>`).join("")}</div></div>` : ""}
       <p class="note">Medicines and doses are your doctor's decision. This summary explains your numbers in plain language and doesn't diagnose anything.</p>
       <div class="sfoot"><button class="btn primary" type="button" data-x="close">Done</button></div>`;
   }

@@ -1,57 +1,85 @@
 // Serve the repo (python3 -m http.server 8790) then: node tests/i18n-check.js
-// Hindi coverage: switches to Hindi, visits every translated screen in many states, and lists any English left.
-// Then switches back and checks no Hindi remains. Made-up sample data only.
+// Hindi coverage: switches to Hindi, visits every screen in many states (Today, Results and its panels,
+// report summaries, upload and review, Ask answers, Trends with tooltips, Plan, Progress, Settings)
+// and lists any English left. Then switches back and checks no Hindi remains. Made-up sample data only.
 const { chromium, devices } = require("playwright");
+const path = require("path"), fs = require("fs"), os = require("os");
 const URL = process.env.URL || "http://localhost:8790/";
-// Words that stay as they are in Hindi too (test names, units, brands, the lab's own name)
-const KEEP = /^(HbA1c|HDL|LDL|ALT|AST|GGT|TSH|B12|eGFR|hs-CRP|ESR|PDF|Google|Samsung|Chrome|Firebase|kcal|km|cm|kg|ng|pg|mg|mL|dL|µIU|min|English|am|pm|L|Sample|Lab)$/;
-// Parts not translated yet (next round): health explanations, Ask answers, graph sentences
-const LATER = "#charts,.panelwrap,#askOut,.prio,.bp,.fold,.rlist .rn,.okrow,#sheet,.ntmini p,.nexttest,.ph .note b + *,.retest b";
+// Words that stay as they are in Hindi too: test codes, units, brands, the sample lab's name, week labels
+const KEEP = /^(HbA1c|HDL|LDL|ALT|AST|GGT|TSH|SGPT|SGOT|B12|eGFR|hs-CRP|CRP|ESR|PTH|HOMA|IR|hs|LFT|KFT|CBC|PSA|T3|T4|OH|PDF|JPG|PNG|AI|Google|Samsung|Galaxy|Watch|Android|Chrome|Firebase|Thyrocare|kcal|km|cm|kg|ng|pg|mg|µg|mL|dL|µIU|min|U|L|English|am|pm|AM|PM|Sample|Lab|W\d+|report)$/;
+// Not checked: source titles on links (citations stay in their original language), the file name, user-typed lab names
+const SKIP = "script,style,textarea,[hidden],[translate='no'],a[href^='http'],.steps + p.note,#sheetIn > p.note:first-of-type";
 (async () => {
   const b = await chromium.launch(), p = await (await b.newContext({ ...devices["Pixel 7"] })).newPage(), errs = [];
   p.on("pageerror", e => errs.push(e.message));
-  await p.goto(URL); await p.waitForTimeout(500);
-  await p.evaluate(() => { localStorage.clear(); });
-  await p.reload(); await p.waitForTimeout(500);
+  await p.goto(URL); await p.waitForTimeout(400);
+  await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
   const left = new Map();
   const grab = async where => {
-    const xs = await p.evaluate(([LATER]) => {
-      const out = [], skip = el => !el || el.closest("script,style,textarea,[hidden],[translate='no']," + LATER);
+    await p.waitForTimeout(40);
+    const xs = await p.evaluate(SKIP => {
+      const out = [], skip = el => !el || el.closest(SKIP);
       const w = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT); let n;
       while ((n = w.nextNode())) {
         if (n.nodeType === 3) { const s = n.nodeValue.trim(); if (/[A-Za-z]{2}/.test(s) && !skip(n.parentElement)) out.push(s); }
         else if (!skip(n)) for (const a of ["placeholder", "aria-label"]) { const v = n.getAttribute(a); if (v && /[A-Za-z]{2}/.test(v)) out.push("[" + a + "] " + v); }
       }
       return out;
-    }, [LATER]);
+    }, SKIP);
     for (const x of xs) {
-      // drop words that stay English (names, units); what remains is untranslated text
-      const rest = names.reduce((t, nm) => t.split(nm).join(" "), x.replace(/^\[[a-z-]+\] /, "")).split(/[\s,.:;·()+\/–—-]+/).filter(w => /[A-Za-z]{2}/.test(w) && !KEEP.test(w) && !/[ऀ-ॿ]/.test(w));
-      if (rest.length && !/^[ऀ-ॿ]/.test(x)) { if (!left.has(x)) left.set(x, where); }
-      else if (rest.length && /[A-Za-z]{4}/.test(rest.join(""))) { if (!left.has(x)) left.set(x, where); }
+      const words = x.replace(/^\[[a-z-]+\] /, "").split(/[\s,.:;·()+\/–—\-↑↓"“”']+/).filter(w => /[A-Za-z]{2}/.test(w) && !KEEP.test(w));
+      if (words.length && !left.has(x)) left.set(x, where);
     }
   };
-  const names = await p.evaluate(() => Object.values(ResetRules.CATALOG).flatMap(c => [c.name, c.name.replace(/ \(.*\)/, "")]).sort((a, b) => b.length - a.length));
   await p.evaluate(() => I18N.setLang("hi"));
-  const views = async tag => { for (const v of ["today", "health", "progress", "plan", "settings"]) { await p.evaluate(v => show(v), v); await p.waitForTimeout(30); await grab(tag + ":" + v); } };
+  const views = async tag => { for (const v of ["today", "health", "progress", "trends", "plan", "settings"]) { await p.evaluate(v => show(v), v); await grab(tag + ":" + v); } };
+  const ask = async qs => { for (const q of qs) { await p.evaluate(q => ResetSearch.open(q), q); await grab("ask: " + q); } await p.evaluate(() => ResetSearch.close()); };
   await views("empty");
   await p.evaluate(() => { document.getElementById("addSheet").hidden = false; }); await grab("add"); await p.evaluate(() => { document.getElementById("addSheet").hidden = true; });
-  await p.evaluate(() => ResetSearch.open()); await grab("ask"); await p.evaluate(() => ResetSearch.close());
-  await p.evaluate(() => { state.start = add(TODAY, -9); state.days[add(TODAY, -9)] = ["water", "sun"]; persist(); render(); show("health"); });
+  await ask(["vitamin d", "thyroid", "what does my report say", "kidney"]);
+  // upload a (made-up) photo: in test mode the app shows sample results to review
+  const img = path.join(os.tmpdir(), "i18n-check-photo.png");
+  fs.writeFileSync(img, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64"));
+  await p.evaluate(() => show("health"));
+  await p.setInputFiles("#hFile", img); await p.waitForTimeout(500); await grab("upload: reading");
+  await p.waitForTimeout(1800); await grab("upload: review");
+  await p.click('#sheet [data-x="save"]'); await p.waitForTimeout(200); await grab("after save: banner");
+  await p.evaluate(() => { document.getElementById("hFile").value = ""; });
+  await p.setInputFiles("#hFile", img); await p.waitForTimeout(2300); await p.click('#sheet [data-x="save"]'); await p.waitForTimeout(150); await grab("upload: duplicate");
+  await p.evaluate(() => { document.querySelector('#sheet [data-x="close"]').click(); });
+  // sample reports, mid-plan, ticks on earlier days so Trends has data
+  await p.evaluate(() => { state.reports = []; state.start = add(TODAY, -20); for (let i = 0; i < 20; i++) state.days[add(TODAY, -20 + i)] = i % 3 ? ["water", "walk", "meds", "sun"] : ["water"]; state.water[add(TODAY, -2)] = 6; state.steps[add(TODAY, -1)] = 6400; persist(); render(); show("health"); });
   await p.click("#hSample"); await p.waitForTimeout(150);
   await views("samples");
-  for (const pane of ["ov", "all", "tests"]) { await p.evaluate(x => { show("health"); HealthUI.showPane(x); }, pane); await grab("results:" + pane); }
-  for (const off of [-9, -3, 0, 3, 12, 30, 50, 83]) { await p.evaluate(o => { show("today"); view = add(TODAY, o); renderToday(); }, off); await p.waitForTimeout(20); await grab("today+" + off); }
-  await p.evaluate(() => { view = TODAY; state.days[TODAY] = habits(TODAY).list.map(h => h.id); persist(); render(); showDone = true; renderToday(); }); await grab("today:all-done");
-  // every habit line, tip and report reason over the 84 days, as the screen would show them
+  for (const pane of ["ov", "all", "tests"]) { await p.evaluate(x => { show("health"); HealthUI.showPane(x); }, pane); await p.evaluate(() => document.querySelectorAll("#hBody details").forEach(d => d.open = true)); await grab("results:" + pane); }
+  await p.evaluate(() => { const b = document.querySelector('#hBody [data-x="prio"]'); if (b) b.click(); }); await grab("results: all priorities");
+  // the detail panel for every result in the samples
+  const keys = await p.evaluate(() => Object.keys(ResetRules.latest(state.reports)));
+  for (const k of keys) { await p.evaluate(k => HealthUI.openPanel(k), k); await grab("panel: " + k); }
+  await p.evaluate(() => document.querySelector('.panelwrap [data-x="pclose"]').click());
+  // report summaries
+  for (const i of [0, 1]) { await p.evaluate(i => { show("health"); HealthUI.showPane("tests"); document.querySelectorAll("#hBody [data-sum]")[i].click(); }, i); await grab("summary " + i); await p.evaluate(() => document.querySelector('#sheet [data-x="close"]').click()); }
+  // Ask answers, typed in English, Hindi and Hinglish
+  await ask(["what is my vitamin results", "do i have thyroid", "heamoglobin range", "do i have anemia", "what does my report say", "which tests haven't I done", "folate", "which vitamin d tablet should i take", "hello there", "cholesterol", "liver", "kidney", "bones",
+    "क्या मुझे थायरॉइड की समस्या है?", "मेरे विटामिन के नतीजे?", "हीमोग्लोबिन की सीमा", "मेरी रिपोर्ट क्या कहती है?", "कौन से टेस्ट नहीं हुए?", "vitamin ki kami hai kya", "khoon ki kami", "sugar kitni hai"]);
+  // Trends in every range, with tooltips
+  for (const r of ["2w", "4w", "all"]) {
+    await p.evaluate(r => { show("trends"); const b = document.querySelector(`#charts [data-r="${r}"]`); if (b) b.click(); }, r); await grab("trends " + r);
+    const tips = await p.evaluate(() => [...document.querySelectorAll("#charts .hit")].map(h => h.dataset.tip));
+    for (const t of tips) { const tr = await p.evaluate(t => I18N.t(t), t); if (/[A-Za-z]{3}/.test(tr.replace(/\b(kcal|km|W\d+|HbA1c)\b/g, "")) && !left.has(tr)) left.set(tr, "trends tooltip"); }
+  }
+  // Today in many states
+  for (const off of [-20, -3, 0, 3, 12, 30, 50, 63]) { await p.evaluate(o => { show("today"); view = add(TODAY, o); renderToday(); }, off); await grab("today+" + off); }
   const habitLeft = await p.evaluate(() => { const o = []; for (let n = 1; n <= 84; n++) for (const h of habits(add(state.start, n - 1)).list) for (const s of [h.t, h.w, h.pw]) if (s && I18N.t(s) === s) o.push(s); return [...new Set(o)]; });
   habitLeft.forEach(s => left.set(s, "habit text"));
+  // every health text the app can show, for all 22 tests (not only those in the samples)
+  const content = await p.evaluate(() => { const R = ResetRules, o = []; for (const c of Object.values(R.CATALOG)) o.push(c.name, c.about); for (const r of Object.values(R.RETEST)) { o.push(r.text); if (r.diabetes) o.push(r.diabetes); } for (const r of Object.values(R.RULES)) for (const st of Object.values(r)) if (st.note) o.push(st.note); return o.filter(s => I18N.t(s) === s && /[a-z]{3}/.test(s)); });
+  content.forEach(s => left.set(s, "health content"));
   let fail = 0;
   for (const [s, where] of left) { fail++; console.log("FAIL untranslated (" + where + "): " + s); }
-  if (!left.size) console.log("PASS no English left on translated screens");
-  // back to English: no Hindi anywhere
+  if (!left.size) console.log("PASS no English left on any screen");
   await p.evaluate(() => I18N.setLang("en")); await p.waitForTimeout(100);
-  const hiLeft = await p.evaluate(() => { const o = []; for (const v of ["today", "health", "progress", "plan", "settings"]) { show(v); const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (/[ऀ-ॿ]/.test(n.nodeValue) && !n.parentElement.closest("[translate='no'],script")) o.push(n.nodeValue.trim()); } return [...new Set(o)]; });
+  const hiLeft = await p.evaluate(() => { const o = []; for (const v of ["today", "health", "progress", "trends", "plan", "settings"]) { show(v); const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (/[ऀ-ॿ]/.test(n.nodeValue) && !n.parentElement.closest("[translate='no'],script")) o.push(n.nodeValue.trim()); } return [...new Set(o)]; });
   if (hiLeft.length) { fail++; console.log("FAIL Hindi left after switching back:", hiLeft.slice(0, 10)); } else console.log("PASS switching back to English restores everything");
   console.log("page errors:", errs.length ? errs : "none");
   await b.close(); process.exit(fail || errs.length ? 1 : 0);

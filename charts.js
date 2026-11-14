@@ -129,7 +129,7 @@
     s += `</svg>`;
     const p = pct(taken, sched.length);
     return card("Medicines and supplements",
-      `Taken on <b>${taken} of ${sched.length}</b> scheduled days (${p}%). Current run: <b>${streak} day${streak === 1 ? "" : "s"}</b>.`,
+      `Taken on ${taken} of ${sched.length} scheduled days (${p}%). Current run: ${streak} day${streak === 1 ? "" : "s"}.`,
       s + `<p class="note key"><i class="dot good"></i>Taken <i class="dot miss"></i>Missed <i class="dot none"></i>Not scheduled</p><p class="note">Counts your "${E(cells.find(c => c.sched).label)}" habit. Prescribed medicines will appear here once that feature is added.</p>`,
       table(["Date", "Status"], cells.map(c => [shortD(c.d), c.sched ? (c.taken ? "Taken" : c.d === TODAY ? "Not ticked yet" : "Missed") : "Not scheduled"])));
   }
@@ -165,7 +165,7 @@
   }
   function calories(days) {
     const pf = state.profile || {}, S = window.ResetSteps;
-    if (!pf.weight) return card("Calories burned walking", "Add your weight and height in Plan → Settings to see estimated calories.", "", "");
+    if (!pf.weight) return card("Calories burned walking", "Add your weight and height in Settings to see estimated calories.", "", "");
     const vals = days.map(d => S.kcal(window.resetDaySteps(d).n, pf) || 0), total = vals.reduce((a, b) => a + b, 0), logged = vals.filter(v => v > 0).length;
     const max = Math.ceil(Math.max(100, ...vals) / 50) * 50;
     return card("Calories burned walking", logged ? `About ${total.toLocaleString()} kcal over ${logged} day${logged > 1 ? "s" : ""}, ${Math.round(total / logged)} a day on average. Estimated from steps, height and weight.` : "No steps yet.",
@@ -180,7 +180,7 @@
     host.innerHTML = weekly() +
       `<div class="seg" role="group" aria-label="Range for the graphs below">${[["2w", "2 weeks"], ["4w", "4 weeks"], ["all", "All days"]].map(([k, l]) => `<button type="button" data-r="${k}" aria-pressed="${range === k}">${l}</button>`).join("")}</div>` +
       daily(days) + steps(days) + calories(days) + byHabit(days) + medicines(days) + timeOfDay(days) + water(days) +
-      `<p class="note">Result trends from your blood reports are on the Health tab.</p>`;
+      `<p class="note">Result trends from your blood reports are on the Results tab.</p>`;
   }
 
   // tooltip: hover, tap or keyboard focus

@@ -3,58 +3,60 @@
 // then filled in with the user's own latest results. Stage 2 may add AI for questions this can't match.
 (function () {
   const R = window.ResetRules;
-  const clean = s => String(s || "").toLowerCase().replace(/[^a-z0-9µ]+/g, " ").trim();
+  // keeps Hindi letters; drops the nukta dot so "फ़" and "फ" match
+  const clean = s => String(s || "").toLowerCase().replace(/\u093C/g, "").replace(/[^a-z0-9µ\u0900-\u097F]+/g, " ").trim();
+  const T = s => (window.I18N ? I18N.t(s) : s);
 
   // Specific tests, by the words people use. Longer phrases are matched first.
   const MARKER = {
-    vitd: ["vitamin d", "vitamin d3", "vit d", "d3", "25 oh", "25 hydroxy", "cholecalciferol"],
-    b12: ["vitamin b12", "vit b12", "b12", "b 12", "cobalamin"],
+    vitd: ["विटामिन डी", "विटामिन d", "vitamin d", "vitamin d3", "vit d", "d3", "25 oh", "25 hydroxy", "cholecalciferol"],
+    b12: ["बी12", "बी 12", "विटामिन बी12", "विटामिन b12", "vitamin b12", "vit b12", "b12", "b 12", "cobalamin"],
     hba1c: ["hba1c", "hb a1c", "a1c", "glycated", "glycosylated", "average sugar"],
-    glucose: ["fasting sugar", "fasting glucose", "fasting blood sugar", "glucose", "fbs"],
-    chol: ["total cholesterol"],
-    hdl: ["hdl", "hdl cholesterol", "good cholesterol"],
-    ldl: ["ldl", "ldl cholesterol", "bad cholesterol"],
-    tg: ["triglyceride", "triglycerides", "tgs"],
+    glucose: ["फास्टिंग शुगर", "खाली पेट शुगर", "fasting sugar", "fasting glucose", "fasting blood sugar", "glucose", "fbs"],
+    chol: ["total cholesterol", "कुल कोलेस्ट्रॉल"],
+    hdl: ["अच्छा कोलेस्ट्रॉल", "hdl", "hdl cholesterol", "good cholesterol"],
+    ldl: ["बुरा कोलेस्ट्रॉल", "खराब कोलेस्ट्रॉल", "ldl", "ldl cholesterol", "bad cholesterol"],
+    tg: ["ट्राइग्लिसराइड", "ट्राइग्लिसराइड्स", "triglyceride", "triglycerides", "tgs"],
     alt: ["alt", "sgpt"],
     ast: ["ast", "sgot"],
     ggt: ["ggt", "gamma gt"],
     crp: ["crp", "hs crp", "c reactive"],
     esr: ["esr"],
-    calcium: ["calcium"],
+    calcium: ["calcium", "कैल्शियम"],
     phosphorus: ["phosphorus", "phosphate"],
-    tsh: ["tsh", "thyroid stimulating"],
-    creatinine: ["creatinine"],
+    tsh: ["टीएसएच", "tsh", "thyroid stimulating"],
+    creatinine: ["creatinine", "क्रिएटिनिन"],
     egfr: ["egfr", "gfr"],
-    uric: ["uric", "uric acid"],
-    hb: ["haemoglobin", "hemoglobin", "hb", "hgb"],
-    ferritin: ["ferritin", "iron stores"],
+    uric: ["uric", "uric acid", "यूरिक", "यूरिक एसिड"],
+    hb: ["हीमोग्लोबिन", "हिमोग्लोबिन", "haemoglobin", "hemoglobin", "hb", "hgb"],
+    ferritin: ["फेरिटिन", "ferritin", "iron stores"],
     iron: ["serum iron"]
   };
 
   // Everyday topics that cover several tests.
   const TOPICS = [
-    { id: "vitamins", words: ["vitamin", "vitamins", "vit"], keys: ["vitd", "b12"] },
-    { id: "thyroid", words: ["thyroid", "hypothyroid", "hypothyroidism", "hyperthyroid", "hyperthyroidism", "goitre", "goiter"], keys: ["tsh"], cond: true },
-    { id: "sugar", words: ["sugar", "diabetes", "diabetic", "prediabetes", "prediabetic", "blood sugar"], keys: ["hba1c", "glucose"], cond: true },
-    { id: "lipids", words: ["cholesterol", "lipid", "lipids", "heart"], keys: ["chol", "hdl", "ldl", "tg"] },
-    { id: "liver", words: ["liver", "fatty liver", "lft"], keys: ["alt", "ast", "ggt"], cond: true },
-    { id: "kidney", words: ["kidney", "kidneys", "renal", "kft"], keys: ["creatinine", "egfr"], cond: true },
-    { id: "iron", words: ["iron", "anaemia", "anemia", "anaemic", "anemic", "cbc", "blood count"], keys: ["hb", "iron", "ferritin"], cond: true },
-    { id: "inflammation", words: ["inflammation", "inflammatory"], keys: ["crp", "esr"] },
-    { id: "bones", words: ["bone", "bones"], keys: ["calcium", "phosphorus", "vitd"] },
-    { id: "gout", words: ["gout"], keys: ["uric"] }
+    { id: "vitamins", words: ["vitamin", "vitamins", "vit", "विटामिन"], keys: ["vitd", "b12"] },
+    { id: "thyroid", words: ["thyroid", "hypothyroid", "hypothyroidism", "hyperthyroid", "hyperthyroidism", "goitre", "goiter", "थायरॉइड", "थायराइड", "थायरोइड"], keys: ["tsh"], cond: true },
+    { id: "sugar", words: ["sugar", "diabetes", "diabetic", "prediabetes", "prediabetic", "blood sugar", "शुगर", "डायबिटीज", "मधुमेह", "शक्कर"], keys: ["hba1c", "glucose"], cond: true },
+    { id: "lipids", words: ["cholesterol", "lipid", "lipids", "heart", "dil", "कोलेस्ट्रॉल", "कोलेस्ट्रोल", "दिल", "हृदय"], keys: ["chol", "hdl", "ldl", "tg"] },
+    { id: "liver", words: ["liver", "fatty liver", "lft", "jigar", "लिवर", "लीवर", "जिगर"], keys: ["alt", "ast", "ggt"], cond: true },
+    { id: "kidney", words: ["kidney", "kidneys", "renal", "kft", "gurda", "gurde", "किडनी", "गुर्दा", "गुर्दे"], keys: ["creatinine", "egfr"], cond: true },
+    { id: "iron", words: ["iron", "anaemia", "anemia", "anaemic", "anemic", "cbc", "blood count", "khoon ki kami", "khun ki kami", "आयरन", "एनीमिया", "खून की कमी", "लोहा"], keys: ["hb", "iron", "ferritin"], cond: true },
+    { id: "inflammation", words: ["inflammation", "inflammatory", "sujan", "soojan", "सूजन"], keys: ["crp", "esr"] },
+    { id: "bones", words: ["bone", "bones", "haddi", "haddiyan", "हड्डी", "हड्डियां", "हड्डियाँ"], keys: ["calcium", "phosphorus", "vitd"] },
+    { id: "gout", words: ["gout", "गाउट"], keys: ["uric"] }
   ];
 
   // Tests the app doesn't track yet: answered honestly instead of guessing.
   const OTHER = [
     { words: ["free t4", "ft4", "t4", "free t3", "ft3", "t3"], name: "Free T4 / T3", topic: "thyroid" },
-    { words: ["vitamin c"], name: "Vitamin C" },
+    { words: ["vitamin c", "विटामिन सी", "विटामिन c"], name: "Vitamin C" },
     { words: ["folate", "folic acid", "folic"], name: "Folate" },
     { words: ["magnesium"], name: "Magnesium" },
     { words: ["potassium", "sodium", "electrolytes", "electrolyte"], name: "Electrolytes (sodium, potassium)" },
     { words: ["platelet", "platelets", "wbc", "white blood", "rbc"], name: "Other blood count values" },
     { words: ["psa"], name: "PSA" },
-    { words: ["urine"], name: "Urine tests" },
+    { words: ["urine", "यूरिन", "पेशाब"], name: "Urine tests" },
     { words: ["insulin"], name: "Insulin" },
     { words: ["urea", "bun"], name: "Urea" },
     { words: ["zinc"], name: "Zinc" }
@@ -76,7 +78,10 @@
   // Ordinary words that must never be "corrected" into a test name.
   const KEEP = new Set(("what which when where does have show tell about range normal healthy report reports result results level levels value values " +
     "test tests mine high good from with this that they them there been done should need take give much many more less okay fine well last latest " +
-    "over under body feel feeling weak tired doctor").split(" "));
+    "over under body feel feeling weak tired doctor " +
+    // Hinglish and Hindi everyday words
+    "kya hai mera meri mere mujhe kitna kitni batao bataiye kaise kaun kaunsa kaunse report normal kami problem samasya bimari dawa dawai goli " +
+    "क्या मेरा मेरी मेरे मुझे कितना कितनी बताओ बताइए कैसा कैसी कौन रिपोर्ट टेस्ट नतीजे सामान्य समस्या बीमारी कमी दवा दवाई गोली").split(" "));
 
   // ---------- understanding the question ----------
   const phrases = [];
@@ -121,10 +126,10 @@
     const has = re => re.test(raw);
     return {
       keys, topics, others,
-      condition: has(/ (have|got|am i|do i|is it|suffer|suffering|problem|problems|disease|issue|issues|deficient|deficiency|diabetic|anaemic|anemic) /) || topics.some(t => t.cond && / (diabetes|anaemia|anemia|hypothyroid|hyperthyroid|hypothyroidism|hyperthyroidism) /.test(raw)),
-      meds: has(/ (medicine|medicines|medication|tablet|tablets|capsule|capsules|dose|dosage|supplement|supplements|injection|pill|pills) /),
-      overview: has(/ (report|reports|result|results|summary|overall|everything) /),
-      tests: has(/ (which|what) (tests?|checks?) | should i (do|get|take|test) | (missing|pending) | tests? (to do|should) /)
+      condition: has(/ (have|got|am i|do i|is it|suffer|suffering|problem|problems|disease|issue|issues|deficient|deficiency|diabetic|anaemic|anemic|hai kya|kya mujhe|samasya|bimari|bimaari|kami|है क्या|हैं क्या|क्या मुझे|समस्या|बीमारी|कमी|रोग|तकलीफ) /) || topics.some(t => t.cond && / (diabetes|anaemia|anemia|hypothyroid|hyperthyroid|hypothyroidism|hyperthyroidism) /.test(raw)),
+      meds: has(/ (medicine|medicines|medication|tablet|tablets|capsule|capsules|dose|dosage|supplement|supplements|injection|pill|pills|dawa|dawai|davai|goli|दवा|दवाई|गोली|इंजेक्शन|सप्लीमेंट|खुराक|डोज) /),
+      overview: has(/ (report|reports|result|results|summary|overall|everything|natije|रिपोर्ट|नतीजे|सारांश) /),
+      tests: has(/ (which|what) (tests?|checks?) | should i (do|get|take|test) | (missing|pending) | tests? (to do|should) | kaun ?se test | kaun ?sa test | kaunse test | कौन ?से टेस्ट | कौन ?सा टेस्ट | कौन ?सी जांच | कौन ?से जांच /)
     };
   }
 
@@ -206,7 +211,7 @@
     return `<div class="card ans nt"><span class="eyebrow">${hasReports ? "Not in your reports" : "No report added yet"}</span>
       <b>${esc(m.keys.map(name).join(", "))}</b>
       <p class="note">${esc(c.about)}</p>
-      <p class="note">Healthy range: ${m.keys.map(k => `${esc(name(k).replace(/ \(.*\)/, ""))} ${esc(rangeOf(k, null, true))}`).join("; ")} (labs vary a little).</p>
+      <p class="note">${esc(T("Healthy range:"))} ${m.keys.map(k => `${esc(T(name(k).replace(/ \(.*\)/, "")))} ${esc(T(rangeOf(k, null, true)))}`).join("; ")} ${esc(T("(labs vary a little)."))}</p>
       <p><b>Test to ask for:</b> ${esc(m.name)}. Ask your doctor whether you need it.</p></div>`;
   }
   const otherCard = o => `<div class="card ans nt"><span class="eyebrow">Not tracked yet</span><b>${esc(o.name)}</b><p class="note">The app doesn't read this test yet. Please check the value on your report itself, or ask your doctor.</p></div>`;
@@ -258,7 +263,7 @@
   $("askClear").onclick = () => { $("askQ").value = ""; run(""); $("askQ").focus(); };
   screen.addEventListener("click", e => {
     const chip = e.target.closest("[data-ask]");
-    if (chip) { $("askQ").value = chip.dataset.ask; run(chip.dataset.ask); $("askOut").scrollIntoView({ block: "nearest" }); return; }
+    if (chip) { const q = T(chip.dataset.ask); $("askQ").value = q; run(q); $("askOut").scrollIntoView({ block: "nearest" }); return; }
     if (e.target.closest("[data-ask-upload]")) { close(); $("hUpload").click(); return; }
     const m = e.target.closest("#askOut [data-m]");
     if (m) H.openPanel(m.dataset.m);
