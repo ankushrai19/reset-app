@@ -11,11 +11,14 @@ window.resetThemeOf=function(m){var d;if(m==="dark")d=true;else if(m==="light")d
 (function(){var m;try{m=localStorage.getItem("reset84theme")}catch(e){}document.documentElement.dataset.theme=resetThemeOf(m||"auto")})();
 </script>
 <meta name="description" content="A daily routine that starts easy and builds up over 12 weeks.">
+<script src="i18n.js"></script>
+<script src="i18n-hi.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <style>
 @font-face{font-family:Inter;src:url(vendor/fonts/inter-latin.woff2) format("woff2");font-weight:400 700;font-display:swap}
+@font-face{font-family:"Noto Sans Devanagari";src:url(vendor/fonts/noto-sans-devanagari.woff2) format("woff2");font-weight:400 700;font-display:swap;unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF}
 @font-face{font-family:"Space Grotesk";src:url(vendor/fonts/space-grotesk-latin.woff2) format("woff2");font-weight:500 700;font-display:swap}
 /* Night look. Light version (daytime) is the default; data-theme="dark" on <html> switches. */
 :root{
@@ -24,8 +27,8 @@ window.resetThemeOf=function(m){var d;if(m==="dark")d=true;else if(m==="light")d
   --sun:#9a5a0b; --sun-soft:#fcebd3; --done:#1e7f57; --done-soft:#ddf2e6; --sky:#2f5fb3; --sky-soft:#e3ebf8;
   --bad:#b4362a; --bad-soft:#fbe4e1; --water:#1c8db0; --ringbg:#e6e9ef;
   --c0:#e6e9ef; --c1:#eef8d2; --c2:#c6f24e; --c3:#8db51f; --bar:#12151c; --bar-ink:#c3cad6; --bar-on:#c6f24e; --nav:#ffffff;
-  --f:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --fh:"Space Grotesk",Inter,system-ui,sans-serif;
-  --mono:Inter,system-ui,sans-serif;
+  --f:Inter,"Noto Sans Devanagari",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --fh:"Space Grotesk",Inter,"Noto Sans Devanagari",system-ui,sans-serif;
+  --mono:Inter,"Noto Sans Devanagari",system-ui,sans-serif;
   --ch1:#3a5a9c; --ch2:#c8740f; --chg:#2f8a5b; --chgrid:#e1e4ea; --band:#cfebd9;
   color-scheme:light;
 }
@@ -41,6 +44,9 @@ html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
 main{padding:calc(env(safe-area-inset-top,0px) + 18px) max(16px,env(safe-area-inset-right,0px)) calc(112px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:640px;margin:0 auto}
 h1,h2,h3{margin:0;line-height:1.15;font-family:var(--fh)}
+:root[data-lang="hi"] body{line-height:1.6}
+:root[data-lang="hi"] h1,:root[data-lang="hi"] h2,:root[data-lang="hi"] h3,:root[data-lang="hi"] .greet{letter-spacing:0;line-height:1.3}
+:root[data-lang="hi"] .eyebrow,:root[data-lang="hi"] .next .lbl{letter-spacing:.02em}
 h1{font-size:1.85rem;font-weight:700;letter-spacing:-.02em}
 h2{font-size:1.25rem;font-weight:700}
 h3{font-size:1.02rem}
@@ -413,6 +419,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
 .btn.icon svg{width:18px;height:18px}
 .seg.wide{align-self:stretch;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 .seg.wide button{padding:8px 4px}
+.seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .seg.four{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (min-width:430px){.seg.four{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .upcard{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:16px;border-radius:20px;border:1.5px dashed var(--acc-fg);background:var(--acc-soft);color:var(--ink)}
@@ -440,7 +447,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
     <button class="retest" id="retestCard" type="button" hidden></button>
     <div class="rings">
       <div class="rtile"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="23" fill="none" stroke="var(--ringbg)" stroke-width="7"/><circle id="arc" class="a1" cx="28" cy="28" r="23" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 145" transform="rotate(-90 28 28)"/></svg><b id="ringTxt">0/6</b><span>habits</span></div>
-      <div class="rtile"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="23" fill="none" stroke="var(--ringbg)" stroke-width="7"/><circle id="stepsArc" class="a2" cx="28" cy="28" r="23" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 145" transform="rotate(-90 28 28)"/></svg><b id="stepsN">0</b><span>of <span id="stepsGoal">5,000</span> steps</span></div>
+      <div class="rtile"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="23" fill="none" stroke="var(--ringbg)" stroke-width="7"/><circle id="stepsArc" class="a2" cx="28" cy="28" r="23" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 145" transform="rotate(-90 28 28)"/></svg><b id="stepsN">0</b><span id="stepsLbl">of 5,000 steps</span></div>
       <div class="rtile"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="23" fill="none" stroke="var(--ringbg)" stroke-width="7"/><circle id="waterArc" class="a3" cx="28" cy="28" r="23" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 145" transform="rotate(-90 28 28)"/></svg><b><span id="waterN">0</span>/<span id="waterGoal">8</span></b><span>glasses</span>
         <div class="stepper"><button type="button" id="waterMinus" aria-label="Remove a glass">−</button><button type="button" id="waterPlus" aria-label="Add a glass">+</button></div></div>
     </div>
@@ -534,6 +541,14 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
   <!-- SETTINGS (opened from the profile button) -->
   <section class="view" id="v-settings" hidden>
     <div class="top"><button class="iconbtn" id="setBack" type="button" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h1 style="flex:1">Settings</h1></div>
+      <div class="card acct">
+        <h3>Language</h3>
+        <div class="seg wide two" role="radiogroup" aria-label="Language" id="langSeg">
+          <button type="button" role="radio" data-lang-set="en" lang="en" translate="no">English</button>
+          <button type="button" role="radio" data-lang-set="hi" lang="hi" translate="no">हिंदी</button>
+        </div>
+        <p class="note">Hindi is a first version. Health explanations and Ask answers are still in English.</p>
+      </div>
       <div class="card acct">
         <h3>Theme</h3>
         <p class="note">Match phone follows your phone's dark mode. On Samsung, set it to turn on from sunset to sunrise.</p>
@@ -667,7 +682,7 @@ const PHASES=[
   {id:"sleep",at:"23:00",t:"7 hours of sleep, screens off before",w:""}]}
 ];
 let MILE={};
-const fmtShort=d=>parse(d).toLocaleDateString(undefined,{day:"numeric",month:"short"});
+const fmtShort=d=>parse(d).toLocaleDateString(window.I18N&&I18N.loc,{day:"numeric",month:"short"});
 function computeMile(){
   const m={},R=window.ResetRules,reps=state.reports||[];
   if(!R||!reps.length){m[84]="Repeat your blood tests";return m}
@@ -721,7 +736,7 @@ function renderToday(){
   const prevPhase=p.n>1?PHASES[p.n-2]:null;
   const prevTexts=prevPhase?new Set((window.ResetRules?ResetRules.apply(prevPhase.habits,prevPhase.to,0,repsOn(view)):prevPhase.habits).map(o=>o.t)):null;
   const isNew=h=>prevPhase&&n-p.from<7&&!prevTexts.has(h.t);
-  const dateTxt=parse(view).toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
+  const dateTxt=parse(view).toLocaleDateString(window.I18N&&I18N.loc,{weekday:"short",day:"numeric",month:"short"});
   document.getElementById("sub").textContent=(n<1?"Before day 1":n>TOTAL?"Plan complete":`Day ${n} · ${p.name}`)+(isToday?"":" · "+dateTxt)+(MILE[n]?" · "+MILE[n]:"");
   renderWeek(n);
   document.getElementById("greet").textContent=isToday?greeting():(n<1?"Before your start":"Day "+n);
@@ -774,7 +789,7 @@ function renderToday(){
   // steps
   const ds=daySteps(view),goal=p.steps||5000,pf=state.profile||{},S=window.ResetSteps;
   document.getElementById("stepsN").textContent=ds.n.toLocaleString();
-  document.getElementById("stepsGoal").textContent=goal.toLocaleString();
+  document.getElementById("stepsLbl").textContent=`of ${goal.toLocaleString()} steps`;
   arc("stepsArc",ds.n/goal);
   const kc=S?S.kcal(ds.n,pf):null;
   document.getElementById("stepsMeta").textContent=ds.n?`${S?S.km(ds.n,pf).toFixed(1):"?"} km${kc!=null?` · about ${kc} kcal burned walking (estimate)`:" · add your weight in Settings for calories"} · ${ds.src==="watch"?"from your watch total":"from walks counted by the app"}`:(future?"":"Tap Start walk on a walking habit to count steps, or enter today's total from your watch.");
@@ -796,12 +811,14 @@ function renderToday(){
 function renderWeek(n){const el=document.getElementById("week"),k=Math.min(Math.max(n,1),TOTAL),from=Math.floor((k-1)/7)*7+1;let h="";
   for(let d=from;d<from+7&&d<=TOTAL;d++){const date=add(state.start,d-1),sc=score(date),fut=date>TODAY;
     const cls=[fut?"future":sc>=.7?"good":sc>0?"some":"",date===view?"cur":"",date===TODAY?"today":""].filter(Boolean).join(" ");
-    h+=`<button type="button" class="${cls}" data-d="${date}" aria-label="Day ${d}, ${parse(date).toLocaleDateString(undefined,{weekday:"long"})}${fut?"":", "+Math.round(sc*100)+"%"}"${date===view?' aria-current="date"':""}><span>${DN[parse(date).getDay()]}</span><i>${d}</i></button>`}
+    h+=`<button type="button" class="${cls}" data-d="${date}" aria-label="Day ${d}, ${parse(date).toLocaleDateString(window.I18N&&I18N.loc,{weekday:"long"})}${fut?"":", "+Math.round(sc*100)+"%"}"${date===view?' aria-current="date"':""}><span>${DN[parse(date).getDay()]}</span><i>${d}</i></button>`}
   el.innerHTML=h}
 document.getElementById("week").addEventListener("click",e=>{const b=e.target.closest("button[data-d]");if(b){view=b.dataset.d;render()}});
+// translate text the app builds itself (see i18n.js)
+const T=s=>window.I18N?I18N.t(s):s;
 const SHORT={water:"water",meds:"supplements",sun:"sun",walk:"walk",chai:"chai",sleep:"sleep",protein:"protein",nuts:"nuts",dinner:"early dinner",strength:"strength",plate:"veg plate",nofried:"no fried food",screens:"screens off",weigh:"weigh-in",millet:"millets",b12food:"B12 food",noalcohol:"no alcohol",calcium:"calcium food",ironfood:"iron food"};
-window.resetHabitName=id=>SHORT[id]||id;
-const shortName=h=>SHORT[h.id]||h.t;
+window.resetHabitName=id=>window.I18N?I18N.t(SHORT[id]||id):SHORT[id]||id;
+const shortName=h=>window.I18N?I18N.t(SHORT[h.id]||h.t):SHORT[h.id]||h.t;
 function streakNow(){const last=Math.min(diff(state.start,TODAY),TOTAL-1);let s=0;
   for(let i=last;i>=0;i--){if(score(add(state.start,i))>=.7)s++;else if(i===last)continue;else break}return last<0?0:s}
 
@@ -874,7 +891,7 @@ function renderProgress(){
   document.getElementById("sAvg").textContent=(k&&last>=0?Math.round(sum/k*100):0)+"%";
 }
 function renderPlan(){
-  const cur=phaseOf(diff(state.start,TODAY)+1).n,f=x=>parse(x).toLocaleDateString(undefined,{day:"numeric",month:"short"});
+  const cur=phaseOf(diff(state.start,TODAY)+1).n,f=x=>parse(x).toLocaleDateString(window.I18N&&I18N.loc,{day:"numeric",month:"short"});
   const reps=state.reports||[], R=window.ResetRules, personal=!!(R&&reps.length);
   const last=personal?[...reps].sort((a,b)=>a.date<b.date?1:-1)[0]:null;
   let intro="";
@@ -884,15 +901,15 @@ function renderPlan(){
     const adds=Object.values(pl.adds);
     const focus=[...new Set(Object.values(pl.tags).filter(t=>!t.maint).map(t=>t.key))].map(k=>R.CATALOG[k].name);
     const maintNames=Object.entries(L).filter(([k,t])=>t.phase==="maintain").map(([k])=>R.CATALOG[k].name);
-    intro=`<div class="card ph cur"><span class="eyebrow">Personalised from your report of ${parse(last.date).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}${reps.length>1?` and ${reps.length-1} earlier`:""}</span>
+    intro=`<div class="card ph cur"><span class="eyebrow">Personalised from your report of ${parse(last.date).toLocaleDateString(window.I18N&&I18N.loc,{day:"numeric",month:"short",year:"numeric"})}${reps.length>1?` and ${reps.length-1} earlier`:""}</span>
       <h3>How your results shaped this plan</h3>
       ${focus.length?`<p class="note"><b>Focus:</b> ${esc(focus.join(", "))}.</p>`:`<p class="note">All tracked results are in range, so this is a maintenance plan of core habits.</p>`}
-      ${adds.length?`<p class="note"><b>Added:</b> ${adds.map(a=>esc(a.maint&&R.MAINT[a.id]?R.MAINT[a.id].t:a.t)+` (${esc(R.CATALOG[a.because].name)}${a.maint?", until confirmed":""})`).join("; ")}.</p>`:""}
+      ${adds.length?`<p class="note"><b>Added:</b> ${adds.map(a=>`<span>${esc(T(a.maint&&R.MAINT[a.id]?R.MAINT[a.id].t:a.t))}</span> (${esc(R.CATALOG[a.because].name)}${a.maint?", "+esc(T("until confirmed")):""})`).join("; ")}.</p>`:""}
       ${maintNames.length?`<p class="note"><b>Lighter for now:</b> ${esc(maintNames.join(", "))} ${maintNames.length>1?"are":"is"} back in range. The habits that helped stay in a lighter form until one more test confirms it.</p>`:""}
       ${allRemoved.size?`<p class="note"><b>Left out:</b> ${[...allRemoved.values()].map(h=>{const rr=R.removedReason(h.id,L);return `${esc(window.resetHabitName(h.id))} (${rr.resolved.length?`your ${esc(rr.resolved.join(", "))} stayed normal on two tests in a row`:`your ${esc(rr.names)} ${rr.names.includes(",")?"are":"is"} in range`})`}).join("; ")}.</p>`:""}
       <p class="note">Upload a new report and the plan updates by itself.</p></div>`;
   }else{
-    intro=`<div class="card"><h3>This is the general plan</h3><p class="note">Upload a blood report on the Health tab and the plan adapts to your results: habits for problems you have get added and explained, and ones you don't need are left out.</p></div>`;
+    intro=`<div class="card"><h3>This is the general plan</h3><p class="note">Upload a blood report on the Results tab and the plan adapts to your results: habits for problems you have get added and explained, and ones you don't need are left out.</p></div>`;
   }
   document.getElementById("phases").innerHTML=intro+PHASES.map(p=>{
     const pp=personal?R.phasePlan(p,reps):{list:p.habits,removed:[]};
@@ -947,7 +964,10 @@ const THEME_KEY="reset84theme";
 function themeMode(){try{return localStorage.getItem(THEME_KEY)||"auto"}catch(e){return"auto"}}
 function applyTheme(){const t=resetThemeOf(themeMode());if(document.documentElement.dataset.theme!==t){document.documentElement.dataset.theme=t;if(window.ResetCharts)ResetCharts.render()}
   document.querySelector('meta[name="theme-color"]').content=t==="dark"?"#0b0d12":"#f3f4f7"}
-function renderTheme(){const m=themeMode();document.querySelectorAll("[data-theme-mode]").forEach(b=>b.setAttribute("aria-checked",b.dataset.themeMode===m));
+function renderLang(){const l=window.I18N?I18N.lang:"en";document.querySelectorAll("[data-lang-set]").forEach(b=>b.setAttribute("aria-checked",b.dataset.langSet===l))}
+document.getElementById("langSeg").addEventListener("click",e=>{const b=e.target.closest("[data-lang-set]");if(b&&window.I18N)I18N.setLang(b.dataset.langSet)});
+window.addEventListener("langchange",()=>{render();renderLang()});
+function renderTheme(){renderLang();const m=themeMode();document.querySelectorAll("[data-theme-mode]").forEach(b=>b.setAttribute("aria-checked",b.dataset.themeMode===m));
   document.getElementById("themeNote").textContent={auto:"Following your phone's setting.",time:"Light from 6:30 am, dark from 6:30 pm.",dark:"Always dark.",light:"Always light."}[m]}
 document.getElementById("themeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-theme-mode]");if(!b)return;try{localStorage.setItem(THEME_KEY,b.dataset.themeMode)}catch(err){}applyTheme();renderTheme()});
 if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
@@ -967,7 +987,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){applyThem
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="3.0 (14 Nov 2026)";
+const APP_VERSION="3.1 (14 Nov 2026)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});

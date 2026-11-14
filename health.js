@@ -8,8 +8,8 @@
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const pad = n => String(n).padStart(2, "0");
   const isoToday = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
-  const fmtDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }); };
-  const shortDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { day: "numeric", month: "short" }); };
+  const fmtDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString(window.I18N&&I18N.loc, { day: "numeric", month: "short", year: "numeric" }); };
+  const shortDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString(window.I18N&&I18N.loc, { day: "numeric", month: "short" }); };
   const rid = () => "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const num = v => { const n = Number(v); return isFinite(n) ? n : null; };
 

@@ -2,7 +2,7 @@
 (function () {
   const R = window.ResetRules;
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const fmtDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }); };
+  const fmtDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString(window.I18N&&I18N.loc, { day: "numeric", month: "short", year: "numeric" }); };
 
   // Per result: common causes, what it can lead to, one action, foods, things to cut, tests to ask about.
   const INFO = {

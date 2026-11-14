@@ -7,7 +7,7 @@
   let range = "4w";
   try { range = localStorage.getItem("reset84range") || "4w"; } catch (e) {}
 
-  const shortD = d => parse(d).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  const shortD = d => parse(d).toLocaleDateString(window.I18N&&I18N.loc, { day: "numeric", month: "short" });
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
   const pathCol = (x, y, w, h) => { // column with 4px rounded top, square at the baseline
     const r = Math.min(4, w / 2, h);
