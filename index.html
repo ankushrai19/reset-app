@@ -570,7 +570,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
       </div>
       <div class="card acct">
         <h3>Your profile</h3>
-        <p class="note">Used only to estimate distance and calories from steps. Saved with your progress.</p>
+        <p class="note">Used to estimate distance and calories from steps. Sex also sets the healthy range for HDL and haemoglobin when a report doesn't give one. Saved with your progress.</p>
         <div class="fields">
           <label class="f" for="pfWeight">Weight (kg)<input type="number" inputmode="decimal" id="pfWeight" min="25" max="250" step="0.1"></label>
           <label class="f" for="pfHeight">Height (cm)<input type="number" inputmode="numeric" id="pfHeight" min="100" max="230"></label>
@@ -919,7 +919,7 @@ function renderPlan(){
   document.getElementById("start").value=state.start;
   const pf=state.profile||{};[["pfWeight","weight"],["pfHeight","height"],["pfAge","age"],["pfSex","sex"]].forEach(([id,k])=>{const el=document.getElementById(id);if(document.activeElement!==el)el.value=pf[k]??""});
 }
-function render(){MILE=computeMile();renderToday();renderProgress();if(window.ResetCharts)ResetCharts.render();renderPlan();if(window.HealthUI)HealthUI.render()}
+function render(){if(window.ResetRules)ResetRules.setSex((state.profile||{}).sex);MILE=computeMile();renderToday();renderProgress();if(window.ResetCharts)ResetCharts.render();renderPlan();if(window.HealthUI)HealthUI.render()}
 
 ["list","doneList"].forEach(id=>{const el=document.getElementById(id);
   el.addEventListener("click",e=>{const li=e.target.closest(".item");if(li)tick(li)});
@@ -931,7 +931,7 @@ document.getElementById("prev").onclick=()=>{view=add(view,-1);render()};
 document.getElementById("next").onclick=()=>{view=add(view,1);render()};
 document.getElementById("todayBtn").onclick=()=>{view=TODAY;render()};
 document.getElementById("grid").addEventListener("click",e=>{const b=e.target.closest(".cell");if(b){view=b.dataset.d;render();show("today")}});
-[["pfWeight","weight"],["pfHeight","height"],["pfAge","age"],["pfSex","sex"]].forEach(([id,k])=>document.getElementById(id).addEventListener("change",e=>{const v=e.target.value;state.profile={...(state.profile||{}),[k]:k==="sex"?v:(v===""?"":Number(v))};save({profile:true});renderToday();toast("Profile saved")}));
+[["pfWeight","weight"],["pfHeight","height"],["pfAge","age"],["pfSex","sex"]].forEach(([id,k])=>document.getElementById(id).addEventListener("change",e=>{const v=e.target.value;state.profile={...(state.profile||{}),[k]:k==="sex"?v:(v===""?"":Number(v))};save({profile:true});render();toast("Profile saved")}));
 document.getElementById("start").addEventListener("change",e=>{if(e.target.value){state.start=e.target.value;if(view<state.start)view=state.start;save({start:true});render();toast("Start date updated")}});
 
 // Trends lives under the Progress tab; Settings opens from the profile button and goes back to where you were.

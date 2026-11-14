@@ -231,7 +231,7 @@ I18N.load({
   "Backup and sync": "बैकअप और सिंक", "Sign in with Google": "Google से साइन इन करें", "Sign out": "साइन आउट",
   "Sign in with Google to back up your progress and use it on more than one device.": "अपनी प्रगति का बैकअप लेने और एक से ज़्यादा डिवाइस पर इस्तेमाल करने के लिए Google से साइन इन करें।",
   "Signed in as {email}. Your progress is backed up and syncs to any phone or laptop where you sign in.": "{email} से साइन इन हैं। आपकी प्रगति का बैकअप है और जिस फ़ोन या लैपटॉप पर साइन इन करें, वहाँ सिंक होती है।",
-  "Your profile": "आपकी प्रोफ़ाइल", "Used only to estimate distance and calories from steps. Saved with your progress.": "सिर्फ़ कदमों से दूरी और कैलोरी का अनुमान लगाने के लिए। आपकी प्रगति के साथ सेव होती है।",
+  "Your profile": "आपकी प्रोफ़ाइल", "Used to estimate distance and calories from steps. Sex also sets the healthy range for HDL and haemoglobin when a report doesn't give one. Saved with your progress.": "कदमों से दूरी और कैलोरी का अनुमान लगाने के लिए। रिपोर्ट में सीमा न दी हो, तो लिंग से HDL और हीमोग्लोबिन की सामान्य सीमा तय होती है। आपकी प्रगति के साथ सेव होती है।",
   "Weight (kg)": "वज़न (kg)", "Height (cm)": "लंबाई (cm)", "Age": "उम्र", "Sex": "लिंग", "Choose": "चुनें", "Male": "पुरुष", "Female": "महिला",
   "Your 12 weeks": "आपके 12 हफ़्ते", "Start date": "शुरुआत की तारीख", "Backup": "बैकअप", "Backup text": "बैकअप टेक्स्ट",
   "A manual copy of your progress, for use without signing in. Copy it now and then, and paste it here to restore.": "बिना साइन इन के लिए आपकी प्रगति की एक कॉपी। समय-समय पर कॉपी करें, और वापस लाने के लिए यहाँ पेस्ट करें।",

@@ -107,6 +107,7 @@ Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Googl
 - Conditional habits (`NEED`) stay only if a matching result is out of range, or untested: sun, meds, chai, millet, nuts, nofried, dinner.
 - Extras added for problems: B12 food, No alcohol (days 1–21), Calcium at dinner (from day 8), Iron food (from day 8).
 - History per marker: `active` (out of range), `maintain` (first normal after out of range → lighter version: sun 3 days a week, "maintenance dose as prescribed", B12 food 3 days a week), `resolved` (normal on two tests in a row → removed), `never`.
+- Ranges: the lab's own range on the report always wins. Without one, the catalog default is used; for women (profile sex "f") HDL is low under 50 mg/dL (MSD Manual) and haemoglobin under 12 g/dL (WHO); for men or sex not set, 40 and 13. `ResetRules.setSex()` is called at the start of every `render()`.
 - Newest result per test wins; a later report that skips a test keeps the earlier value.
 - Past days keep the plan they had: a day uses only reports whose `added` date (save day; falls back to test `date` for older reports) is on or before it, so a new report never re-scores history or breaks a streak.
 - Plan and Today must show the same habits for today and every later day. There is a test for this (compare `habits(date)` with `ResetRules.phasePlan` filtered by weekday and extra day ranges, over all 84 days and several result sets, plus a report added mid-programme). Run it after any rules change.
@@ -143,5 +144,4 @@ Open (owner decides order):
 2. **Option B, Android app with Health Connect:** wrap the app with Capacitor + `@capgo/capacitor-health` to read steps, distance, active calories and heart rate (Galaxy Watch via Samsung Health). Exact steps for Start walk even with the screen off. Build the APK with GitHub Actions (this environment can't download the Android SDK). This replaces the PWABuilder route for the Play Store.
 3. (Decided in 2.2, see Product rules: chai taper, continue after a new report, past days keep their plan.) Idea for later: when day 84 has passed, offer "Start a new 12 weeks".
 4. Public readiness: first-launch disclaimer, privacy policy page, Play Console health/data-safety declarations, 12 testers for 14 days.
-5. Sex-specific default ranges (found in the medical review): when a lab report has no range of its own, the app uses one limit for everyone. MSD uses HDL under 50 as low for women (40 for men); WHO uses haemoglobin under 12 for women (13 for men). Use the profile's sex for these defaults. Owner to decide.
-6. Roadmap (after the base app is final): doctor's prescriptions in the plan; repeat-test comparison report.
+5. Roadmap (after the base app is final): doctor's prescriptions in the plan; repeat-test comparison report.

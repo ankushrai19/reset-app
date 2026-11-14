@@ -1,6 +1,11 @@
 // Results catalog and the fixed rules that turn report results into habits.
 // The AI (Stage 2) only extracts numbers; everything here is deterministic.
 (function () {
+  // Sex from the profile ("f" / "m" / null). Only used where a lab report gives no range of its own.
+  // Women: HDL low under 50 mg/dL (MSD Manual, metabolic syndrome), haemoglobin low under 12 g/dL (WHO). Men or not set: 40 and 13.
+  let SEX = null;
+  const setSex = s => { SEX = s === "f" || s === "m" ? s : null; };
+
   // dir: which side of the range is a problem. "both" | "low" | "high"
   const CATALOG = {
     vitd:      { name: "Vitamin D", unit: "ng/mL", low: 30, high: 100, dir: "low", aka: ["vitamin d", "25-oh", "25 oh", "25-hydroxy", "cholecalciferol"], about: "Helps you absorb calcium for strong bones, and supports muscles and immunity. Made by your skin in sunlight." },
@@ -8,7 +13,7 @@
     hba1c:     { name: "HbA1c", unit: "%", low: 4, high: 5.7, dir: "high", aka: ["hba1c", "hb a1c", "a1c", "glycated", "glycosylated"], about: "Your average blood sugar over the last 3 months. 5.7 to 6.4 is prediabetes; 6.5 and above is diabetes." },
     glucose:   { name: "Fasting glucose", unit: "mg/dL", low: 70, high: 100, dir: "high", aka: ["fasting blood sugar", "fasting glucose", "glucose fasting", "fbs"], about: "Blood sugar after not eating overnight." },
     chol:      { name: "Total cholesterol", unit: "mg/dL", low: 0, high: 200, dir: "high", aka: ["total cholesterol", "cholesterol total", "cholesterol - total"], about: "All the cholesterol in your blood. The balance between HDL and LDL matters more than the total." },
-    hdl:       { name: "HDL (good) cholesterol", unit: "mg/dL", low: 40, high: 60, dir: "low", aka: ["hdl"], about: "The clean-up cholesterol that carries fat away from arteries. Higher is better." },
+    hdl:       { name: "HDL (good) cholesterol", unit: "mg/dL", get low() { return SEX === "f" ? 50 : 40; }, high: 60, dir: "low", aka: ["hdl"], about: "The clean-up cholesterol that carries fat away from arteries. Higher is better." },
     ldl:       { name: "LDL (bad) cholesterol", unit: "mg/dL", low: 0, high: 100, dir: "high", aka: ["ldl"], about: "The cholesterol that builds up in artery walls. Lower is better." },
     tg:        { name: "Triglycerides", unit: "mg/dL", low: 0, high: 150, dir: "high", aka: ["triglyceride"], about: "Fat your body makes from extra sugar, refined carbs and alcohol." },
     alt:       { name: "ALT / SGPT (liver)", unit: "U/L", low: 0, high: 45, dir: "high", aka: ["alt", "sgpt", "alanine"], about: "A liver enzyme. When high, the liver is under stress, most often from fatty liver or alcohol." },
@@ -22,7 +27,7 @@
     creatinine:{ name: "Creatinine (kidney)", unit: "mg/dL", low: 0.7, high: 1.2, dir: "high", aka: ["creatinine"], about: "A waste product filtered by the kidneys." },
     egfr:      { name: "eGFR (kidney filtering)", unit: "mL/min", low: 90, high: 200, dir: "low", aka: ["egfr", "glomerular"], about: "How well your kidneys filter blood. 90 and above is normal." },
     uric:      { name: "Uric acid", unit: "mg/dL", low: 3.5, high: 7.2, dir: "high", aka: ["uric"], about: "High levels can cause gout and kidney stones." },
-    hb:        { name: "Haemoglobin", unit: "g/dL", low: 13, high: 17, dir: "low", aka: ["haemoglobin", "hemoglobin", "hb"], about: "Carries oxygen in red blood cells. Low means anaemia." },
+    hb:        { name: "Haemoglobin", unit: "g/dL", get low() { return SEX === "f" ? 12 : 13; }, high: 17, dir: "low", aka: ["haemoglobin", "hemoglobin", "hb"], about: "Carries oxygen in red blood cells. Low means anaemia." },
     iron:      { name: "Iron", unit: "µg/dL", low: 65, high: 175, dir: "low", aka: ["iron", "serum iron"], about: "Needed to make haemoglobin." },
     ferritin:  { name: "Ferritin (iron stores)", unit: "ng/mL", low: 30, high: 400, dir: "low", aka: ["ferritin"], about: "Your body's iron reserve." }
   };
@@ -311,5 +316,5 @@
     return { routine: false, due: first, overdue: !!(today && first < today), together, later: items.filter(i => i.due > window), doctor, all: items };
   }
 
-  window.ResetRules = { CATALOG, EXTRA, RULES, NEED, MAINT, RETEST, SRC, keyFor, status, latest, plan, apply, effects, phasePlan, removedReason, retest, addDaysIso };
+  window.ResetRules = { setSex, CATALOG, EXTRA, RULES, NEED, MAINT, RETEST, SRC, keyFor, status, latest, plan, apply, effects, phasePlan, removedReason, retest, addDaysIso };
 })();

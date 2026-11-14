@@ -35,4 +35,12 @@ check("high sugar, day 2", chai(2, high), "Chai with half the usual sugar");
 check("high sugar, day 5", chai(5, high), "Chai with a quarter of the usual sugar");
 check("high sugar, day 7", chai(7, high), "Chai without sugar");
 check("sugar normal, day 7", chai(7, ok), "Chai with half the usual sugar");
+// women's limits apply only when the lab gives no range of its own
+const st = (key, value, sex, low) => { R.setSex(sex); const s = R.status({ key, value, low: low ?? null, high: null }); R.setSex(null); return s; };
+check("HDL 45, woman, no lab range: low", st("hdl", 45, "f"), "low");
+check("HDL 45, man, no lab range: ok", st("hdl", 45, "m"), "ok");
+check("HDL 45, sex not set: ok", st("hdl", 45, null), "ok");
+check("Haemoglobin 12.5, woman: ok", st("hb", 12.5, "f"), "ok");
+check("Haemoglobin 12.5, man: low", st("hb", 12.5, "m"), "low");
+check("Haemoglobin 12.5, woman, lab range 13: low (lab wins)", st("hb", 12.5, "f", 13), "low");
 process.exit(fail ? 1 : 0);
