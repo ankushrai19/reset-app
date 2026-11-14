@@ -44,7 +44,7 @@
     { id: "iron", words: ["iron", "anaemia", "anemia", "anaemic", "anemic", "cbc", "blood count", "khoon ki kami", "khun ki kami", "आयरन", "एनीमिया", "खून की कमी", "लोहा"], keys: ["hb", "iron", "ferritin"], cond: true },
     { id: "inflammation", words: ["inflammation", "inflammatory", "sujan", "soojan", "सूजन"], keys: ["crp", "esr"] },
     { id: "bones", words: ["bone", "bones", "haddi", "haddiyan", "हड्डी", "हड्डियां", "हड्डियाँ"], keys: ["calcium", "phosphorus", "vitd"] },
-    { id: "gout", words: ["gout", "गाउट"], keys: ["uric"] }
+    { id: "gout", words: ["gout", "गाउट", "गठिया"], keys: ["uric"] }
   ];
 
   // Tests the app doesn't track yet: answered honestly instead of guessing.
