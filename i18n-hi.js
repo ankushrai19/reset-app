@@ -385,7 +385,7 @@ I18N.load({
   "Walnuts and almonds": "अखरोट और बादाम", "Flaxseed or chia": "अलसी या चिया", "Fish twice a week": "हफ़्ते में दो बार मछली",
   "Mustard or olive oil in moderation": "सीमित मात्रा में सरसों या जैतून का तेल", "Smoking": "धूम्रपान", "Dal and beans": "दाल और फलियाँ",
   "Fried snacks": "तले स्नैक्स", "Bakery items": "बेकरी की चीज़ें", "Ghee and butter in large amounts": "ज़्यादा मात्रा में घी और मक्खन",
-  "Vegetables": "सब्ज़ियाँ", "Whole grains": "साबुत अनाज", "Alcohol": "शराब", "Sugar": "चीनी", "Coffee without sugar in moderation": "सीमित मात्रा में बिना चीनी की कॉफ़ी",
+  "Vegetables": "सब्ज़ियाँ", "Whole grains": "साबुत अनाज", "Alcohol": "शराब", "Added sugar": "ऊपर से डाली गई चीनी", "Coffee without sugar in moderation": "सीमित मात्रा में बिना चीनी की कॉफ़ी",
   "Herbal or detox supplements": "हर्बल या डिटॉक्स सप्लीमेंट", "Unneeded painkillers": "बेवजह दर्द की दवाएँ",
   "Fish, walnuts, flaxseed": "मछली, अखरोट, अलसी", "Vegetables and fruit": "सब्ज़ियाँ और फल", "Fried food": "तला खाना", "Ragi": "रागी",
   "Til (sesame)": "तिल", "Green leafy vegetables": "हरी पत्तेदार सब्ज़ियाँ",
@@ -547,4 +547,56 @@ I18N.load({
   "Glasses": "गिलास", "Average {a} glasses a day; goal reached on {h} of {n} days.": "रोज़ औसत {a} गिलास; {n} में से {h} दिन लक्ष्य पूरा।",
   "{d}: {n} glasses": "{d}: {n} गिलास", "{d}: {n} glass": "{d}: {n} गिलास", "Goal 8": "लक्ष्य 8",
   "Result trends from your blood reports are on the Results tab.": "ब्लड रिपोर्ट के नतीजों के रुझान \"नतीजे\" टैब पर हैं।"
+});
+
+// ======================================================================
+// Round 3: safety notes, focus habits, repeat week, weight and waist, calendar reminders.
+// ======================================================================
+I18N.load({
+  // focus habits
+  "Before your start": "शुरुआत से पहले", ".": "।",
+  "Focus today": "आज का फ़ोकस", "This day's focus habits": "इस दिन की फ़ोकस आदतें", "Also good to do": "यह भी करना अच्छा है", "optional": "ज़रूरी नहीं",
+  "focus": "फ़ोकस", "That's a good day. 70% or more of your focus habits counts.": "अच्छा दिन! फ़ोकस आदतों का 70% या ज़्यादा गिना जाता है।",
+  // profile
+  "Medicines for diabetes?": "डायबिटीज़ की दवाएँ लेते हैं?", "Pregnant or breastfeeding?": "गर्भवती हैं या स्तनपान कराती हैं?", "No": "नहीं", "Yes": "हाँ",
+  "Used to estimate distance and calories from steps. Sex also sets the healthy range for HDL and haemoglobin when a report doesn't give one. Saved with your progress.": "कदमों से दूरी और कैलोरी का अनुमान लगाने के लिए। रिपोर्ट में सीमा न दी हो, तो लिंग से HDL और हीमोग्लोबिन की सामान्य सीमा तय होती है। आपकी प्रगति के साथ सेव होती है।",
+  // safety notes
+  "Plan paused for pregnancy and breastfeeding": "गर्भावस्था और स्तनपान के लिए प्लान रोका गया",
+  "Only gentle basics are shown: water, a walk and sleep. Normal ranges and advice are different in pregnancy and while breastfeeding, so please follow your doctor's advice.": "सिर्फ़ हल्की बुनियादी आदतें दिखाई गई हैं: पानी, वॉक और नींद। गर्भावस्था और स्तनपान में सामान्य सीमाएँ और सलाह अलग होती हैं, इसलिए कृपया डॉक्टर की सलाह मानें।",
+  "You can change this in Settings, under Your profile.": "इसे सेटिंग्स में \"आपकी प्रोफ़ाइल\" के अंदर बदल सकते हैं।",
+  "You take medicines for diabetes": "आप डायबिटीज़ की दवाएँ लेते हैं",
+  "Talk to your doctor before changing your diet or exercise. More walking and less sugar can lower your blood sugar too far.": "खाना या व्यायाम बदलने से पहले डॉक्टर से बात करें। ज़्यादा वॉक और कम चीनी से ब्लड शुगर बहुत ज़्यादा गिर सकती है।",
+  "Signs of low sugar: shaking, sweating, sudden hunger or confusion.": "शुगर कम होने के लक्षण: काँपना, पसीना आना, अचानक भूख लगना या उलझन।",
+  "Your sugar is in the diabetes range": "आपकी शुगर डायबिटीज़ की सीमा में है",
+  "Please see your doctor soon about this result. If you start medicines for diabetes, set it in Settings, under Your profile.": "इस नतीजे के बारे में जल्द डॉक्टर को दिखाएँ। अगर डायबिटीज़ की दवाएँ शुरू करें, तो सेटिंग्स में \"आपकी प्रोफ़ाइल\" के अंदर बताएँ।",
+  "Made for adults": "वयस्कों के लिए बना",
+  "The ranges and plan in this app are for adults (18 and over). Please use it only with guidance from a doctor.": "इस ऐप की सीमाएँ और प्लान वयस्कों (18 साल और ऊपर) के लिए हैं। कृपया इसे सिर्फ़ डॉक्टर की सलाह के साथ इस्तेमाल करें।",
+  "I've talked to my doctor": "मैंने डॉक्टर से बात कर ली है",
+  // kidney
+  "Kidney": "किडनी", "Protein as your doctor advises": "डॉक्टर के बताए अनुसार प्रोटीन",
+  "Your kidney results need a doctor's review. Don't add protein powders or extra protein without their OK.": "आपके किडनी के नतीजे डॉक्टर को दिखाने ज़रूरी हैं। उनकी सलाह के बिना प्रोटीन पाउडर या ज़्यादा प्रोटीन न लें।",
+  // repeat week
+  "Last week was tough ({p}%)": "पिछला हफ़्ता मुश्किल रहा ({p}%)",
+  "Repeat it before stepping up? You get the same habits for 7 more days, and your 12 weeks get one week longer.": "आगे बढ़ने से पहले इसे दोहराएँ? 7 दिन और यही आदतें रहेंगी, और आपके 12 हफ़्ते एक हफ़्ता लंबे हो जाएँगे।",
+  "Repeat last week": "पिछला हफ़्ता दोहराएँ", "Keep going": "आगे बढ़ें",
+  "Week repeated. Same habits for 7 more days.": "हफ़्ता दोहराया गया। 7 दिन और यही आदतें।", "Keep going. You've got this.": "आगे बढ़ते रहें। आप कर सकते हैं।",
+  "Phase {n} · {name} · week repeated": "चरण {n} · {name} · हफ़्ता दोहराया",
+  "Don't rush": "जल्दबाज़ी न करें", "If a week ends under 60%, the app offers to repeat it before stepping up.": "अगर कोई हफ़्ता 60% से कम पर खत्म हो, तो ऐप आगे बढ़ने से पहले उसे दोहराने का विकल्प देता है।",
+  // weight and waist
+  "Weight and waist": "वज़न और कमर", "Log today's numbers": "आज के नंबर लिखें", "Waist (cm)": "कमर (cm)",
+  "Measure your waist at the level of your belly button, after breathing out.": "साँस छोड़ने के बाद नाभि की ऊँचाई पर कमर नापें।",
+  "Check the numbers: weight 25–250 kg, waist 40–200 cm": "नंबर जाँचें: वज़न 25–250 kg, कमर 40–200 cm", "Weight and waist saved": "वज़न और कमर सेव हुए",
+  "Log your weight and waist from the + button, or when you tick the weekly weigh-in.": "+ बटन से वज़न और कमर लिखें, या हफ़्ते के वज़न वाली आदत पर टिक करते समय।",
+  "Weight {w} kg ({c} since {d})": "वज़न {w} kg ({d} से {c})", "Weight {w} kg": "वज़न {w} kg",
+  "waist {x} cm ({y} since {e})": "कमर {x} cm ({e} से {y})", "waist {x} cm": "कमर {x} cm",
+  "Weight {w} kg ({c} since {d}).": "वज़न {w} kg ({d} से {c})।", "Weight {w} kg.": "वज़न {w} kg।",
+  "waist {x} cm ({y} since {e}).": "कमर {x} cm ({e} से {y})।", "waist {x} cm.": "कमर {x} cm।",
+  "Target under {t} cm": "लक्ष्य {t} cm से कम",
+  "Set your sex in Settings to see your waist target (men under 90 cm, women under 80 cm).": "कमर का लक्ष्य देखने के लिए सेटिंग्स में लिंग चुनें (पुरुष 90 cm से कम, महिलाएँ 80 cm से कम)।",
+  // calendar reminders
+  "Reminders": "रिमाइंडर", "Add to calendar": "कैलेंडर में जोड़ें",
+  "Add this phase's habit times to your phone's calendar, and it reminds you at each time. Add them again when a new phase starts.": "इस चरण की आदतों के समय फ़ोन के कैलेंडर में जोड़ें, वह हर समय पर याद दिलाएगा। नया चरण शुरू होने पर फिर से जोड़ें।",
+  "On Samsung, open the file with Samsung Calendar.": "Samsung पर फ़ाइल को Samsung Calendar से खोलें।",
+  "Or add one by one to Google Calendar": "या एक-एक करके Google Calendar में जोड़ें",
+  "Calendar file saved. Open it with your calendar app.": "कैलेंडर फ़ाइल सेव हुई। इसे अपने कैलेंडर ऐप से खोलें।"
 });

@@ -1,5 +1,5 @@
 // Progress graphs. Hand-drawn SVG (no library) so they work offline.
-// Uses the app's globals: state, habits, add, diff, parse, TODAY, TOTAL, PHASES, mins, fmt, esc, resetHabitName.
+// Uses the app's globals: state, habits, scored, calLen, add, diff, parse, TODAY, TOTAL, PHASES, mins, fmt, esc, resetHabitName.
 (function () {
   const $ = id => document.getElementById(id);
   const E = x => String(x ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
@@ -22,7 +22,7 @@
 
   // ---- data ----
   function daysIn(r) {
-    const last = Math.min(diff(state.start, TODAY), TOTAL - 1);
+    const last = Math.min(diff(state.start, TODAY), calLen() - 1);
     if (last < 0) return [];
     const first = r === "2w" ? Math.max(0, last - 13) : r === "4w" ? Math.max(0, last - 27) : 0;
     const out = [];
@@ -30,8 +30,9 @@
     return out;
   }
   function dayStats(d) {
-    const { list } = habits(d), done = new Set(state.days[d] || []);
-    return { d, list, done, total: list.length, n: list.filter(h => done.has(h.id)).length };
+    // list: every habit that day (for the per-habit graphs); the day's score counts the focus habits (see scored())
+    const { list } = habits(d), done = new Set(state.days[d] || []), sc = scored(d);
+    return { d, list, done, total: sc.length, n: sc.filter(h => done.has(h.id)).length };
   }
 
   // ---- chart pieces ----
@@ -73,15 +74,29 @@
     });
     return s + `</svg>`;
   }
+  // a line with dots, one point per entry (entries are evenly spaced, not by date)
+  function line({ values, labels, tips, ref, refLabel, unit, H = 150 }) {
+    const n = values.length, pw = W - PAD.l - PAD.r, ph = H - PAD.t - PAD.b, all = [...values, ...(ref != null ? [ref] : [])];
+    let lo = Math.min(...all), hi = Math.max(...all); const padv = Math.max(1, (hi - lo) * 0.25); lo = Math.floor(lo - padv); hi = Math.ceil(hi + padv);
+    const x = i => PAD.l + (n === 1 ? pw / 2 : pw * i / (n - 1)), y = v => PAD.t + ph * (1 - (v - lo) / (hi - lo));
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
+    for (const t of [lo, (lo + hi) / 2, hi]) s += `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(t)}" y2="${y(t)}" class="grid"/><text x="${PAD.l - 6}" y="${y(t) + 4}" class="tick" text-anchor="end">${Math.round(t)}${unit || ""}</text>`;
+    if (ref != null) s += `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(ref)}" y2="${y(ref)}" class="ref"/><text x="${W - PAD.r}" y="${y(ref) - 4}" class="reflab" text-anchor="end">${E(refLabel)}</text>`;
+    if (n > 1) s += `<path d="${values.map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + "," + y(v).toFixed(1)).join("")}" class="ln"/>`;
+    values.forEach((v, i) => { s += `<circle cx="${x(i)}" cy="${y(v)}" r="4" class="pt"/><rect x="${x(i) - 14}" y="${PAD.t}" width="28" height="${ph}" class="hit" tabindex="0" data-tip="${E(tips[i])}"/>`; });
+    [0, n - 1].filter((v, i, a) => a.indexOf(v) === i).forEach(i => { s += `<text x="${x(i)}" y="${H - 8}" class="tick" text-anchor="${n > 1 ? (i ? "end" : "start") : "middle"}">${E(labels[i])}</text>`; });
+    return s + `</svg>`;
+  }
   const table = (head, rows) => `<details class="tview"><summary>Show as table</summary><div class="tbl"><table><thead><tr>${head.map(h => `<th>${E(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${E(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></details>`;
   const key = (hi, rest) => `<p class="note key"><i class="sw m1"></i>${E(rest)} <i class="sw m2"></i>${E(hi)}</p>`;
   const card = (title, lead, body, tbl, id) => `<div class="card chart"${id ? ` id="${id}"` : ""}><h3>${E(title)}</h3><p class="note lead">${lead}</p>${body}${tbl}</div>`;
 
   // ---- the charts ----
   function weekly() {
-    const last = Math.min(diff(state.start, TODAY), TOTAL - 1), cur = Math.floor(Math.max(last, 0) / 7);
+    // calendar weeks: 12, plus one for each repeated week
+    const last = Math.min(diff(state.start, TODAY), calLen() - 1), cur = Math.floor(Math.max(last, 0) / 7);
     const vals = [], tips = [], rows = [];
-    for (let w = 0; w < 12; w++) {
+    for (let w = 0; w < calLen() / 7; w++) {
       const ds = []; for (let i = w * 7; i < w * 7 + 7 && i <= last; i++) ds.push(dayStats(add(state.start, i)));
       if (!ds.length) { vals.push(null); tips.push(`Week ${w + 1}: not started`); continue; }
       const p = Math.round(ds.reduce((a, s) => a + (s.total ? s.n / s.total : 0), 0) / ds.length * 100);
@@ -174,10 +189,29 @@
       table(["Date", "kcal (estimate)"], days.map((d, i) => [shortD(d), vals[i]])));
   }
 
+  // Weight and waist, from the weekly weigh-in or the + button. Waist target by sex (Asian cut-offs, IDF): men under 90 cm, women under 80 cm.
+  function body() {
+    const b = state.body || {}, ds = Object.keys(b).sort(), sex = (state.profile || {}).sex;
+    const wd = ds.filter(d => b[d].w != null), cd = ds.filter(d => b[d].waist != null), target = sex === "f" ? 80 : sex === "m" ? 90 : null;
+    if (!wd.length && !cd.length) return card("Weight and waist", "Log your weight and waist from the + button, or when you tick the weekly weigh-in.", "", "");
+    const ch = (a, z, u) => { const d = Math.round((z - a) * 10) / 10; return (d > 0 ? "+" : "") + d + " " + u; };
+    const parts = [];
+    if (wd.length) parts.push(`Weight ${b[wd.at(-1)].w} kg` + (wd.length > 1 ? ` (${ch(b[wd[0]].w, b[wd.at(-1)].w, "kg")} since ${shortD(wd[0])})` : ""));
+    if (cd.length) parts.push(`waist ${b[cd.at(-1)].waist} cm` + (cd.length > 1 ? ` (${ch(b[cd[0]].waist, b[cd.at(-1)].waist, "cm")} since ${shortD(cd[0])})` : ""));
+    // each part is translated on its own (a template can't tell where one part ends)
+    const T = x => (window.I18N ? I18N.t(x) : x);
+    const lead = parts.map(T).join(", ") + T(".");
+    let bodyHTML = "";
+    if (wd.length) bodyHTML += `<p class="note"><b>Weight (kg)</b></p>` + line({ values: wd.map(d => b[d].w), labels: wd.map(shortD), tips: wd.map(d => `${shortD(d)}: ${b[d].w} kg`), unit: "" });
+    if (cd.length) bodyHTML += `<p class="note"><b>Waist (cm)</b></p>` + line({ values: cd.map(d => b[d].waist), labels: cd.map(shortD), tips: cd.map(d => `${shortD(d)}: ${b[d].waist} cm`), ref: target, refLabel: target ? `Target under ${target} cm` : "", unit: "" });
+    if (!target) bodyHTML += `<p class="note">Set your sex in Settings to see your waist target (men under 90 cm, women under 80 cm).</p>`;
+    return card("Weight and waist", lead, bodyHTML, table(["Date", "Weight (kg)", "Waist (cm)"], ds.map(d => [shortD(d), b[d].w ?? "–", b[d].waist ?? "–"])));
+  }
+
   function render() {
     const host = $("charts"); if (!host) return;
     const days = daysIn(range);
-    host.innerHTML = weekly() +
+    host.innerHTML = weekly() + body() +
       `<div class="seg" role="group" aria-label="Range for the graphs below">${[["2w", "2 weeks"], ["4w", "4 weeks"], ["all", "All days"]].map(([k, l]) => `<button type="button" data-r="${k}" aria-pressed="${range === k}">${l}</button>`).join("")}</div>` +
       daily(days) + steps(days) + calories(days) + byHabit(days) + medicines(days) + timeOfDay(days) + water(days) +
       `<p class="note">Result trends from your blood reports are on the Results tab.</p>`;

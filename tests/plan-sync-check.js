@@ -36,7 +36,7 @@ const URL = process.env.URL || "http://localhost:8790/";
         const pl = pp.list.filter(h => (!h.days || h.days.includes(wd)) && (!h.extra || (n >= h.from && (!h.to || n <= h.to)))).map(h => h.id).sort();
         if (today.join() !== pl.join()) plan++;
         view = date; renderToday();
-        const shown = [...document.querySelectorAll('#nextCard:not([hidden]) [data-act="done"],#list .item,#doneList .item')].map(e => e.dataset.id).sort();
+        const shown = [...document.querySelectorAll('#nextCard:not([hidden]) [data-act="done"],#list .item,#optList .item,#doneList .item')].map(e => e.dataset.id).sort();
         if (shown.join() !== today.join()) screen++;
       }
       state.start = start0; view = TODAY; render(); return { plan, screen, past };

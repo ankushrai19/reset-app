@@ -6,9 +6,15 @@ const { chromium, devices } = require("playwright");
 const path = require("path"), fs = require("fs"), os = require("os");
 const URL = process.env.URL || "http://localhost:8790/";
 // Words that stay as they are in Hindi too: test codes, units, brands, the sample lab's name, week labels
-const KEEP = /^(HbA1c|HDL|LDL|ALT|AST|GGT|TSH|SGPT|SGOT|B12|eGFR|hs-CRP|CRP|ESR|PTH|HOMA|IR|hs|LFT|KFT|CBC|PSA|T3|T4|OH|PDF|JPG|PNG|AI|Google|Samsung|Galaxy|Watch|Android|Chrome|Firebase|Thyrocare|kcal|km|cm|kg|ng|pg|mg|µg|mL|dL|µIU|min|U|L|English|am|pm|AM|PM|Sample|Lab|W\d+|report)$/;
+const KEEP = /^(HbA1c|HDL|LDL|ALT|AST|GGT|TSH|SGPT|SGOT|B12|eGFR|hs-CRP|CRP|ESR|PTH|HOMA|IR|hs|LFT|KFT|CBC|PSA|T3|T4|OH|PDF|JPG|PNG|AI|Google|Samsung|Calendar|Galaxy|Watch|Android|Chrome|Firebase|Thyrocare|kcal|km|cm|kg|ng|pg|mg|µg|mL|dL|µIU|min|U|L|English|am|pm|AM|PM|Sample|Lab|W\d+|report)$/;
 // Not checked: source titles on links (citations stay in their original language), the file name, user-typed lab names
 const SKIP = "script,style,textarea,[hidden],[translate='no'],a[href^='http'],.steps + p.note,#sheetIn > p.note:first-of-type";
+// one English phrase must have one Hindi meaning (a later entry would silently replace an earlier one)
+{ const src = fs.readFileSync(path.join(__dirname, "..", "i18n-hi.js"), "utf8"), seen = {};
+  for (const m of src.matchAll(/"((?:[^"\\]|\\.)*)":\s*"((?:[^"\\]|\\.)*)"/g)) (seen[m[1]] = seen[m[1]] || new Set()).add(m[2]);
+  const clash = Object.entries(seen).filter(([, s]) => s.size > 1);
+  console.log(clash.length ? "FAIL same English, different Hindi: " + clash.map(([e, s]) => e + " → " + [...s].join(" | ")).join("; ") : "PASS every English phrase has one Hindi meaning");
+  if (clash.length) process.exitCode = 1; }
 (async () => {
   const b = await chromium.launch(), p = await (await b.newContext({ ...devices["Pixel 7"] })).newPage(), errs = [];
   p.on("pageerror", e => errs.push(e.message));
@@ -27,7 +33,7 @@ const SKIP = "script,style,textarea,[hidden],[translate='no'],a[href^='http'],.s
       return out;
     }, SKIP);
     for (const x of xs) {
-      const words = x.replace(/^\[[a-z-]+\] /, "").split(/[\s,.:;·()+\/–—\-↑↓"“”']+/).filter(w => /[A-Za-z]{2}/.test(w) && !KEEP.test(w));
+      const words = x.replace(/^\[[a-z-]+\] /, "").split(/[\s,.:;·()+\/–—\-↑↓"“”'।]+/).filter(w => /[A-Za-z]{2}/.test(w) && !KEEP.test(w));
       if (words.length && !left.has(x)) left.set(x, where);
     }
   };
@@ -68,6 +74,19 @@ const SKIP = "script,style,textarea,[hidden],[translate='no'],a[href^='http'],.s
     const tips = await p.evaluate(() => [...document.querySelectorAll("#charts .hit")].map(h => h.dataset.tip));
     for (const t of tips) { const tr = await p.evaluate(t => I18N.t(t), t); if (/[A-Za-z]{3}/.test(tr.replace(/\b(kcal|km|W\d+|HbA1c)\b/g, "")) && !left.has(tr)) left.set(tr, "trends tooltip"); }
   }
+  // safety notes, focus and optional habits, repeat week, weight and waist, reminders
+  const scene = o => p.evaluate(o => { state = shape({ ...JSON.parse(JSON.stringify(state)), ...o.set, profile: o.profile || {}, plan: { focusFrom: add(TODAY, -100) }, start: o.start != null ? add(TODAY, o.start) : state.start }); view = TODAY; persist(); render(); }, o);
+  await scene({ profile: { diab: "yes", age: 16 } }); await p.evaluate(() => show("today")); await grab("today: diabetes + under 18");
+  await p.evaluate(() => show("plan")); await grab("plan: safety notes");
+  await scene({ profile: { sex: "f", preg: "yes" } }); for (const v of ["today", "health", "plan"]) { await p.evaluate(v => show(v), v); await grab("pregnancy: " + v); }
+  await scene({ profile: {}, set: { reports: [{ id: "k", date: "2026-01-01", added: "2026-01-01", lab: "T", tests: [{ key: "egfr", name: "eGFR", value: 50, unit: "", low: 90, high: null }, { key: "hba1c", name: "HbA1c", value: 7.2, unit: "%", low: null, high: 5.7 }] }] }, start: -12 });
+  await p.evaluate(() => show("today")); await grab("today: kidney + sugar note");
+  await scene({ profile: {}, set: { reports: [], days: {} }, start: -8 }); await p.evaluate(() => show("today")); await grab("today: repeat offer");
+  await p.click('#offer [data-week="repeat"]'); await p.evaluate(() => show("progress")); await grab("progress: repeated week");
+  await scene({ profile: { sex: "m" }, set: { body: { [await p.evaluate(() => add(TODAY, -14))]: { w: 84, waist: 96 }, [await p.evaluate(() => TODAY)]: { w: 82.4, waist: 94 } } } });
+  await p.evaluate(() => { show("trends"); openBody(TODAY); }); await grab("weight and waist");
+  await p.evaluate(() => { document.getElementById("bodySheet").hidden = true; state.body = { [TODAY]: { w: 82.4, waist: null } }; state.profile = {}; render(); show("trends"); }); await grab("trends: weight only");
+  await p.evaluate(() => { show("settings"); document.getElementById("calLinks").open = true; }); await grab("settings: reminders");
   // Today in many states
   for (const off of [-20, -3, 0, 3, 12, 30, 50, 63]) { await p.evaluate(o => { show("today"); view = add(TODAY, o); renderToday(); }, off); await grab("today+" + off); }
   const habitLeft = await p.evaluate(() => { const o = []; for (let n = 1; n <= 84; n++) for (const h of habits(add(state.start, n - 1)).list) for (const s of [h.t, h.w, h.pw]) if (s && I18N.t(s) === s) o.push(s); return [...new Set(o)]; });
@@ -82,5 +101,5 @@ const SKIP = "script,style,textarea,[hidden],[translate='no'],a[href^='http'],.s
   const hiLeft = await p.evaluate(() => { const o = []; for (const v of ["today", "health", "progress", "trends", "plan", "settings"]) { show(v); const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (/[ऀ-ॿ]/.test(n.nodeValue) && !n.parentElement.closest("[translate='no'],script")) o.push(n.nodeValue.trim()); } return [...new Set(o)]; });
   if (hiLeft.length) { fail++; console.log("FAIL Hindi left after switching back:", hiLeft.slice(0, 10)); } else console.log("PASS switching back to English restores everything");
   console.log("page errors:", errs.length ? errs : "none");
-  await b.close(); process.exit(fail || errs.length ? 1 : 0);
+  await b.close(); process.exit(fail || errs.length || process.exitCode ? 1 : 0);
 })();

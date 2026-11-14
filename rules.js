@@ -216,12 +216,18 @@
   const TAPER_PLAN = "Chai sugar: half (days 1–3), a quarter (days 4–6), none from day 7";
   const taperW = "Cutting down over a week is easier to stick with than stopping at once.";
 
+  // Kidney filtering low (eGFR) or creatinine high: protein becomes "as your doctor advises" instead of "more protein".
+  const kidneyKey = L => ["egfr", "creatinine"].find(k => L[k] && L[k].phase === "active");
+  const KIDNEY = { t: "Protein as your doctor advises", w: "", pw: "Your kidney results need a doctor's review. Don't add protein powders or extra protein without their OK." };
+  const kidneySafe = (list, L) => { const k = kidneyKey(L); return k ? list.map(h => h.id === "protein" ? { ...h, ...KIDNEY, pk: k } : h) : list; };
+
   // Apply the plan to one day's habit list (call before filtering by weekday).
   function apply(list, dayN, wd, reports) {
     if (!reports || !reports.length) return list;
     const p = plan(reports);
     let out = personalise(list, p);
     if (dayN <= 7 && sugarHigh(p.latest)) out = out.map(h => h.id === "chai" ? { ...h, t: TAPER(Math.max(1, dayN)), w: taperW } : h);
+    out = kidneySafe(out, p.latest);
     const have = new Set(out.map(h => h.id));
     for (const x of Object.values(p.adds)) {
       if (have.has(x.id) || dayN < x.from || (x.to && dayN > x.to)) continue;
@@ -243,6 +249,7 @@
     const p = plan(reports), removed = phase.habits.filter(h => !isNeeded(h.id, p.latest));
     let kept = personalise(phase.habits, p);
     if (phase.from === 1 && sugarHigh(p.latest)) kept = kept.map(h => h.id === "chai" ? { ...h, t: TAPER_PLAN, w: taperW } : h);
+    kept = kidneySafe(kept, p.latest);
     const have = new Set(kept.map(h => h.id));
     for (const x of Object.values(p.adds)) {
       if (have.has(x.id) || x.from > phase.to || (x.to && x.to < phase.from)) continue;

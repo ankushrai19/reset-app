@@ -219,6 +219,8 @@ nav.tabs .addbtn{justify-self:center;width:52px;height:52px;min-height:52px;padd
 .chart .track{fill:var(--soft)}
 .chart .good{fill:var(--chg)} .chart .miss{fill:none;stroke:var(--muted);stroke-width:2} .chart .none{fill:var(--chgrid)}
 .chart .hit{fill:transparent;cursor:pointer;outline:none}
+.chart .ln{fill:none;stroke:var(--ch1);stroke-width:2.5;stroke-linejoin:round}
+.chart .pt{fill:var(--ch1)}
 .chart .hit.on,.chart .hit:focus-visible{fill:var(--ink);fill-opacity:.06}
 .chart .key{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
 .chart .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
@@ -422,6 +424,14 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
 .seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .seg.four{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (min-width:430px){.seg.four{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.safe{background:var(--sun-soft);border:1px solid var(--sun);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;color:var(--ink)}
+.safe h3{font-size:1rem}
+.safe p{font-size:.92rem}
+.safe .btn{align-self:flex-start;margin-top:4px}
+.list.opt .item,.list.opt .item:first-child{padding:9px 14px;background:var(--soft)}
+.list.opt .item .t{font-weight:500}
+.addgrid button:last-child:nth-child(odd){grid-column:1/-1;min-height:84px}
+.mk.focus{background:var(--acc-soft);color:var(--acc-fg)}
 .upcard{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:16px;border-radius:20px;border:1.5px dashed var(--acc-fg);background:var(--acc-soft);color:var(--ink)}
 .upcard:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
 .sfoot{display:flex;gap:10px;position:sticky;bottom:0;background:var(--bg);padding:10px 0 4px}
@@ -444,6 +454,8 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
     <div class="week" id="week" role="group" aria-label="This week of your plan"></div>
     <div class="viewing" id="viewing" hidden><span id="viewingTxt"></span><button class="btn" id="todayBtn" type="button">Back to today</button></div>
     <div class="next" id="nextCard" aria-live="polite"></div>
+    <div id="safety" class="view" style="gap:10px"></div>
+    <div id="offer"></div>
     <button class="retest" id="retestCard" type="button" hidden></button>
     <div class="rings">
       <div class="rtile"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="23" fill="none" stroke="var(--ringbg)" stroke-width="7"/><circle id="arc" class="a1" cx="28" cy="28" r="23" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 145" transform="rotate(-90 28 28)"/></svg><b id="ringTxt">0/6</b><span>habits</span></div>
@@ -456,6 +468,10 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
     <div class="sect" id="todoSect">
       <h2 class="h3" id="todoLbl">Still to do</h2>
       <ul class="list cards" id="list"></ul>
+    </div>
+    <div class="sect" id="optSect">
+      <h2 class="h3">Also good to do <span class="note">optional</span></h2>
+      <ul class="list cards opt" id="optList"></ul>
     </div>
     <button class="donebar" id="doneBar" type="button" aria-expanded="false"><span id="doneTxt"></span><span id="doneAct">Show</span></button>
     <ul class="list cards" id="doneList" hidden></ul>
@@ -479,6 +495,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
       <button type="button" role="tab" data-pane="tests" aria-selected="false">Tests</button>
     </div>
     <input type="file" id="hFile" accept="application/pdf,image/*" hidden>
+    <div id="hSafety" class="view" style="gap:10px"></div>
     <div id="hBody" class="view"></div>
     <button class="btn" id="hSample" type="button" style="align-self:flex-start">Try sample reports</button>
     <p class="note">The app reads numbers from your report and compares them with healthy ranges. It doesn't diagnose anything. Please discuss your results with your doctor.</p>
@@ -518,7 +535,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
       <h2>Rules that make it stick</h2>
       <div class="rule"><h3>70% is a pass</h3><p>Most boxes, not every box. A 5-of-7 day still counts for your streak.</p></div>
       <div class="rule"><h3>Never miss twice</h3><p>One bad day is normal. After one, do at least the walk the next day.</p></div>
-      <div class="rule"><h3>Don't rush a phase</h3><p>If a phase ends under 60%, move your start date back a week and repeat it.</p></div>
+      <div class="rule"><h3>Don't rush</h3><p>If a week ends under 60%, the app offers to repeat it before stepping up.</p></div>
       <div class="rule"><h3>Attach to anchors</h3><p>Water after brushing, walk after lunch, sun on the way to the canteen.</p></div>
       <div class="rule"><h3>Medicines are your doctor's call</h3><p>The supplements box is for whatever your doctor prescribes. Don't self-dose high vitamin D.</p></div>
     </div>
@@ -574,9 +591,18 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
         <div class="fields">
           <label class="f" for="pfWeight">Weight (kg)<input type="number" inputmode="decimal" id="pfWeight" min="25" max="250" step="0.1"></label>
           <label class="f" for="pfHeight">Height (cm)<input type="number" inputmode="numeric" id="pfHeight" min="100" max="230"></label>
-          <label class="f" for="pfAge">Age<input type="number" inputmode="numeric" id="pfAge" min="13" max="100"></label>
+          <label class="f" for="pfAge">Age<input type="number" inputmode="numeric" id="pfAge" min="18" max="100"></label>
           <label class="f" for="pfSex">Sex<select id="pfSex"><option value="">Choose</option><option value="m">Male</option><option value="f">Female</option></select></label>
+          <label class="f" for="pfDiab">Medicines for diabetes?<select id="pfDiab"><option value="">Choose</option><option value="no">No</option><option value="yes">Yes</option></select></label>
+          <label class="f" for="pfPreg" id="pfPregWrap">Pregnant or breastfeeding?<select id="pfPreg"><option value="">No</option><option value="yes">Yes</option></select></label>
         </div>
+      </div>
+      <div class="card acct">
+        <h3>Reminders</h3>
+        <p class="note">Add this phase's habit times to your phone's calendar, and it reminds you at each time. Add them again when a new phase starts.</p>
+        <div class="row"><button class="btn primary" type="button" id="calAdd">Add to calendar</button></div>
+        <p class="note">On Samsung, open the file with Samsung Calendar.</p>
+        <details class="tview" id="calLinks"><summary>Or add one by one to Google Calendar</summary><ul class="clean" id="calList"></ul></details>
       </div>
       <div class="card acct">
         <h3>Your 12 weeks</h3>
@@ -626,11 +652,25 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
       <button type="button" data-add="walk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="M10 22l2-8 3 3v6M9 12l3-4 4 2 2 3"/></svg><b>Start a walk</b><span>Counts steps</span></button>
       <button type="button" data-add="steps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="5" width="10" height="14" rx="4"/><path d="M9 2h6M9 22h6M12 9v3l2 1"/></svg><b>Watch steps</b><span>Enter today's total</span></button>
       <button type="button" data-add="water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10l-1.5 17a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2z"/><path d="M7.5 9h9"/></svg><b>Glass of water</b><span id="addWater">Add one</span></button>
+      <button type="button" data-add="body"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 9.5a4 4 0 0 1 6 0l-2 2.5"/></svg><b>Weight and waist</b><span>Log today's numbers</span></button>
       <button type="button" data-add="ask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><b>Ask</b><span>About your results</span></button>
     </div>
   </div>
 </div>
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="in" id="sheetIn"></div></div>
+<div class="addsheet" id="bodySheet" hidden>
+  <div class="backdrop" data-body="close"></div>
+  <form class="addpanel" id="bodyForm" role="dialog" aria-modal="true" aria-labelledby="bodyTitle">
+    <div class="top"><h2 id="bodyTitle">Weight and waist</h2><button class="iconbtn" type="button" data-body="close" aria-label="Close">×</button></div>
+    <p class="note" id="bodyDate"></p>
+    <div class="fields">
+      <label class="f" for="bodyW">Weight (kg)<input type="number" inputmode="decimal" id="bodyW" min="25" max="250" step="0.1"></label>
+      <label class="f" for="bodyWaist">Waist (cm)<input type="number" inputmode="decimal" id="bodyWaist" min="40" max="200" step="0.5"></label>
+    </div>
+    <p class="note">Measure your waist at the level of your belly button, after breathing out.</p>
+    <div class="row"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" data-body="close">Cancel</button></div>
+  </form>
+</div>
 <div class="toast" id="toast" hidden></div>
 <script type="module" src="sync.js"></script>
 <script src="rules.js"></script>
@@ -685,11 +725,11 @@ let MILE={};
 const fmtShort=d=>parse(d).toLocaleDateString(window.I18N&&I18N.loc,{day:"numeric",month:"short"});
 function computeMile(){
   const m={},R=window.ResetRules,reps=state.reports||[];
-  if(!R||!reps.length){m[84]="Repeat your blood tests";return m}
+  if(!R||!reps.length){m[endDate()]="Repeat your blood tests";return m}
   const rt=R.retest(reps,TODAY);if(!rt)return m;
   const items=rt.routine?[{key:null,due:rt.due}]:rt.all;
-  for(const it of items){const n=diff(state.start,it.due)+1;if(n<1||n>TOTAL)continue;
-    const name=it.key?R.CATALOG[it.key].name.replace(/ \(.*\)/,""):"Yearly check-up";m[n]=m[n]?m[n]+", "+name:"Blood test due: "+name}
+  for(const it of items){if(it.due<state.start||it.due>endDate())continue;
+    const name=it.key?R.CATALOG[it.key].name.replace(/ \(.*\)/,""):"Yearly check-up";m[it.due]=m[it.due]?m[it.due]+", "+name:"Blood test due: "+name}
   return m}
 const TOTAL=84, KEY="reset84";
 const pad=n=>String(n).padStart(2,"0");
@@ -705,22 +745,49 @@ const DN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let TODAY=iso(new Date());
 
+const SHAPE={days:{},water:{},reports:[],steps:{},walks:[],profile:{},plan:{},body:{}};
 let state=load(); let view=TODAY; let userName=""; let showDone=false;
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.start&&s.days)return{start:s.start,days:s.days,water:s.water||{},reports:s.reports||[],steps:s.steps||{},walks:s.walks||[],profile:s.profile||{}}}catch(e){}return{start:TODAY,days:{},water:{},reports:[],steps:{},walks:[],profile:{}}}
+// Focus scoring (70% of the focus habits) counts from the first day this version ran; earlier days keep their scores.
+if(!state.plan.focusFrom){state.plan={...state.plan,focusFrom:TODAY};try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+// Everything the app saves. plan: repeated weeks, when focus scoring began, safety notes read. body: weight and waist by date.
+function shape(s){const o={start:s.start};for(const[k,d]of Object.entries(SHAPE))o[k]=s[k]||(Array.isArray(d)?[]:{});return o}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.start&&s.days)return shape(s)}catch(e){}return shape({start:TODAY})}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Couldn't save. Is storage full?")}}
 function save(change){persist();if(typeof window.onResetChange==="function")window.onResetChange(change,state)}
 // used by sync.js
-window.resetApp={getState:()=>state,applyRemote(s){state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[],steps:s.steps||{},walks:s.walks||[],profile:s.profile||{}};if(view<state.start)view=state.start;persist();render()},toast:m=>toast(m),save:c=>save(c),render:()=>render(),show:v=>show(v),setName(n){userName=n||"";const a=document.getElementById("avatarTxt");if(userName)a.textContent=userName[0].toUpperCase();renderToday()},showSettings:()=>show("settings")};
+window.resetApp={getState:()=>state,applyRemote(s){state=shape(s);if(view<state.start)view=state.start;persist();render()},toast:m=>toast(m),save:c=>save(c),render:()=>render(),show:v=>show(v),setName(n){userName=n||"";const a=document.getElementById("avatarTxt");if(userName)a.textContent=userName[0].toUpperCase();renderToday()},showSettings:()=>show("settings")};
 
 const phaseOf=n=>PHASES.find(p=>n>=p.from&&n<=p.to)||(n<1?PHASES[0]:PHASES[3]);
+// A repeated week starts on a date in plan.repeats and replays the 7 plan days before it, so later day numbers shift back 7.
+// Past days keep their numbers. The calendar gets 7 days longer per repeat; the plan itself stays 84 days.
+const reps7=()=>[...(state.plan.repeats||[])].sort();
+const dayN=date=>diff(state.start,date)+1-7*reps7().filter(r=>r<=date).length;
+const calLen=()=>TOTAL+7*reps7().length;
+const endDate=()=>add(state.start,calLen()-1);
+const isRepeatWeek=date=>{const k=Math.floor(diff(state.start,date)/7);return reps7().includes(add(state.start,k*7))};
+// first and last calendar date that has plan day n
+function datesOfDay(n){let a=null,b=null;for(let i=0;i<calLen();i++){const d=add(state.start,i);if(dayN(d)===n){if(!a)a=d;b=d}}return[a||add(state.start,n-1),b||add(state.start,n-1)]}
+const profile=()=>state.profile||{};
+// Pregnant or breastfeeding: the report-based plan pauses; only gentle basics stay.
+const paused=()=>profile().sex==="f"&&profile().preg==="yes";
+const GENTLE=["water","walk","sleep"];
+// Focus habits: up to 5 a day. Habits your report asks for first, then walk, water, sleep; at least 3.
+const PRI=["walk","meds","sun","chai","b12food","ironfood","calcium","noalcohol","dinner","nofried","millet","plate","nuts","protein","strength","water","sleep","screens","weigh"];
+function focusIds(list){const rank=h=>(h.pk&&!h.maint?0:GENTLE.includes(h.id)?1:2)*100+((PRI.indexOf(h.id)+1)||99);
+  const s=[...list].sort((a,b)=>rank(a)-rank(b));let f=s.filter(h=>rank(h)<200).slice(0,5);if(f.length<3)f=s.slice(0,Math.min(3,s.length));
+  return new Set(f.map(h=>h.id))}
 // A day uses the reports that were in the app on that day, so a new report never re-scores past days.
 const repsOn=date=>(state.reports||[]).filter(r=>(r.added||r.date)<=date);
-function habits(date){const n=diff(state.start,date)+1,p=phaseOf(n),wd=parse(date).getDay();
+function habits(date){const n=dayN(date),p=phaseOf(n),wd=parse(date).getDay();
   let list=p.habits;
-  if(window.ResetRules)list=ResetRules.apply(list,n,wd,repsOn(date));
-  list=list.filter(h=>!h.days||h.days.includes(wd));
-  return{n,p,list:list.sort((a,b)=>mins(a.at)-mins(b.at))}}
-function score(date){const{list}=habits(date),d=new Set(state.days[date]||[]);return list.length?list.filter(h=>d.has(h.id)).length/list.length:0}
+  if(paused())list=list.filter(h=>GENTLE.includes(h.id));
+  else if(window.ResetRules)list=ResetRules.apply(list,n,wd,repsOn(date));
+  list=list.filter(h=>!h.days||h.days.includes(wd)).sort((a,b)=>mins(a.at)-mins(b.at));
+  return{n,p,list,focus:focusIds(list)}}
+// the habits a day is scored on: focus habits from focusFrom on, every habit before that
+function scored(date){const{list,focus}=habits(date);return date>=(state.plan.focusFrom||"9999")?list.filter(h=>focus.has(h.id)):list}
+function score(date){const l=scored(date),d=new Set(state.days[date]||[]);return l.length?l.filter(h=>d.has(h.id)).length/l.length:0}
+window.resetScored=scored;
 
 const WATER_GOAL=8, TKEY="reset84timer";
 let timer=null; try{timer=JSON.parse(localStorage.getItem(TKEY))}catch(e){}
@@ -730,28 +797,32 @@ function greeting(){const h=new Date().getHours();return(h<12?"Good morning":h<1
 function itemHTML(h,done,isNew,locked,showWhy){const late=!done&&view===TODAY&&mins(h.at)<nowMin()-30;
   return `<li class="item${done?" on":""}${locked?" locked":""}" data-id="${h.id}" role="checkbox" aria-checked="${done}" tabindex="0">
   <span class="time${late?" late":""}">${fmt(h.at)}</span><span><span class="t">${esc(h.t)}${isNew?'<span class="new">new</span>':""}</span>${showWhy&&h.w?`<span class="w">${esc(h.w)}</span>`:""}${h.pk&&!done?`<span class="mk">${esc(mkName(h.pk))}</span>`:""}${h.maint&&!done?`<span class="mk lite">${h.lite?"lighter for now":"until confirmed"}</span>`:""}</span><span class="box"></span></li>`}
-const mkName=k=>({vitd:"Vitamin D",b12:"B12",hba1c:"Sugar",glucose:"Sugar",hdl:"HDL",tg:"Triglycerides",ldl:"LDL",chol:"Cholesterol",alt:"Liver",ggt:"Liver",ast:"Liver",calcium:"Calcium",phosphorus:"Calcium",hb:"Iron",iron:"Iron",ferritin:"Iron",uric:"Uric acid"})[k]||"Your report";
+const mkName=k=>({vitd:"Vitamin D",b12:"B12",hba1c:"Sugar",glucose:"Sugar",hdl:"HDL",tg:"Triglycerides",ldl:"LDL",chol:"Cholesterol",alt:"Liver",ggt:"Liver",ast:"Liver",calcium:"Calcium",phosphorus:"Calcium",hb:"Iron",iron:"Iron",ferritin:"Iron",uric:"Uric acid",egfr:"Kidney",creatinine:"Kidney"})[k]||"Your report";
 function renderToday(){
-  const{n,p,list}=habits(view),done=new Set(state.days[view]||[]),future=view>TODAY,isToday=view===TODAY;
+  const{n,p,list,focus}=habits(view),done=new Set(state.days[view]||[]),future=view>TODAY,isToday=view===TODAY,sc=scored(view);
   const prevPhase=p.n>1?PHASES[p.n-2]:null;
   const prevTexts=prevPhase?new Set((window.ResetRules?ResetRules.apply(prevPhase.habits,prevPhase.to,0,repsOn(view)):prevPhase.habits).map(o=>o.t)):null;
   const isNew=h=>prevPhase&&n-p.from<7&&!prevTexts.has(h.t);
   const dateTxt=parse(view).toLocaleDateString(window.I18N&&I18N.loc,{weekday:"short",day:"numeric",month:"short"});
-  document.getElementById("sub").textContent=(n<1?"Before day 1":n>TOTAL?"Plan complete":`Day ${n} · ${p.name}`)+(isToday?"":" · "+dateTxt)+(MILE[n]?" · "+MILE[n]:"");
-  renderWeek(n);
+  document.getElementById("sub").textContent=(n<1?"Before day 1":view>endDate()?"Plan complete":`Day ${n} · ${p.name}`)+(isToday?"":" · "+dateTxt)+(MILE[view]?" · "+MILE[view]:"");
+  renderWeek();
   document.getElementById("greet").textContent=isToday?greeting():(n<1?"Before your start":"Day "+n);
   document.getElementById("viewing").hidden=isToday;
   document.getElementById("viewingTxt").textContent=future?"A future day, preview only":"Filling in a past day";
-  const c=list.filter(h=>done.has(h.id)).length,C=2*Math.PI*23,arc=(id,f)=>document.getElementById(id).setAttribute("stroke-dasharray",Math.min(1,f)*C+" "+C);
-  document.getElementById("arc").setAttribute("stroke-dasharray",(list.length?c/list.length*C:0)+" "+C);
+  // the habits ring counts what the day is scored on (the focus habits)
+  const c=sc.filter(h=>done.has(h.id)).length,C=2*Math.PI*23,arc=(id,f)=>document.getElementById(id).setAttribute("stroke-dasharray",Math.min(1,f)*C+" "+C);
+  document.getElementById("arc").setAttribute("stroke-dasharray",(sc.length?c/sc.length*C:0)+" "+C);
   document.getElementById("arc").style.opacity=c?1:0;
-  document.getElementById("ringTxt").textContent=c+"/"+list.length;
+  document.getElementById("ringTxt").textContent=c+"/"+sc.length;
+  document.getElementById("safety").innerHTML=safetyHTML(true);
+  document.getElementById("offer").innerHTML=isToday?offerHTML():"";
 
   // Next up (today only)
   const card=document.getElementById("nextCard");
   const undone=list.filter(h=>!done.has(h.id));
   let nx=null;
-  if(isToday){nx=(timer&&undone.find(h=>h.id===timer.id))||undone.find(h=>mins(h.at)>=nowMin()-30)||undone[0]||null}
+  const soonest=l=>l.find(h=>mins(h.at)>=nowMin()-30);
+  if(isToday){const uf=undone.filter(h=>focus.has(h.id));nx=(timer&&undone.find(h=>h.id===timer.id))||soonest(uf)||soonest(undone)||uf[0]||undone[0]||null}
   card.hidden=!isToday; card.classList.toggle("alldone",isToday&&!nx); if(!isToday)card.innerHTML="";
   if(isToday&&!nx){card.innerHTML=`<div class="lbl"><span>All done</span><span></span></div><h2>Every habit ticked today.</h2><p>Rest well. Tomorrow's list is ready when you are.</p>`}
   else if(nx){const running=timer&&timer.id===nx.id;
@@ -763,10 +834,13 @@ function renderToday(){
     if(running)tickClock()}
 
   // lists
-  const todo=isToday?undone.filter(h=>h!==nx):list;
-  document.getElementById("todoLbl").textContent=isToday?"Still to do":(future?"This day's habits":"Tick what you did");
-  document.getElementById("todoSect").hidden=!todo.length;
-  document.getElementById("list").innerHTML=todo.map(h=>itemHTML(h,done.has(h.id),isNew(h),future,!isToday)).join("");
+  // focus habits first; the rest are optional
+  const todo=isToday?undone.filter(h=>h!==nx):list,tf=todo.filter(h=>focus.has(h.id)),to=todo.filter(h=>!focus.has(h.id));
+  document.getElementById("todoLbl").textContent=isToday?"Focus today":(future?"This day's focus habits":"Tick what you did");
+  document.getElementById("todoSect").hidden=!tf.length;
+  document.getElementById("list").innerHTML=tf.map(h=>itemHTML(h,done.has(h.id),isNew(h),future,!isToday)).join("");
+  document.getElementById("optSect").hidden=!to.length;
+  document.getElementById("optList").innerHTML=to.map(h=>itemHTML(h,done.has(h.id),isNew(h),future,!isToday)).join("");
   const doneList=list.filter(h=>done.has(h.id));
   const bar=document.getElementById("doneBar");
   bar.hidden=!isToday||!doneList.length;
@@ -776,13 +850,13 @@ function renderToday(){
   document.getElementById("doneList").hidden=!isToday||!showDone||!doneList.length;
   document.getElementById("doneList").innerHTML=doneList.map(h=>itemHTML(h,true,false,false,false)).join("");
   const ch=document.getElementById("cheer");
-  ch.hidden=future||!list.length||c/list.length<.7||(isToday&&!nx); ch.textContent="That's a good day. 70% or more counts.";
+  ch.hidden=future||!sc.length||c/sc.length<.7||(isToday&&!nx); ch.textContent="That's a good day. 70% or more of your focus habits counts.";
 
   // blood test due soon (today only)
   const rc=document.getElementById("retestCard"),R2=window.ResetRules;
   const rt=isToday&&R2&&state.reports&&state.reports.length?R2.retest(state.reports,TODAY):null;
   const soon=rt&&rt.due&&diff(TODAY,rt.due)<=14;
-  rc.hidden=!soon;
+  rc.hidden=!soon;if(!soon)rc.innerHTML="";
   if(soon){const names=(rt.routine?["Yearly check-up"]:rt.together.map(i=>R2.CATALOG[i.key].name.replace(/ \(.*\)/,"")));const dd=diff(TODAY,rt.due);
     rc.innerHTML=`<span class="eyebrow">${dd<0?"Blood test overdue":dd===0?"Blood test due today":"Blood test due in "+dd+" day"+(dd>1?"s":"")}</span><b>${esc(names.join(", "))}</b><span class="note">${dd<0?"Was due "+fmtShort(rt.due)+". ":"Around "+fmtShort(rt.due)+". "}Tap to see why and when.</span>`}
 
@@ -802,14 +876,14 @@ function renderToday(){
   arc("waterArc",w/WATER_GOAL);
   document.getElementById("waterMinus").disabled=future||w<=0; document.getElementById("waterPlus").disabled=future;
   document.getElementById("streakN").textContent=streakNow();
-  document.getElementById("dayOf").textContent=n<1?"Not started yet":n>TOTAL?"All 84 days done":"Day "+n+" of "+TOTAL;
+  document.getElementById("dayOf").textContent=n<1?"Not started yet":view>endDate()?"All 84 days done":"Day "+n+" of "+TOTAL;
   document.getElementById("phaseOf").textContent=`${p.to-Math.max(n,p.from)+1} days left in phase ${p.n}`;
   document.getElementById("prev").disabled=diff(state.start,view)<=0;
-  document.getElementById("next").disabled=diff(state.start,view)>=TOTAL-1;
+  document.getElementById("next").disabled=diff(state.start,view)>=calLen()-1;
 }
-// the 7 days of the plan week that holds the day on screen
-function renderWeek(n){const el=document.getElementById("week"),k=Math.min(Math.max(n,1),TOTAL),from=Math.floor((k-1)/7)*7+1;let h="";
-  for(let d=from;d<from+7&&d<=TOTAL;d++){const date=add(state.start,d-1),sc=score(date),fut=date>TODAY;
+// the calendar week (7 days from the start date) that holds the day on screen; labels are plan day numbers
+function renderWeek(){const el=document.getElementById("week"),k=Math.min(Math.max(Math.floor(diff(state.start,view)/7),0),calLen()/7-1);let h="";
+  for(let i=0;i<7;i++){const date=add(state.start,k*7+i),d=dayN(date),sc=score(date),fut=date>TODAY;
     const cls=[fut?"future":sc>=.7?"good":sc>0?"some":"",date===view?"cur":"",date===TODAY?"today":""].filter(Boolean).join(" ");
     h+=`<button type="button" class="${cls}" data-d="${date}" aria-label="Day ${d}, ${parse(date).toLocaleDateString(window.I18N&&I18N.loc,{weekday:"long"})}${fut?"":", "+Math.round(sc*100)+"%"}"${date===view?' aria-current="date"':""}><span>${DN[parse(date).getDay()]}</span><i>${d}</i></button>`}
   el.innerHTML=h}
@@ -819,7 +893,7 @@ const T=s=>window.I18N?I18N.t(s):s;
 const SHORT={water:"water",meds:"supplements",sun:"sun",walk:"walk",chai:"chai",sleep:"sleep",protein:"protein",nuts:"nuts",dinner:"early dinner",strength:"strength",plate:"veg plate",nofried:"no fried food",screens:"screens off",weigh:"weigh-in",millet:"millets",b12food:"B12 food",noalcohol:"no alcohol",calcium:"calcium food",ironfood:"iron food"};
 window.resetHabitName=id=>window.I18N?I18N.t(SHORT[id]||id):SHORT[id]||id;
 const shortName=h=>window.I18N?I18N.t(SHORT[h.id]||h.t):SHORT[h.id]||h.t;
-function streakNow(){const last=Math.min(diff(state.start,TODAY),TOTAL-1);let s=0;
+function streakNow(){const last=Math.min(diff(state.start,TODAY),calLen()-1);let s=0;
   for(let i=last;i>=0;i--){if(score(add(state.start,i))>=.7)s++;else if(i===last)continue;else break}return last<0?0:s}
 
 // timers
@@ -851,7 +925,8 @@ document.getElementById("nextCard").addEventListener("click",e=>{const b=e.targe
   if(act==="start"){const hid=document.querySelector('#nextCard [data-act="done"]').dataset.id;setTimer({id:hid,min:+b.dataset.min,start:Date.now(),end:Date.now()+b.dataset.min*60000,steps:0});renderToday()}
   else if(act==="stop"){const n=stopCounting();setTimer(null);clearInterval(clockInt);renderToday();if(n)toast(`${n.toLocaleString()} steps saved to today`)}
   else if(act==="done"){let n=null;if(timer&&timer.id===b.dataset.id){n=stopCounting();setTimer(null);clearInterval(clockInt)}
-    const s=new Set(state.days[TODAY]||[]);s.add(b.dataset.id);state.days[TODAY]=[...s];save({day:TODAY});if(navigator.vibrate)navigator.vibrate(12);render();if(n)toast(`${n.toLocaleString()} steps saved to today`)}});
+    const s=new Set(state.days[TODAY]||[]);s.add(b.dataset.id);state.days[TODAY]=[...s];save({day:TODAY});if(navigator.vibrate)navigator.vibrate(12);render();if(n)toast(`${n.toLocaleString()} steps saved to today`);
+    if(b.dataset.id==="weigh")openBody(TODAY)}});
 document.getElementById("retestCard").onclick=()=>{show("health");if(window.HealthUI&&HealthUI.showPane)HealthUI.showPane("tests")};
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>show(b.dataset.go));
 document.getElementById("avatarBtn").onclick=()=>show("settings");
@@ -875,24 +950,26 @@ setInterval(()=>{if(document.hidden)return;applyTheme();if(!rollDay()&&view===TO
 function renderProgress(){
   const sw=parse(state.start).getDay();
   document.getElementById("wk").innerHTML=Array.from({length:7},(_,i)=>`<span>${DN[(sw+i)%7]}</span>`).join("");
-  let h="";
-  PHASES.forEach(p=>{h+=`<div class="pb">Phase ${p.n} · ${p.name}</div>`;
-    for(let n=p.from;n<=p.to;n++){const d=add(state.start,n-1),s=score(d);let c="cell";
-      if(d>TODAY)c+=" future";else if(s>=1)c+=" l3";else if(s>=.7)c+=" l2";else if(s>0)c+=" l1";
-      if(d===TODAY)c+=" today";if(MILE[n])c+=" mile";
-      h+=`<button type="button" class="${c}" data-d="${d}" aria-label="Day ${n}, ${Math.round(s*100)}%${MILE[n]?", "+MILE[n]:""}">${n}</button>`}});
+  let h="",lastPh=0;
+  for(let i=0;i<calLen();i++){const d=add(state.start,i),n=dayN(d),p=phaseOf(n),s=score(d);
+    if(i%7===0&&isRepeatWeek(d))h+=`<div class="pb">Phase ${p.n} · ${p.name} · week repeated</div>`;
+    else if(p.n!==lastPh)h+=`<div class="pb">Phase ${p.n} · ${p.name}</div>`;
+    lastPh=p.n;let c="cell";
+    if(d>TODAY)c+=" future";else if(s>=1)c+=" l3";else if(s>=.7)c+=" l2";else if(s>0)c+=" l1";
+    if(d===TODAY)c+=" today";if(MILE[d])c+=" mile";
+    h+=`<button type="button" class="${c}" data-d="${d}" aria-label="Day ${n}, ${Math.round(s*100)}%${MILE[d]?", "+MILE[d]:""}">${n}</button>`}
   document.getElementById("grid").innerHTML=h;
-  const last=Math.min(diff(state.start,TODAY),TOTAL-1);let good=0,streak=0;
+  const last=Math.min(diff(state.start,TODAY),calLen()-1);let good=0,streak=0;
   for(let i=0;i<=last;i++)if(score(add(state.start,i))>=.7)good++;
   for(let i=last;i>=0;i--){if(score(add(state.start,i))>=.7)streak++;else if(i===last)continue;else break}
-  const cp=phaseOf(last+1);let sum=0,k=0;for(let n=cp.from;n<=Math.min(cp.to,last+1);n++){sum+=score(add(state.start,n-1));k++}
+  const cp=phaseOf(dayN(add(state.start,Math.max(last,0))));let sum=0,k=0;for(let i=0;i<=last;i++){const d=add(state.start,i);if(phaseOf(dayN(d))===cp){sum+=score(d);k++}}
   document.getElementById("sStreak").textContent=last<0?0:streak;
   document.getElementById("sGood").textContent=last<0?0:good;
   document.getElementById("sAvg").textContent=(k&&last>=0?Math.round(sum/k*100):0)+"%";
 }
 function renderPlan(){
-  const cur=phaseOf(diff(state.start,TODAY)+1).n,f=x=>parse(x).toLocaleDateString(window.I18N&&I18N.loc,{day:"numeric",month:"short"});
-  const reps=state.reports||[], R=window.ResetRules, personal=!!(R&&reps.length);
+  const cur=phaseOf(dayN(TODAY)).n,f=x=>parse(x).toLocaleDateString(window.I18N&&I18N.loc,{day:"numeric",month:"short"});
+  const reps=state.reports||[], R=window.ResetRules, personal=!!(R&&reps.length)&&!paused();
   const last=personal?[...reps].sort((a,b)=>a.date<b.date?1:-1)[0]:null;
   let intro="";
   if(personal){
@@ -911,27 +988,93 @@ function renderPlan(){
   }else{
     intro=`<div class="card"><h3>This is the general plan</h3><p class="note">Upload a blood report on the Results tab and the plan adapts to your results: habits for problems you have get added and explained, and ones you don't need are left out.</p></div>`;
   }
-  document.getElementById("phases").innerHTML=intro+PHASES.map(p=>{
-    const pp=personal?R.phasePlan(p,reps):{list:p.habits,removed:[]};
-    return `<div class="card ph${p.n===cur?" cur":""}"><span class="eyebrow">Days ${p.from}–${p.to} · ${f(add(state.start,p.from-1))} – ${f(add(state.start,p.to-1))}${p.n===cur?" · now":""}</span><h3>Phase ${p.n}: ${p.name}</h3><p class="note">${p.goal} <b>Daily step goal: ${p.steps.toLocaleString()}.</b></p>
-    <ul>${pp.list.map(x=>`<li>${esc(x.t)}${x.extra?` <span class="mk">added for ${esc(mkName(x.pk))}</span>`:x.pk?` <span class="mk">${esc(mkName(x.pk))}</span>`:""}${x.maint?` <span class="mk lite">${x.lite?"lighter for now":"until confirmed"}</span>`:""}${x.days?` <span class="note">(${x.days.length===6?"not Sunday":x.days.map(d=>DN[d]).join(", ")})</span>`:""}${x.fromDay?` <span class="note">(from day ${x.fromDay})</span>`:""}${x.toDay?` <span class="note">(until day ${x.toDay})</span>`:""}</li>`).join("")}</ul>
+  if(paused())intro=`<div class="card"><h3>This is the general plan</h3><p class="note">Upload a blood report on the Results tab and the plan adapts to your results: habits for problems you have get added and explained, and ones you don't need are left out.</p></div>`;
+  document.getElementById("phases").innerHTML=safetyHTML(false)+intro+PHASES.map(p=>{
+    const pp=personal?R.phasePlan(p,reps):{list:paused()?p.habits.filter(h=>GENTLE.includes(h.id)):p.habits,removed:[]},fo=focusIds(pp.list);
+    return `<div class="card ph${p.n===cur?" cur":""}"><span class="eyebrow">Days ${p.from}–${p.to} · ${f(datesOfDay(p.from)[0])} – ${f(datesOfDay(p.to)[1])}${p.n===cur?" · now":""}</span><h3>Phase ${p.n}: ${p.name}</h3><p class="note">${p.goal} <b>Daily step goal: ${p.steps.toLocaleString()}.</b></p>
+    <ul>${pp.list.map(x=>`<li>${esc(x.t)}${fo.has(x.id)?` <span class="mk focus">focus</span>`:""}${x.extra?` <span class="mk">added for ${esc(mkName(x.pk))}</span>`:x.pk?` <span class="mk">${esc(mkName(x.pk))}</span>`:""}${x.maint?` <span class="mk lite">${x.lite?"lighter for now":"until confirmed"}</span>`:""}${x.days?` <span class="note">(${x.days.length===6?"not Sunday":x.days.map(d=>DN[d]).join(", ")})</span>`:""}${x.fromDay?` <span class="note">(from day ${x.fromDay})</span>`:""}${x.toDay?` <span class="note">(until day ${x.toDay})</span>`:""}</li>`).join("")}</ul>
     ${pp.removed.length?`<p class="note">Not needed for you: ${pp.removed.map(h=>esc(window.resetHabitName(h.id))).join(", ")}</p>`:""}</div>`}).join("");
   document.getElementById("start").value=state.start;
-  const pf=state.profile||{};[["pfWeight","weight"],["pfHeight","height"],["pfAge","age"],["pfSex","sex"]].forEach(([id,k])=>{const el=document.getElementById(id);if(document.activeElement!==el)el.value=pf[k]??""});
+  const pf=state.profile||{};PF.forEach(([id,k])=>{const el=document.getElementById(id);if(document.activeElement!==el)el.value=pf[k]??""});
+  document.getElementById("pfPregWrap").hidden=pf.sex!=="f";
 }
-function render(){if(window.ResetRules)ResetRules.setSex((state.profile||{}).sex);MILE=computeMile();renderToday();renderProgress();if(window.ResetCharts)ResetCharts.render();renderPlan();if(window.HealthUI)HealthUI.render()}
+function render(){if(window.ResetRules)ResetRules.setSex((state.profile||{}).sex);MILE=computeMile();document.getElementById("hSafety").innerHTML=paused()?safetyHTML(false,true):"";renderToday();renderProgress();if(window.ResetCharts)ResetCharts.render();renderPlan();if(window.HealthUI)HealthUI.render()}
 
-["list","doneList"].forEach(id=>{const el=document.getElementById(id);
+["list","optList","doneList"].forEach(id=>{const el=document.getElementById(id);
   el.addEventListener("click",e=>{const li=e.target.closest(".item");if(li)tick(li)});
   el.addEventListener("keydown",e=>{if((e.key===" "||e.key==="Enter")&&e.target.classList.contains("item")){e.preventDefault();tick(e.target)}})});
 function tick(li){if(view>TODAY)return;const id=li.dataset.id,s=new Set(state.days[view]||[]);s.has(id)?s.delete(id):s.add(id);
   state.days[view]=[...s];save({day:view});render();if(navigator.vibrate)navigator.vibrate(12);
+  if(id==="weigh"&&s.has(id)){openBody(view);return}
   const f=document.querySelector(`.item[data-id="${id}"]`);f&&f.focus({preventScroll:true})}
 document.getElementById("prev").onclick=()=>{view=add(view,-1);render()};
 document.getElementById("next").onclick=()=>{view=add(view,1);render()};
 document.getElementById("todayBtn").onclick=()=>{view=TODAY;render()};
 document.getElementById("grid").addEventListener("click",e=>{const b=e.target.closest(".cell");if(b){view=b.dataset.d;render();show("today")}});
-[["pfWeight","weight"],["pfHeight","height"],["pfAge","age"],["pfSex","sex"]].forEach(([id,k])=>document.getElementById(id).addEventListener("change",e=>{const v=e.target.value;state.profile={...(state.profile||{}),[k]:k==="sex"?v:(v===""?"":Number(v))};save({profile:true});render();toast("Profile saved")}));
+const PF=[["pfWeight","weight"],["pfHeight","height"],["pfAge","age"],["pfSex","sex"],["pfDiab","diab"],["pfPreg","preg"]];
+PF.forEach(([id,k])=>document.getElementById(id).addEventListener("change",e=>{const v=e.target.value;state.profile={...(state.profile||{}),[k]:["sex","diab","preg"].includes(k)?v:(v===""?"":Number(v))};save({profile:true});render();toast("Profile saved")}));
+
+// ---------- weight and waist (body: { date: { w, waist } }) ----------
+const bodySheet=document.getElementById("bodySheet");let bodyDay=TODAY;
+function openBody(d){bodyDay=d||TODAY;const e=(state.body||{})[bodyDay]||{};
+  document.getElementById("bodyDate").textContent=parse(bodyDay).toLocaleDateString(window.I18N&&I18N.loc,{weekday:"long",day:"numeric",month:"short"});
+  document.getElementById("bodyW").value=e.w??"";document.getElementById("bodyWaist").value=e.waist??"";bodySheet.hidden=false;document.getElementById("bodyW").focus()}
+bodySheet.addEventListener("click",e=>{if(e.target.closest("[data-body='close']"))bodySheet.hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!bodySheet.hidden)bodySheet.hidden=true});
+document.getElementById("bodyForm").addEventListener("submit",e=>{e.preventDefault();
+  const num=(v,lo,hi)=>{v=String(v).trim();if(v==="")return null;const n=Number(v);return n>=lo&&n<=hi?Math.round(n*10)/10:NaN};
+  const w=num(document.getElementById("bodyW").value,25,250),waist=num(document.getElementById("bodyWaist").value,40,200);
+  if(Number.isNaN(w)||Number.isNaN(waist)){toast("Check the numbers: weight 25–250 kg, waist 40–200 cm");return}
+  const b={...(state.body||{})};if(w==null&&waist==null)delete b[bodyDay];else b[bodyDay]={w,waist};state.body=b;save({body:bodyDay});
+  // the latest weight also updates the profile (used for calorie estimates)
+  const latest=Object.keys(b).filter(d=>b[d].w!=null).sort().pop();
+  if(latest&&b[latest].w!==profile().weight){state.profile={...profile(),weight:b[latest].w};save({profile:true})}
+  bodySheet.hidden=true;render();toast("Weight and waist saved")});
+
+// ---------- "Repeat last week?" after a week under 60% (offered in the first 3 days of the next week) ----------
+function weekOffer(){if(TODAY>endDate())return null;const k=Math.floor(diff(state.start,TODAY)/7);if(k<1)return null;
+  const ws=add(state.start,k*7);if(diff(ws,TODAY)>2||(state.plan.asked||[]).includes(ws)||reps7().length>=4)return null;
+  let sum=0;for(let i=1;i<=7;i++)sum+=score(add(ws,-i));const pc=Math.round(sum/7*100);return pc<60?{ws,pc}:null}
+function offerHTML(){const o=weekOffer();if(!o)return"";
+  return `<div class="safe" role="note"><h3>${esc(T(`Last week was tough (${o.pc}%)`))}</h3><p>${esc(T("Repeat it before stepping up? You get the same habits for 7 more days, and your 12 weeks get one week longer."))}</p>
+    <div class="row"><button class="btn primary" type="button" data-week="repeat">${esc(T("Repeat last week"))}</button><button class="btn" type="button" data-week="keep">${esc(T("Keep going"))}</button></div></div>`}
+document.getElementById("offer").addEventListener("click",e=>{const b=e.target.closest("[data-week]");const o=weekOffer();if(!b||!o)return;
+  const pl={...state.plan,asked:[...new Set([...(state.plan.asked||[]),o.ws])]};if(b.dataset.week==="repeat")pl.repeats=[...new Set([...(state.plan.repeats||[]),o.ws])].sort();
+  state.plan=pl;save({plan:true});render();toast(b.dataset.week==="repeat"?"Week repeated. Same habits for 7 more days.":"Keep going. You've got this.")});
+
+// ---------- calendar reminders: one event per habit of the current phase, repeating until the phase ends ----------
+const icsDate=(d,t)=>d.replace(/-/g,"")+(t?"T"+t.replace(":","").padStart(4,"0")+"00":"");
+const BYDAY=["SU","MO","TU","WE","TH","FR","SA"];
+function calHabits(){const n=Math.max(1,dayN(TODAY)),p=phaseOf(n),R=window.ResetRules,reps=repsOn(TODAY);
+  let list=paused()?p.habits.filter(h=>GENTLE.includes(h.id)):R&&reps.length?R.phasePlan(p,reps).list.filter(h=>!h.extra||(n<=(h.to||99))):p.habits;
+  const pEnd=datesOfDay(p.to)[1];
+  return list.map(h=>{const pad2=x=>String(x).padStart(2,"0"),[hh,mm]=h.at.split(":").map(Number),end=hh*60+mm+(h.min||10);
+    return{h,t:T(h.t),start:pad2(hh)+":"+pad2(mm),end:pad2(Math.floor(end/60)%24)+":"+pad2(end%60),until:h.to?datesOfDay(h.to)[1]:pEnd,
+      rule:h.days?`FREQ=WEEKLY;BYDAY=${h.days.map(d=>BYDAY[d]).join(",")}`:"FREQ=DAILY"}})}
+function icsFile(){const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//12-Week Reset//EN","CALSCALE:GREGORIAN"];
+  for(const e of calHabits()){L.push("BEGIN:VEVENT",`UID:${e.h.id}-${icsDate(TODAY)}@12-week-reset`,`DTSTAMP:${icsDate(TODAY,"0000")}Z`,`DTSTART:${icsDate(TODAY,e.start)}`,`DTEND:${icsDate(TODAY,e.end)}`,
+    `RRULE:${e.rule};UNTIL=${icsDate(e.until,"2359")}`,`SUMMARY:${e.t.replace(/[,;]/g,"\\$&")}`,"BEGIN:VALARM","ACTION:DISPLAY",`DESCRIPTION:${e.t.replace(/[,;]/g,"\\$&")}`,"TRIGGER:PT0M","END:VALARM","END:VEVENT")}
+  L.push("END:VCALENDAR");return L.join("\r\n")}
+function renderCal(){document.getElementById("calList").innerHTML=calHabits().map(e=>{const u="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(e.t)+
+  "&dates="+icsDate(TODAY,e.start)+"/"+icsDate(TODAY,e.end)+"&recur="+encodeURIComponent("RRULE:"+e.rule+";UNTIL="+icsDate(e.until,"2359"));
+  return `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(e.t)}</a> <span class="note">${esc(fmt(e.start))}</span></li>`}).join("")}
+document.getElementById("calAdd").onclick=async()=>{const f=new File([icsFile()],"12-week-reset-reminders.ics",{type:"text/calendar"});
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"12-Week Reset reminders"});return}}catch(e){if(e&&e.name==="AbortError")return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast("Calendar file saved. Open it with your calendar app.")};
+
+// ---------- safety notes (Today, Plan; pregnancy also on Results) ----------
+// Sugar in the diabetes range: HbA1c 6.5% or more, or fasting glucose 126 or more (ADA, MedlinePlus).
+function sugarHigh(){const R=window.ResetRules;if(!R||!(state.reports||[]).length)return false;const L=R.latest(state.reports);
+  return (L.hba1c&&L.hba1c.value>=6.5)||(L.glucose&&L.glucose.value>=126)}
+function safetyHTML(withButtons,pregOnly){const pf=profile(),ack=state.plan.ack||{},out=[];
+  const card=(title,body,key)=>`<div class="safe" role="note"><h3>${title}</h3>${body.map(b=>`<p>${b}</p>`).join("")}${withButtons&&key?`<button class="btn" type="button" data-ack="${key}">I've talked to my doctor</button>`:""}</div>`;
+  if(paused())out.push(card("Plan paused for pregnancy and breastfeeding",["Only gentle basics are shown: water, a walk and sleep. Normal ranges and advice are different in pregnancy and while breastfeeding, so please follow your doctor's advice.","You can change this in Settings, under Your profile."]));
+  if(pregOnly)return out.join("");
+  if(pf.diab==="yes"&&!ack.diab)out.push(card("You take medicines for diabetes",["Talk to your doctor before changing your diet or exercise. More walking and less sugar can lower your blood sugar too far.","Signs of low sugar: shaking, sweating, sudden hunger or confusion."],"diab"));
+  else if(pf.diab!=="yes"&&sugarHigh()&&!ack.sugar)out.push(card("Your sugar is in the diabetes range",["Please see your doctor soon about this result. If you start medicines for diabetes, set it in Settings, under Your profile."],"sugar"));
+  if(pf.age&&pf.age<18)out.push(card("Made for adults",["The ranges and plan in this app are for adults (18 and over). Please use it only with guidance from a doctor."]));
+  return out.join("")}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ack]");if(!b)return;state.plan={...state.plan,ack:{...(state.plan.ack||{}),[b.dataset.ack]:TODAY}};save({plan:true});render()});
 document.getElementById("start").addEventListener("change",e=>{if(e.target.value){state.start=e.target.value;if(view<state.start)view=state.start;save({start:true});render();toast("Start date updated")}});
 
 // Trends lives under the Progress tab; Settings opens from the profile button and goes back to where you were.
@@ -939,7 +1082,7 @@ const TAB_OF={today:"today",health:"health",progress:"progress",trends:"progress
 function show(v){["today","health","progress","trends","plan","settings"].forEach(x=>{document.getElementById("v-"+x).hidden=x!==v});
   document.querySelectorAll("nav.tabs [data-v]").forEach(b=>b.dataset.v===TAB_OF[v]?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
   if(v!=="settings")lastTab=v;
-  if(v==="settings"){document.getElementById("backup").value=JSON.stringify(state);renderTheme()}window.scrollTo(0,0)}
+  if(v==="settings"){document.getElementById("backup").value=JSON.stringify(state);renderTheme();renderCal()}window.scrollTo(0,0)}
 document.querySelectorAll("nav.tabs [data-v]").forEach(b=>b.onclick=()=>show(b.dataset.v));
 
 // + quick add
@@ -950,6 +1093,7 @@ document.getElementById("addBtn").onclick=openAdd;
 addSheet.addEventListener("click",e=>{const b=e.target.closest("[data-add]");if(!b)return;const a=b.dataset.add;closeAdd();
   if(a==="upload"){document.getElementById("hUpload").click()}
   else if(a==="ask"){if(window.ResetSearch&&ResetSearch.open)ResetSearch.open()}
+  else if(a==="body"){openBody(TODAY)}
   else if(a==="water"){if(view!==TODAY)view=TODAY;setWater(1);toast(`Water: ${state.water[TODAY]} of ${WATER_GOAL} glasses`)}
   else if(a==="steps"){view=TODAY;show("today");render();const f=document.getElementById("stepsForm");if(f.hidden)document.getElementById("stepsEdit").click()}
   else if(a==="walk"){view=TODAY;show("today");const w=habits(TODAY).list.find(h=>h.id==="walk");
@@ -966,7 +1110,7 @@ function applyTheme(){const t=resetThemeOf(themeMode());if(document.documentElem
   document.querySelector('meta[name="theme-color"]').content=t==="dark"?"#0b0d12":"#f3f4f7"}
 function renderLang(){const l=window.I18N?I18N.lang:"en";document.querySelectorAll("[data-lang-set]").forEach(b=>b.setAttribute("aria-checked",b.dataset.langSet===l))}
 document.getElementById("langSeg").addEventListener("click",e=>{const b=e.target.closest("[data-lang-set]");if(b&&window.I18N)I18N.setLang(b.dataset.langSet)});
-window.addEventListener("langchange",()=>{render();renderLang()});
+window.addEventListener("langchange",()=>{render();renderLang();renderCal();if(bodySheet.hidden)document.getElementById("bodyDate").textContent="";else openBody(bodyDay)});
 function renderTheme(){renderLang();const m=themeMode();document.querySelectorAll("[data-theme-mode]").forEach(b=>b.setAttribute("aria-checked",b.dataset.themeMode===m));
   document.getElementById("themeNote").textContent={auto:"Following your phone's setting.",time:"Light from 6:30 am, dark from 6:30 pm.",dark:"Always dark.",light:"Always light."}[m]}
 document.getElementById("themeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-theme-mode]");if(!b)return;try{localStorage.setItem(THEME_KEY,b.dataset.themeMode)}catch(err){}applyTheme();renderTheme()});
@@ -976,7 +1120,7 @@ applyTheme();
 document.getElementById("copyBk").onclick=async()=>{const t=document.getElementById("backup");t.value=JSON.stringify(state);
   try{await navigator.clipboard.writeText(t.value);toast("Backup copied")}catch(e){t.select();toast("Selected. Copy it manually.")}};
 document.getElementById("restoreBk").onclick=()=>{try{const s=JSON.parse(document.getElementById("backup").value);
-  if(!s.start||typeof s.days!=="object")throw 0;state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[],steps:s.steps||{},walks:s.walks||[],profile:s.profile||{}};save({all:true});view=TODAY;render();toast("Restored")}catch(e){toast("That text isn't a valid backup")}};
+  if(!s.start||typeof s.days!=="object")throw 0;state=shape(s);save({all:true});view=TODAY;render();toast("Restored")}catch(e){toast("That text isn't a valid backup")}};
 
 let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)}
 
@@ -987,7 +1131,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){applyThem
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="3.2 (2026-11-14)";
+const APP_VERSION="3.3 (2026-11-14)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});

@@ -62,8 +62,13 @@ function merge(local, cloud) {
   const walks = [...(cloud.walks || [])];
   for (const w of local.walks || []) if (!walks.some(x => x.id === w.id)) walks.push(w);
   const profile = { ...(cloud.profile || {}), ...(local.profile || {}) };
+  // plan: repeated weeks from both, the earliest focus start, every safety note read; body: weight and waist by date
+  const lp = local.plan || {}, cp = cloud.plan || {}, ff = [lp.focusFrom, cp.focusFrom].filter(Boolean).sort()[0];
+  const plan = { ...cp, ...lp, repeats: [...new Set([...(cp.repeats || []), ...(lp.repeats || [])])].sort(), asked: [...new Set([...(cp.asked || []), ...(lp.asked || [])])].sort(), ack: { ...(cp.ack || {}), ...(lp.ack || {}) } };
+  if (ff) plan.focusFrom = ff;
+  const body = { ...(cloud.body || {}), ...(local.body || {}) };
   const cloudHasData = Object.values(cloud.days || {}).some(a => a.length);
-  return { start: cloudHasData ? cloud.start : (local.start || cloud.start), days, water, reports, steps, walks, profile };
+  return { start: cloudHasData ? cloud.start : (local.start || cloud.start), days, water, reports, steps, walks, profile, plan, body };
 }
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -91,9 +96,11 @@ window.onResetChange = (change, state) => {
   else if (change && change.steps) write({ steps: { [change.steps]: (state.steps || {})[change.steps] ?? null } }, true);
   else if (change && change.walks) write({ walks: state.walks || [] }, true);
   else if (change && change.profile) write({ profile: state.profile || {} }, true);
+  else if (change && change.plan) write({ plan: state.plan || {} }, true);
+  else if (change && change.body) write({ body: { [change.body]: (state.body || {})[change.body] ?? null } }, true);
   else if (change && change.water) write({ water: { [change.water]: (state.water || {})[change.water] || 0 } }, true);
   else if (change && change.start) write({ start: state.start }, true);
-  else write({ start: state.start, days: state.days, water: state.water || {}, reports: state.reports || [], steps: state.steps || {}, walks: state.walks || [], profile: state.profile || {} }, false);
+  else write({ start: state.start, days: state.days, water: state.water || {}, reports: state.reports || [], steps: state.steps || {}, walks: state.walks || [], profile: state.profile || {}, plan: state.plan || {}, body: state.body || {} }, false);
 };
 
 async function startSync(u) {
@@ -102,7 +109,8 @@ async function startSync(u) {
   try {
     const snap = await getDoc(ref);
     const local = app.getState();
-    const cloud = snap.exists() ? { start: snap.data().start, days: snap.data().days || {}, water: snap.data().water || {}, reports: snap.data().reports || [], steps: snap.data().steps || {}, walks: snap.data().walks || [], profile: snap.data().profile || {} } : { start: local.start, days: {}, water: {}, reports: [], steps: {}, walks: [], profile: {} };
+    const d0 = snap.exists() ? snap.data() : null;
+    const cloud = d0 ? { start: d0.start, days: d0.days || {}, water: d0.water || {}, reports: d0.reports || [], steps: d0.steps || {}, walks: d0.walks || [], profile: d0.profile || {}, plan: d0.plan || {}, body: d0.body || {} } : { start: local.start, days: {}, water: {}, reports: [], steps: {}, walks: [], profile: {}, plan: {}, body: {} };
     const merged = snap.exists() && inStep(u.uid) ? cloud : merge(local, cloud);
     if (!snap.exists() || !same(merged, cloud)) await write(merged, false);
     app.applyRemote(merged);
@@ -116,7 +124,7 @@ async function startSync(u) {
   unsub = onSnapshot(ref, snap => {
     if (!snap.exists() || snap.metadata.hasPendingWrites) return;
     const d = snap.data();
-    const next = { start: d.start, days: d.days || {}, water: d.water || {}, reports: d.reports || [], steps: d.steps || {}, walks: d.walks || [], profile: d.profile || {} };
+    const next = { start: d.start, days: d.days || {}, water: d.water || {}, reports: d.reports || [], steps: d.steps || {}, walks: d.walks || [], profile: d.profile || {}, plan: d.plan || {}, body: d.body || {} };
     if (!same(next, app.getState())) app.applyRemote(next);
     if (!pending) setInStep(user && user.uid);
     if (!pending) status(snap.metadata.fromCache ? "Saved offline, will sync" : "Backed up", !snap.metadata.fromCache);

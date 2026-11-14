@@ -3,7 +3,7 @@
 A habit app that turns a blood report into a 12-week daily routine that starts easy and builds up. Installable web app (PWA) for Android, hosted on GitHub Pages. Owner: Anki (GitHub `ankushrai19`).
 
 - Live: https://ankushrai19.github.io/reset-app/
-- Current version: 3.2 (14 Nov 2026), offline cache `reset-v19`
+- Current version: 3.3 (14 Nov 2026), offline cache `reset-v20`
 - Owner's phone: Android, Samsung Galaxy Watch
 
 ## How to work on this repo
@@ -21,7 +21,8 @@ node tests/search-check.js                        # Health tab search: everyday 
 node tests/steps-check.js                         # step detection on simulated movement
 python3 -m http.server 8790 &                     # then:
 node tests/plan-sync-check.js                     # Plan and Today match, past days keep their plan, 8 result sets
-node tests/i18n-check.js                          # Hindi: no English left on any screen (incl. panels, summary, upload, Ask, Trends); switching back is clean
+node tests/safety-check.js                        # safety notes, focus habits, repeat week, weight and waist, calendar file
+node tests/i18n-check.js                          # Hindi (also: one Hindi meaning per English phrase): no English left on any screen (incl. panels, summary, upload, Ask, Trends); switching back is clean
 ```
 All use made-up data and must print only PASS. Also take light and dark screenshots of anything you changed.
 
@@ -72,7 +73,9 @@ One object in `localStorage` (`reset84`) and, when signed in, one Firestore doc 
   reports:[{ id, date, added?, lab, sample?, tests:[{ key, name, value, unit, low, high }] }],
   steps:  { date: total from watch },          // a watch total wins over counted walks
   walks:  [{ id, date, start, end, steps, km, kcal }],
-  profile:{ weight, height, age, sex } }
+  profile:{ weight, height, age, sex, diab: "yes"|"no", preg: "yes" },
+  plan:   { focusFrom: date, repeats: [week start dates], asked: [week start dates], ack: { diab, sugar: date } },
+  body:   { date: { w: kg, waist: cm } } }
 ```
 
 Firestore rules the owner must keep in sync with these keys (Firestore → Rules):
@@ -84,7 +87,7 @@ service cloud.firestore {
     match /users/{uid} {
       allow read, delete: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['start', 'days', 'water', 'reports', 'steps', 'walks', 'profile', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['start', 'days', 'water', 'reports', 'steps', 'walks', 'profile', 'plan', 'body', 'updatedAt'])
         && request.resource.data.start is string
         && request.resource.data.days is map;
     }
@@ -100,7 +103,17 @@ Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Googl
 
 ## Product rules (decided with the owner)
 
-**Phases:** days 1–7 Easy start, 8–21 Build, 22–42 Strengthen, 43–84 Lifestyle. Step goals 5,000 / 6,500 / 8,000 / 9,000. A good day is 70%+ of that day's habits.
+**Phases:** days 1–7 Easy start, 8–21 Build, 22–42 Strengthen, 43–84 Lifestyle. Step goals 5,000 / 6,500 / 8,000 / 9,000.
+
+**Focus habits (3.3):** each day has 3 to 5 focus habits (`focusIds()`): habits the report asks for first (not "until confirmed" ones), ordered by `PRI`, then walk, water, sleep. The rest are "Also good to do" (optional). A good day is 70%+ of the **focus** habits, from `plan.focusFrom` (the day 3.3 first ran) on; earlier days keep the old rule (all habits). `scored(date)` gives the habits a day is scored on; Today's ring, Progress, streak and Trends use it. Plan marks focus habits with a "focus" chip.
+
+**Repeat a week (3.3):** in the first 3 days of a calendar week, if the previous 7 days averaged under 60%, Today offers "Repeat last week" (asked once per week, at most 4 repeats). A repeat adds the week start to `plan.repeats`; `dayN(date)` subtracts 7 for each repeat on or before the date, so past days keep their numbers and the calendar (`calLen()`, `endDate()`) gets 7 days longer. Progress shows the repeated week; milestones (`MILE`) are keyed by date.
+
+**Safety (3.3):** profile asks "Medicines for diabetes?" and, for women, "Pregnant or breastfeeding?"; age starts at 18. Notes (`safetyHTML`) on Today and Plan: diabetes medicines → talk to your doctor before changing diet or exercise, low-sugar signs (shaking, sweating, sudden hunger, confusion; MedlinePlus); HbA1c ≥ 6.5 or fasting glucose ≥ 126 without medicines → see your doctor; under 18 → made for adults. The two diabetes notes can be dismissed ("I've talked to my doctor", `plan.ack`). Pregnant or breastfeeding (women only) → the report-based plan pauses: only water, walk, sleep; note on Today, Plan and Results. Low eGFR or high creatinine (active) → the protein habit becomes "Protein as your doctor advises" with a note (`kidneySafe` in rules.js).
+
+**Weight and waist (3.3):** logged from the + button or when the weekly weigh-in is ticked (`openBody`), saved in `body`; the latest weight updates `profile.weight`. Trends has a "Weight and waist" card (line graphs, table, waist target under 90 cm men / 80 cm women when sex is set).
+
+**Reminders (3.3):** Settings → Reminders makes a calendar file (.ics) of the current phase's habits, one repeating event with an alarm per habit until the phase ends (weekday habits weekly); shared to the calendar app where possible (Samsung Calendar opens it), else downloaded. Also "Add to Google Calendar" links per habit. Real notifications come with the Android app.
 
 **Plan follows results (rules.js):**
 - Core habits always stay: water, walk, sleep, protein, plate, strength, screens, weigh-in.
@@ -137,7 +150,11 @@ Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Googl
 
 ## Status and next steps
 
-Done: Health tab search (2.3), Stage 1 report upload in test mode, summaries, personalised plan, maintenance step, retest schedule, Trends graphs, step counting during walks, daily steps from watch, profile, sync.
+Done: safety notes, focus habits, repeat week, weight and waist, calendar reminders (3.3), Health tab search (2.3), Stage 1 report upload in test mode, summaries, personalised plan, maintenance step, retest schedule, Trends graphs, step counting during walks, daily steps from watch, profile, sync.
+
+**Before going public (owner asked to be reminded, Nov 2026):**
+- Privacy law: India's DPDP Act 2023 treats health data as sensitive personal data. Needs a clear consent step, a privacy policy, and an in-app "Delete my account and data" (Google Play requires account deletion too).
+- Share with your doctor: a one-page PDF of results, trends and habits followed, to take to an appointment.
 
 Open (owner decides order):
 1. **Stage 2, real report reading:** a Firebase Cloud Function (Blaze plan is on) that sends the trimmed PDF text or photo to Claude and returns `{date, lab, tests:[{name, value, unit, low, high}]}`; the Anthropic API key goes in Firebase Secret Manager, never in the repo or chat. Then set `READER_MODE = "live"` in `health.js`. Owner still needs to add API credit.
