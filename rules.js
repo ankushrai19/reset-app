@@ -4,7 +4,7 @@
   // dir: which side of the range is a problem. "both" | "low" | "high"
   const CATALOG = {
     vitd:      { name: "Vitamin D", unit: "ng/mL", low: 30, high: 100, dir: "low", aka: ["vitamin d", "25-oh", "25 oh", "25-hydroxy", "cholecalciferol"], about: "Helps you absorb calcium for strong bones, and supports muscles and immunity. Made by your skin in sunlight." },
-    b12:       { name: "Vitamin B12", unit: "pg/mL", low: 197, high: 771, dir: "low", aka: ["b12", "b-12", "cobalamin"], about: "Keeps nerves and red blood cells healthy. Found only in animal foods: eggs, dairy, fish, meat." },
+    b12:       { name: "Vitamin B12", unit: "pg/mL", low: 197, high: 771, dir: "low", aka: ["b12", "b-12", "cobalamin"], about: "Keeps nerves and red blood cells healthy. Found mainly in animal foods: eggs, dairy, fish, meat." },
     hba1c:     { name: "HbA1c", unit: "%", low: 4, high: 5.7, dir: "high", aka: ["hba1c", "hb a1c", "a1c", "glycated", "glycosylated"], about: "Your average blood sugar over the last 3 months. 5.7 to 6.4 is prediabetes; 6.5 and above is diabetes." },
     glucose:   { name: "Fasting glucose", unit: "mg/dL", low: 70, high: 100, dir: "high", aka: ["fasting blood sugar", "fasting glucose", "glucose fasting", "fbs"], about: "Blood sugar after not eating overnight." },
     chol:      { name: "Total cholesterol", unit: "mg/dL", low: 0, high: 200, dir: "high", aka: ["total cholesterol", "cholesterol total", "cholesterol - total"], about: "All the cholesterol in your blood. The balance between HDL and LDL matters more than the total." },

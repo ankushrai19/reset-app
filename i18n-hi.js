@@ -259,7 +259,7 @@ I18N.load({
 
   // ---------- what each test means ----------
   "Helps you absorb calcium for strong bones, and supports muscles and immunity. Made by your skin in sunlight.": "मज़बूत हड्डियों के लिए कैल्शियम के अवशोषण में मदद करता है, और मांसपेशियों व प्रतिरक्षा (इम्यूनिटी) को सहारा देता है। धूप में त्वचा इसे बनाती है।",
-  "Keeps nerves and red blood cells healthy. Found only in animal foods: eggs, dairy, fish, meat.": "तंत्रिकाओं और लाल रक्त कोशिकाओं को स्वस्थ रखता है। सिर्फ़ पशु-आधारित खाने में मिलता है: अंडे, दूध-दही, मछली, मांस।",
+  "Keeps nerves and red blood cells healthy. Found mainly in animal foods: eggs, dairy, fish, meat.": "तंत्रिकाओं और लाल रक्त कोशिकाओं को स्वस्थ रखता है। मुख्य रूप से पशु-आधारित खाने में मिलता है: अंडे, दूध-दही, मछली, मांस।",
   "Your average blood sugar over the last 3 months. 5.7 to 6.4 is prediabetes; 6.5 and above is diabetes.": "पिछले 3 महीनों की औसत ब्लड शुगर। 5.7 से 6.4 प्रीडायबिटीज़ है; 6.5 और उससे ऊपर डायबिटीज़।",
   "Blood sugar after not eating overnight.": "रात भर कुछ न खाने के बाद की ब्लड शुगर।",
   "All the cholesterol in your blood. The balance between HDL and LDL matters more than the total.": "खून में कुल कोलेस्ट्रॉल। कुल मात्रा से ज़्यादा HDL और LDL का संतुलन मायने रखता है।",
@@ -310,11 +310,11 @@ I18N.load({
   "Too little direct sun (indoor work, travel by car, winter smog) and few vitamin D foods.": "सीधी धूप कम मिलना (अंदर काम, कार से आना-जाना, सर्दियों का स्मॉग) और विटामिन D वाला खाना कम।",
   "Muscle weakness and aches, bone pain, and weaker bones over time; many people also feel tired.": "मांसपेशियों में कमज़ोरी और दर्द, हड्डियों में दर्द, और समय के साथ कमज़ोर हड्डियाँ; कई लोगों को थकान भी होती है।",
   "Daily midday sun and a vitamin D course from your doctor.": "रोज़ दोपहर की धूप और डॉक्टर से विटामिन D का कोर्स।",
-  "B12 comes only from animal foods, so a mostly vegetarian diet, acidity medicines or poor absorption lower it.": "B12 सिर्फ़ पशु-आधारित खाने से मिलता है, इसलिए ज़्यादातर शाकाहारी खाना, एसिडिटी की दवाएँ या ठीक से अवशोषण न होना इसे घटाते हैं।",
+  "B12 comes mainly from animal foods, so a mostly vegetarian diet, acidity medicines, metformin or poor absorption can lower it.": "B12 मुख्य रूप से पशु-आधारित खाने से मिलता है, इसलिए ज़्यादातर शाकाहारी खाना, एसिडिटी की दवाएँ, मेटफ़ॉर्मिन या ठीक से अवशोषण न होना इसे घटा सकते हैं।",
   "Tiredness, poor memory and focus, tingling or numbness in hands and feet; long-term nerve damage.": "थकान, याददाश्त और ध्यान में कमी, हाथ-पैरों में झुनझुनी या सुन्नपन; लंबे समय में तंत्रिकाओं को नुकसान।",
   "B12 foods daily; ask your doctor about tablets or injections.": "रोज़ B12 वाला खाना; गोली या इंजेक्शन के बारे में डॉक्टर से पूछें।",
   "Insulin resistance: cells respond poorly to insulin, usually from belly fat, refined carbs, sugar and sitting a lot.": "इंसुलिन रेज़िस्टेंस: कोशिकाएँ इंसुलिन पर ठीक से असर नहीं दिखातीं, अक्सर पेट की चर्बी, मैदे जैसे कार्ब, चीनी और ज़्यादा बैठे रहने से।",
-  "Prediabetes can become type 2 diabetes within a few years. It is very reversible at this stage.": "प्रीडायबिटीज़ कुछ सालों में टाइप 2 डायबिटीज़ बन सकती है। इस स्तर पर इसे काफ़ी हद तक ठीक किया जा सकता है।",
+  "Prediabetes can become type 2 diabetes within a few years. Lifestyle changes at this stage can delay or prevent it.": "प्रीडायबिटीज़ कुछ सालों में टाइप 2 डायबिटीज़ बन सकती है। इस स्तर पर जीवनशैली में बदलाव से इसे टाला या रोका जा सकता है।",
   "Walk after meals, cut sugar and refined carbs, lose some belly fat.": "खाने के बाद वॉक करें, चीनी और मैदे जैसे कार्ब घटाएँ, पेट की थोड़ी चर्बी कम करें।",
   "Insulin resistance, a carb-heavy dinner the night before, poor sleep or stress.": "इंसुलिन रेज़िस्टेंस, पिछली रात भारी कार्ब वाला डिनर, कम नींद या तनाव।",
   "Repeated high readings point toward diabetes.": "बार-बार ज़्यादा आना डायबिटीज़ की ओर इशारा करता है।",
@@ -371,7 +371,7 @@ I18N.load({
   "Can lead to anaemia.": "इससे एनीमिया (खून की कमी) हो सकता है।",
   "Iron foods with vitamin C.": "विटामिन C के साथ आयरन वाला खाना।",
   "Low iron stores.": "आयरन का भंडार कम।",
-  "Tiredness and hair fall even before anaemia shows.": "एनीमिया दिखने से पहले ही थकान और बाल झड़ना।",
+  "Tiredness, even before anaemia shows.": "एनीमिया दिखने से पहले भी थकान हो सकती है।",
   "Iron foods with vitamin C; ask your doctor about iron.": "विटामिन C के साथ आयरन वाला खाना; आयरन की दवा के बारे में डॉक्टर से पूछें।",
 
   // ---------- foods and tests to ask about ----------
