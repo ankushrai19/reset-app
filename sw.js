@@ -1,5 +1,5 @@
-const CACHE = "reset-v17";
-const FILES = ["./", "./index.html", "./sync.js", "./firebase.js", "./rules.js", "./steps.js", "./charts.js", "./summary.js", "./health.js", "./search.js", "./pdftext.js", "./vendor/pdf.min.mjs", "./vendor/pdf.worker.min.mjs", "./vendor/fonts/inter-latin.woff2", "./vendor/fonts/space-grotesk-latin.woff2", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-192-maskable.png", "./icon-512-maskable.png", "./icon-180.png"];
+const CACHE = "reset-v18";
+const FILES = ["./", "./index.html", "./i18n.js", "./i18n-hi.js", "./sync.js", "./firebase.js", "./rules.js", "./steps.js", "./charts.js", "./summary.js", "./health.js", "./search.js", "./pdftext.js", "./vendor/pdf.min.mjs", "./vendor/pdf.worker.min.mjs", "./vendor/fonts/inter-latin.woff2", "./vendor/fonts/space-grotesk-latin.woff2", "./vendor/fonts/noto-sans-devanagari.woff2", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-192-maskable.png", "./icon-512-maskable.png", "./icon-180.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

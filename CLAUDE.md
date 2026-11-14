@@ -3,7 +3,7 @@
 A habit app that turns a blood report into a 12-week daily routine that starts easy and builds up. Installable web app (PWA) for Android, hosted on GitHub Pages. Owner: Anki (GitHub `ankushrai19`).
 
 - Live: https://ankushrai19.github.io/reset-app/
-- Current version: 3.0 (14 Nov 2026), offline cache `reset-v17`
+- Current version: 3.1 (14 Nov 2026), offline cache `reset-v18`
 - Owner's phone: Android, Samsung Galaxy Watch
 
 ## How to work on this repo
@@ -21,6 +21,7 @@ node tests/search-check.js                        # Health tab search: everyday 
 node tests/steps-check.js                         # step detection on simulated movement
 python3 -m http.server 8790 &                     # then:
 node tests/plan-sync-check.js                     # Plan and Today match, past days keep their plan, 8 result sets
+node tests/i18n-check.js                          # Hindi: no English left on translated screens; switching back is clean
 ```
 All use made-up data and must print only PASS. Also take light and dark screenshots of anything you changed.
 
@@ -44,6 +45,8 @@ The GitHub API through this environment can't create repos or change Pages setti
 | File | What it does |
 |---|---|
 | `index.html` | All markup, CSS (tokens at the top: light, then `:root[data-theme="dark"]`), a tiny head script that sets the theme before first paint, and the main script: `PHASES`, state, Today (week strip, Next up, rings), Progress grid, Plan, Settings screen, theme, + quick-add sheet, timers, water, steps, `show()` navigation. |
+| `i18n.js` | `I18N`: language (`reset84lang` in localStorage, per device; default from the phone's language), English → Hindi swap of on-screen text with a MutationObserver, `{placeholder}` templates, `I18N.t()`, `I18N.loc` for dates, `setLang()` fires `langchange`. |
+| `i18n-hi.js` | The Hindi dictionary, keyed by the app's exact English text. |
 | `rules.js` | `ResetRules`: results catalog (22 markers, ranges, aliases), name matching, status, history phases, rules that turn results into habits, maintenance versions, retest intervals with sources. |
 | `health.js` | Results tab (was Health): three sections `ov` / `all` / `tests` switched by `HealthUI.showPane()` without re-rendering, upload flow, review screen, duplicate check, slide-up result panel, after-upload "What changed" banner. `READER_MODE = "test"`. |
 | `search.js` | `ResetSearch`: the full-screen Ask screen (`#askScreen`, opened from the Results search bar or the + sheet; `ResetSearch.open(q)`). Fixed answers (no AI): everyday words and misspellings → tests (`MARKER`, `TOPICS`), untracked tests (`OTHER`), test to ask for when missing (`TEST_NAME`), overview, "which tests haven't I done" (`BASIC`). `answer()` returns plain data; the screen part is separate. |
@@ -53,10 +56,10 @@ The GitHub API through this environment can't create repos or change Pages setti
 | `sync.js` | Firebase Google sign-in and Firestore sync (ES module). |
 | `pdftext.js` | Reads PDF text on the device with pdf.js and keeps only pages with results (cuts AI tokens). |
 | `firebase.js` | Bundled Firebase SDK (app, auth, firestore) built with esbuild from `firebase@11`. Rebuild only if needed. |
-| `vendor/` | pdf.js 4.10.38 (`pdf.min.mjs`, `pdf.worker.min.mjs`); `fonts/` Inter and Space Grotesk (Latin, variable, OFL), self-hosted so the app works offline and makes no Google font requests. |
+| `vendor/` | pdf.js 4.10.38 (`pdf.min.mjs`, `pdf.worker.min.mjs`); `fonts/` Inter and Space Grotesk (Latin) and Noto Sans Devanagari (Hindi), variable, OFL, self-hosted so the app works offline and makes no Google font requests. |
 | `sw.js` | Service worker: offline cache, network-first for app files. |
 
-Script order in `index.html`: `sync.js` (module), `rules.js`, `steps.js`, main inline script, `charts.js`, `summary.js`, `health.js`, `search.js` (uses `HealthUI.openPanel/bar/fmtDate`). Top-level `const`s in the main script (`state`, `habits`, `add`, `diff`, `parse`, `TODAY`, `PHASES`, `mins`, `esc`...) are used by the later scripts.
+Script order in `index.html`: in `<head>` the theme script, `i18n.js`, `i18n-hi.js`; then `sync.js` (module), `rules.js`, `steps.js`, main inline script, `charts.js`, `summary.js`, `health.js`, `search.js` (uses `HealthUI.openPanel/bar/fmtDate`). Top-level `const`s in the main script (`state`, `habits`, `add`, `diff`, `parse`, `TODAY`, `PHASES`, `mins`, `esc`...) are used by the later scripts.
 
 ## Data model
 
@@ -118,6 +121,8 @@ Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Googl
 **Results tab** (was Health; element ids still `v-health`, `t-health`, `hBody`) is a live summary of the latest results in three sections: **Overview** (What changed banner after an upload, glance counts + next test chip, What to fix top 3, notes, big picture cause map, eat/avoid/tests folded, link to Plan), **All results** (grouped Needs attention / Back in range / Normal, tap for the slide-up detail panel), **Tests** (When to test again, reports history with Summary and delete, upload card). The search bar at the top opens the Ask screen. After an upload, Results opens on Overview.
 
 **Health search (decided: fixed answers now, AI later):** answers come from the user's latest results plus fixed text. "Do I have…" questions always show a note that one test can't confirm or rule out a condition; never yes/no on a condition. Medicine or dose questions → "ask your doctor". A test not in the reports → its healthy range and the test to ask for, "Ask your doctor whether you need it". After Stage 2, AI may answer only the questions the fixed answers can't match (`kind: "unknown"`).
+
+**Languages (3.1: English and Hindi, first version):** the app is written in English. When Hindi is on, `i18n.js` swaps every on-screen phrase that has an entry in `i18n-hi.js`; anything without one stays English. So **any new or changed English text on screen needs a matching Hindi entry** (same exact English, `{name}` for numbers, dates and names), then run `tests/i18n-check.js`. Text the app builds can also go through `T()` / `I18N.t()`. Dates use `toLocaleDateString(I18N.loc, …)`. Translated now: navigation, Today, Plan (habits, phases, rules, food swaps), "Your report" reasons, Progress days, Settings, + menu, Results labels, Ask labels, sync messages and toasts. Not yet (next round, stays English): test names and health explanations (catalog `about`, summary.js content, result panel), Ask answers and Hindi/Hinglish search words, Trends graph sentences, upload and review screens. Hindi is a draft: a native speaker should review it, especially health text, before a public release. Simple everyday Hindi; keep common words (वॉक, प्रोटीन, विटामिन D, HbA1c).
 
 **Safety and tone:** general wellness, not diagnosis. Never suggest medicines or doses. Plain language, no emoji, keep "not medical advice" notes.
 
