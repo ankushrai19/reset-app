@@ -171,7 +171,7 @@
     if (draft.sample) report.sample = true;
     const st = app.getState(), before = [...(st.reports || [])];
     st.reports = [...before, report];
-    banner = { date: report.date, ...changesSince(before, st.reports) };
+    banner = { date: report.date, ...changesSince(before, st.reports) }; pane = "ov";
     app.save({ reports: true }); closeSheet(); app.show("health"); app.render(); window.scrollTo(0, 0);
   }
 
@@ -240,7 +240,13 @@
   }
 
   // ---------- Health tab: a live summary of the latest results ----------
-  let showAllPrio = false, banner = null;
+  let showAllPrio = false, banner = null, pane = "ov";
+  // Results has three sections; switching only shows/hides, nothing re-renders
+  function showPane(p) {
+    pane = p;
+    document.querySelectorAll("#hSeg [data-pane]").forEach(b => b.setAttribute("aria-selected", b.dataset.pane === p));
+    document.querySelectorAll("#hBody [data-pane]").forEach(d => { d.hidden = d.dataset.pane !== p; });
+  }
   function changesSince(before, after) {
     const Lb = R.latest(before), La = R.latest(after), out = { improved: 0, worse: 0, back: 0, newOut: 0, first: !before.length };
     const bad = t => t && (t.status === "low" || t.status === "high");
@@ -275,6 +281,7 @@
     const hasSample = reports.some(r => r.sample);
     $("hSample").textContent = hasSample ? "Remove sample reports" : "Try sample reports";
     $("hSample").hidden = reports.length > 0 && !hasSample;
+    $("hSeg").hidden = !reports.length;
     if (!reports.length) {
       $("hSub").textContent = "";
       $("hBody").innerHTML = `<div class="card empty"><h2>Read your blood report</h2>
@@ -286,14 +293,14 @@
     const active = S.sortBad(keys.filter(k => L[k].phase === "active").map(k => ({ ...L[k], key: k })));
     const maint = keys.filter(k => L[k].phase === "maintain"), normal = keys.filter(k => L[k].status === "ok" && L[k].phase !== "maintain");
     const last = [...reports].sort((a, b) => a.date < b.date ? 1 : -1)[0];
-    $("hSub").textContent = `Based on your report of ${fmtDate(last.date)}${last.lab ? " · " + last.lab : ""}${reports.length > 1 ? ` and ${reports.length - 1} earlier` : ""}`;
+    $("hSub").textContent = `${fmtDate(last.date)}${last.lab ? " · " + last.lab : ""}`;
     const today = isoToday(), rt = R.retest(reports, today);
     const chip = rt && (rt.due || rt.doctor.length) ? `<button type="button" class="ntchip" data-x="nt"><span class="eyebrow">Next test</span><b>${rt.routine ? "Yearly check-up" : rt.due ? esc((n => n.length > 3 ? n.slice(0, 3).join(", ") + " + " + (n.length - 3) + " more" : n.join(", "))(rt.together.map(i => R.CATALOG[i.key].name.replace(/ \(.*\)/, "")))) : "Ask your doctor"}</b><span>${rt.due ? (rt.overdue ? "overdue · " : "around ") + esc(shortDate(rt.due)) : "doctor's schedule"}</span></button>` : "";
     const adds = Object.values(p.adds), lighter = Object.values(p.tags).filter(t => t.maint).length;
     const planLine = adds.length || lighter || active.length ? `<button type="button" class="planline" data-x="plan">Your plan follows these results${adds.length ? `: ${adds.length} habit${adds.length > 1 ? "s" : ""} added` : ""}${lighter ? `${adds.length ? "," : ":"} some lighter for now` : ""}. <b>See Plan</b></button>` : "";
     const group = (title, ks, openIt) => ks.length ? `<details class="rgroup"${openIt ? " open" : ""}><summary><span class="eyebrow">${title}</span><span class="note">${ks.length}</span></summary><div class="card rlist">${ks.map(k => row(k, L[k])).join("")}</div></details>` : "";
     const rtFull = window.ReportSummary.retestHTML(rt, today, "");
-    $("hBody").innerHTML = `
+    const ov = `
       ${bannerHTML()}
       <div class="glance">
         <div class="stat"><b class="c-bad">${active.length}</b><span>need attention</span></div>
@@ -304,17 +311,20 @@
       ${S.prioHTML(active, showAllPrio)}
       ${p.notes.map(n => `<div class="notice"><span><b>${esc(R.CATALOG[n.key].name)}:</b> ${esc(n.text)}</span></div>`).join("")}
       ${S.bigPicture(active)}
-      <div class="sect"><span class="eyebrow">Your results</span><p class="note" style="margin-top:-4px">Tap a result for what it means, why it happens and what helps.</p>
-        ${group("Needs attention", active.map(t => t.key), true)}${group("Back in range", maint, true)}${group("Normal", normal, false)}</div>
       ${S.eatAvoidHTML(active)}
-      ${planLine}
-      <div id="nextTest" class="sect"><span class="eyebrow">When to test again</span>
+      ${planLine}`;
+    const all = `<p class="note">Tap a result for what it means, why it happens and what helps.</p>
+      ${group("Needs attention", active.map(t => t.key), true)}${group("Back in range", maint, true)}${group("Normal", normal, false)}`;
+    const tests = `<div id="nextTest" class="sect"><h2 class="h3">When to test again</h2>
         ${rt && rt.due ? `<div class="card ntmini"><div class="big">${rt.overdue ? "Overdue since " : "Around "}${esc(fmtDate(rt.due))}</div><p>${rt.routine ? "A yearly check-up is common practice." : esc(rt.together.map(i => R.CATALOG[i.key].name).join(", "))}</p>
           <details><summary class="linkbtn">See all dates and sources</summary>${rtFull}</details></div>` : rtFull}</div>
-      <details class="rgroup"><summary><span class="eyebrow">Your reports</span><span class="note">${reports.length}</span></summary><div class="card" style="padding:2px 14px">
+      <div class="sect"><h2 class="h3">Your reports <span class="note">${reports.length}</span></h2><div class="card" style="padding:2px 14px">
         ${[...reports].sort((a, b) => a.date < b.date ? 1 : -1).map(r => `<div class="rep"><div><b>${esc(fmtDate(r.date))}</b>${r.sample ? '<span class="tag">sample</span>' : ""}<div class="note">${esc(r.lab || "Lab not named")} · ${r.tests.length} results</div></div>
-          <div class="row">${confirmDel === r.id ? `<button class="btn" type="button" data-del-no>Keep</button><button class="btn danger" type="button" data-del-yes="${r.id}">Delete</button>` : `<button class="btn" type="button" data-sum="${r.id}">Summary</button><button class="btn" type="button" data-del="${r.id}" aria-label="Delete report from ${esc(fmtDate(r.date))}">Delete</button>`}</div></div>`).join("")}
-        <p class="note" style="padding:8px 0">Each report's summary shows it as it was on that date.</p></div></details>`;
+          <div class="row">${confirmDel === r.id ? `<button class="btn" type="button" data-del-no>Keep</button><button class="btn danger" type="button" data-del-yes="${r.id}">Delete</button>` : `<button class="btn" type="button" data-sum="${r.id}">Summary</button><button class="btn" type="button" data-del="${r.id}" aria-label="Delete report from ${esc(fmtDate(r.date))}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>`}</div></div>`).join("")}
+        <p class="note" style="padding:8px 0">Each report's summary shows it as it was on that date.</p></div></div>
+      <button type="button" class="upcard" data-x="upload"><b>Upload a new report</b><span class="note">PDF or photo. You check every number before it's saved.</span></button>`;
+    $("hBody").innerHTML = `<div class="view" data-pane="ov">${ov}</div><div class="view" data-pane="all">${all}</div><div class="view" data-pane="tests">${tests}</div>`;
+    showPane(pane);
   }
 
   // detail panel that slides up from the bottom
@@ -330,13 +340,14 @@
   }
   function closePanel() { panel.hidden = true; document.body.style.overflow = ""; }
   panel.addEventListener("click", e => { if (e.target.closest("[data-x='pclose']")) closePanel(); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && !panel.hidden) closePanel(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !panel.hidden) { e.preventDefault(); closePanel(); } });
 
   $("hBody").addEventListener("click", e => {
     const x = e.target.closest("[data-x]"), sum = e.target.closest("[data-sum]");
     if (x && x.dataset.x === "banner") { banner = null; render(); return; }
     if (x && x.dataset.x === "prio") { showAllPrio = !showAllPrio; render(); return; }
-    if (x && x.dataset.x === "nt") { $("nextTest").scrollIntoView({ block: "start", behavior: "smooth" }); return; }
+    if (x && x.dataset.x === "nt") { showPane("tests"); return; }
+    if (x && x.dataset.x === "upload") { $("hUpload").click(); return; }
     if (x && x.dataset.x === "plan") { app.show("plan"); return; }
     if (sum) { showSummary(sum.dataset.sum); return; }
     const m = e.target.closest("[data-m]"), del = e.target.closest("[data-del]"), yes = e.target.closest("[data-del-yes]"), no = e.target.closest("[data-del-no]");
@@ -355,6 +366,7 @@
   };
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("sheet").hidden) closeSheet(); });
 
-  window.HealthUI = { render, openPanel, bar, rangeText, fmtDate };
+  $("hSeg").addEventListener("click", e => { const b = e.target.closest("[data-pane]"); if (b) showPane(b.dataset.pane); });
+  window.HealthUI = { render, openPanel, bar, rangeText, fmtDate, showPane };
   render();
 })();

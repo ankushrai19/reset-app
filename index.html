@@ -4,49 +4,61 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>12-Week Reset</title>
-<meta name="theme-color" content="#1d2433">
+<meta name="theme-color" content="#0b0d12">
+<script>
+// Theme: "auto" follows the phone, "time" is light 6:30 am to 6:30 pm, or fixed "dark" / "light". Kept per device.
+window.resetThemeOf=function(m){var d;if(m==="dark")d=true;else if(m==="light")d=false;else if(m==="time"){var t=new Date(),x=t.getHours()*60+t.getMinutes();d=x<390||x>=1110}else d=!!(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);return d?"dark":"light"};
+(function(){var m;try{m=localStorage.getItem("reset84theme")}catch(e){}document.documentElement.dataset.theme=resetThemeOf(m||"auto")})();
+</script>
 <meta name="description" content="A daily routine that starts easy and builds up over 12 weeks.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <style>
+@font-face{font-family:Inter;src:url(vendor/fonts/inter-latin.woff2) format("woff2");font-weight:400 700;font-display:swap}
+@font-face{font-family:"Space Grotesk";src:url(vendor/fonts/space-grotesk-latin.woff2) format("woff2");font-weight:500 700;font-display:swap}
+/* Night look. Light version (daytime) is the default; data-theme="dark" on <html> switches. */
 :root{
-  --bg:#f3f1ec; --paper:#fffdf9; --ink:#1d2433; --muted:#636b7a; --line:#e0dcd2; --soft:#f7f4ee;
-  --sun:#c8740f; --sun-soft:#fcebd3; --done:#2f8a5b; --done-soft:#dff1e6; --sky:#3a5a9c; --sky-soft:#e4ebf8;
-  --c0:#ebe6dc; --c1:#f6d9ad; --c2:#efb45e; --c3:#2f8a5b; --bar:#1d2433; --bar-ink:#c9d0dc; --bar-on:#f3a54a;
-  --f:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
-  --mono:ui-monospace,"Roboto Mono",Menlo,monospace;
-  --ch1:#3a5a9c; --ch2:#c8740f; --chg:#2f8a5b; --chgrid:#e6e1d6; --band:#bfe3cc;
+  --bg:#f3f4f7; --paper:#ffffff; --ink:#0f1218; --muted:#596173; --line:#e1e4ea; --soft:#eef0f4;
+  --acc:#c6f24e; --acc-ink:#0b0d12; --acc-fg:#4a6600; --acc-soft:#eef8d2;
+  --sun:#9a5a0b; --sun-soft:#fcebd3; --done:#1e7f57; --done-soft:#ddf2e6; --sky:#2f5fb3; --sky-soft:#e3ebf8;
+  --bad:#b4362a; --bad-soft:#fbe4e1; --water:#1c8db0; --ringbg:#e6e9ef;
+  --c0:#e6e9ef; --c1:#eef8d2; --c2:#c6f24e; --c3:#8db51f; --bar:#12151c; --bar-ink:#c3cad6; --bar-on:#c6f24e; --nav:#ffffff;
+  --f:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --fh:"Space Grotesk",Inter,system-ui,sans-serif;
+  --mono:Inter,system-ui,sans-serif;
+  --ch1:#3a5a9c; --ch2:#c8740f; --chg:#2f8a5b; --chgrid:#e1e4ea; --band:#cfebd9;
   color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root{
-  --bg:#12151c; --paper:#1a1f29; --ink:#e8ebf1; --muted:#9aa3b2; --line:#2c3341; --soft:#202634;
-  --sun:#f3a54a; --sun-soft:#3b2b16; --done:#5cc58c; --done-soft:#17321f; --sky:#8fb0f0; --sky-soft:#1d2840;
-  --c0:#262c38; --c1:#4a3a20; --c2:#9a6a25; --c3:#3fa86f; --bar:#0b0e13;
-  --ch1:#5a82e0; --ch2:#d07a22; --chg:#36a56b; --chgrid:#2c3341; --band:#2b5a3d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b0d12; --paper:#161a22; --ink:#f2f4f8; --muted:#9aa3b2; --line:#2a3040; --soft:#1d2230;
+  --acc:#c6f24e; --acc-ink:#0b0d12; --acc-fg:#c6f24e; --acc-soft:#2a3312;
+  --sun:#f3a54a; --sun-soft:#2b2216; --done:#5cc58c; --done-soft:#16301f; --sky:#7aa2ff; --sky-soft:#1a2440;
+  --bad:#ff8a7a; --bad-soft:#3a1f1d; --water:#5fd4f4; --ringbg:#262c3a;
+  --c0:#1d2230; --c1:#3a4718; --c2:#9dc23a; --c3:#c6f24e; --bar:#161a22; --bar-ink:#c3cad6; --bar-on:#c6f24e; --nav:#161a22;
+  --ch1:#5a82e0; --ch2:#d07a22; --chg:#36a56b; --chgrid:#2c3341; --band:#2b5a3d; color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5}
-main{padding:calc(env(safe-area-inset-top,0px) + 18px) max(16px,env(safe-area-inset-right,0px)) calc(86px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:640px;margin:0 auto}
-h1,h2,h3{margin:0;line-height:1.15}
-h1{font-size:1.6rem;font-weight:800;letter-spacing:-.01em}
-h2{font-size:1.25rem;font-weight:750}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+main{padding:calc(env(safe-area-inset-top,0px) + 18px) max(16px,env(safe-area-inset-right,0px)) calc(112px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:640px;margin:0 auto}
+h1,h2,h3{margin:0;line-height:1.15;font-family:var(--fh)}
+h1{font-size:1.85rem;font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.25rem;font-weight:700}
 h3{font-size:1.02rem}
 p{margin:0}
-.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.eyebrow{font-family:var(--f);font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .view{display:flex;flex-direction:column;gap:16px}
-.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:16px}
 button,input,textarea{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--sky);outline-offset:2px}
-.btn{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 14px;cursor:pointer;min-height:40px}
-.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:8px 14px;cursor:pointer;min-height:42px;font-weight:600}
+.btn.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
 .btn[disabled]{opacity:.35}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
 /* today */
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .top>div{min-width:0}
-.pill{display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--sun-soft);color:var(--sun)}
+.pill{display:inline-block;font-family:var(--f);font-weight:600;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--sun-soft);color:var(--sun)}
 .daynum{font-size:2.3rem;font-weight:850;color:var(--sun);line-height:1.05;margin-top:4px}
 .date{color:var(--muted);font-size:.9rem}
 .ring{position:relative;width:76px;height:76px;flex:none}
@@ -56,13 +68,13 @@ button,input,textarea{font:inherit;color:inherit}
 .list{list-style:none;margin:0;padding:0}
 .item{display:grid;grid-template-columns:68px 1fr 34px;gap:10px;align-items:center;padding:13px 0;border-top:1px solid var(--line);cursor:pointer}
 .item:first-child{border-top:0}
-.time{font-family:var(--mono);font-size:.74rem;color:var(--muted);white-space:nowrap}
+.time{font-size:.78rem;font-weight:600;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 .item .t{font-weight:650;display:block}
 .item .w{color:var(--muted);font-size:.85rem;display:block}
-.box{width:30px;height:30px;border-radius:9px;border:2px solid var(--line);display:grid;place-items:center;background:var(--paper)}
-.item.on .box{background:var(--done);border-color:var(--done)}
-.item.on .box::after{content:"";width:8px;height:14px;border:solid var(--paper);border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
-.item.on .t{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--done)}
+.box{width:32px;height:32px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;background:var(--paper)}
+.item.on .box{background:var(--acc);border-color:var(--acc)}
+.item.on .box::after{content:"";width:8px;height:14px;border:solid var(--acc-ink);border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.item.on .t{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--acc-fg)}
 .new{margin-left:6px;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:999px;background:var(--sky-soft);color:var(--sky);vertical-align:2px}
 .item.locked{cursor:default}
 .note{font-size:.85rem;color:var(--muted)}
@@ -70,7 +82,7 @@ button,input,textarea{font:inherit;color:inherit}
 .sync i{width:8px;height:8px;border-radius:50%;background:var(--c2)}
 .sync.ok i{background:var(--done)}
 .acct{display:flex;flex-direction:column;gap:8px}
-.cheer{background:var(--done-soft);color:var(--done);border-radius:12px;padding:10px 12px;font-weight:650}
+.cheer{background:var(--acc-soft);color:var(--ink);border-radius:12px;padding:10px 12px;font-weight:650}
 
 /* progress */
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -80,15 +92,16 @@ button,input,textarea{font:inherit;color:inherit}
 .wk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;font-family:var(--mono);font-size:.66rem;color:var(--muted);text-align:center}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
 .cell{aspect-ratio:1;border-radius:8px;background:var(--c0);border:2px solid transparent;font-family:var(--mono);font-size:.68rem;color:var(--muted);padding:0;cursor:pointer}
-.cell.l1{background:var(--c1);color:var(--ink)}.cell.l2{background:var(--c2);color:var(--ink)}.cell.l3{background:var(--c3);color:var(--paper)}
+.cell.l1{background:var(--c1);color:var(--ink)}.cell.l2{background:var(--c2);color:var(--acc-ink)}.cell.l3{background:var(--c3);color:var(--acc-ink)}
 .cell.today{border-color:var(--ink)}.cell.future{opacity:.5}.cell.mile{box-shadow:inset 0 0 0 2px var(--sky)}
+.cell{border-radius:10px}
 .pb{grid-column:1/-1;font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:6px}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.78rem;color:var(--muted)}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
 
 /* plan */
 .ph{display:flex;flex-direction:column;gap:6px}
-.ph.cur{border-color:var(--sun);box-shadow:0 0 0 1px var(--sun)}
+.ph.cur{border-color:var(--acc-fg);box-shadow:0 0 0 1px var(--acc-fg)}
 .ph ul{margin:0;padding-left:1.1em;font-size:.92rem;display:flex;flex-direction:column;gap:3px}
 .rule h3{margin-bottom:2px}
 .rule p{color:var(--muted);font-size:.92rem}
@@ -101,37 +114,36 @@ input[type=date],textarea{border:1px solid var(--line);background:var(--paper);b
 textarea{width:100%;min-height:90px;font-family:var(--mono);font-size:.75rem}
 
 /* tab bar */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--bar);display:grid;grid-template-columns:repeat(5,1fr);padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));z-index:5}
-nav.tabs button{background:none;border:0;color:var(--bar-ink);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.72rem;padding:6px 2px;cursor:pointer;min-height:52px;min-width:0}
+nav.tabs{position:fixed;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));max-width:620px;margin:0 auto;height:68px;background:var(--nav);border:1px solid var(--line);border-radius:24px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;padding:0 4px;z-index:5;box-shadow:0 6px 24px rgba(0,0,0,.12)}
+nav.tabs button{background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.7rem;font-weight:600;padding:4px 2px;cursor:pointer;min-height:52px;min-width:0}
 nav.tabs button svg{width:24px;height:24px}
-nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
-.toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:999px;font-size:.85rem;z-index:6}
+nav.tabs button[aria-current="page"]{color:var(--acc-fg)}
+nav.tabs .addbtn{justify-self:center;width:52px;height:52px;min-height:52px;padding:0;border-radius:18px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center}
+.toast{max-width:calc(100% - 32px);text-align:center;position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:999px;font-size:.85rem;z-index:6}
 #install[hidden],.toast[hidden]{display:none}
 [hidden]{display:none!important}
 /* today: option A */
 .sub{font-size:.85rem;color:var(--muted)}
-.greet{font-size:1.75rem;font-weight:800;letter-spacing:-.01em;margin:2px 0 0}
-.mini-ring{position:relative;width:58px;height:58px;flex:none}
-.mini-ring svg{width:58px;height:58px}
-.mini-ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:.85rem;font-variant-numeric:tabular-nums}
-.next{background:var(--bar);color:#fffdf9;border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:12px}
-.next .lbl{display:flex;justify-content:space-between;align-items:center;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--bar-on)}
+.greet{font-size:1.9rem;font-weight:700;letter-spacing:-.02em;margin:2px 0 0}
+.next{background:var(--bar);color:#fffdf9;border:1px solid var(--line);border-radius:26px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.next .lbl{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--bar-on)}
 .next .lbl span:last-child{letter-spacing:0;text-transform:none;font-weight:500;color:var(--bar-ink)}
-.next h2{font-size:1.5rem;line-height:1.2;color:#fffdf9}
+.next h2{font-size:1.6rem;line-height:1.15;color:#fffdf9}
 .next p{font-size:.9rem;color:var(--bar-ink)}
 .next .acts{display:flex;gap:10px}
-.next .go{flex:1;min-height:48px;border-radius:14px;border:0;background:var(--bar-on);color:#1d2433;font-weight:750;cursor:pointer}
-.next .ok{min-width:92px;min-height:48px;border-radius:14px;border:1px solid #47516a;background:transparent;color:#fffdf9;font-weight:650;cursor:pointer}
+.next .go{flex:1;min-height:52px;border-radius:16px;border:0;background:var(--bar-on);color:#0b0d12;font-weight:700;font-size:1rem;cursor:pointer}
+.next .ok{min-width:92px;min-height:52px;border-radius:16px;border:1px solid #3a4256;background:transparent;color:#fffdf9;font-weight:650;cursor:pointer}
 .next .clock{font-size:2.6rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em;color:#fffdf9}
-.next .bar{height:6px;border-radius:3px;background:#323b51;overflow:hidden}
+.next .bar{height:6px;border-radius:3px;background:#2a3040;overflow:hidden}
 .next .bar i{display:block;height:100%;background:var(--bar-on);width:0}
-.next.alldone{background:var(--done-soft);color:var(--done)}
-.next.alldone h2{color:var(--done)}
+.next.alldone{background:var(--acc-soft);color:var(--ink);border-color:var(--acc-soft)}
+.next.alldone h2{color:var(--ink)}
+.next.alldone .lbl span:first-child{color:var(--acc-fg)}
 .next.alldone p{color:var(--ink)}
 .sect{display:flex;flex-direction:column;gap:6px}
 .list.tight .item{padding:11px 0}
 .time.late{color:var(--sun);font-weight:700}
-.donebar{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--done-soft);color:var(--done);border:0;border-radius:14px;padding:12px 16px;font-weight:650;cursor:pointer;text-align:left}
+.donebar{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--acc-soft);color:var(--ink);border:0;border-radius:14px;padding:12px 16px;font-weight:650;cursor:pointer;text-align:left}
 .donebar span:first-child{min-width:0}
 .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .tile{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -140,9 +152,6 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 .tile .v small{font-size:.85rem;color:var(--muted);font-weight:600}
 .stepper{display:flex;gap:8px}
 .stepper button{flex:1;min-height:40px;border-radius:12px;border:1px solid var(--line);background:var(--soft);font-size:1.2rem;font-weight:700;cursor:pointer}
-.drops{display:flex;gap:3px}
-.drops i{flex:1;height:6px;border-radius:3px;background:var(--c0)}
-.drops i.f{background:var(--sky)}
 .viewing{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--sky-soft);color:var(--sky);border-radius:14px;padding:10px 14px;font-size:.9rem;font-weight:650}
 .daylinks{display:flex;justify-content:space-between}
 .daylinks button{background:none;border:0;color:var(--muted);font-size:.85rem;padding:8px 4px;cursor:pointer;min-height:40px}
@@ -153,8 +162,7 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 .banner .x{border:0;background:none;font-size:1.3rem;line-height:1;cursor:pointer;color:var(--muted);min-width:32px;min-height:32px}
 .glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .glance .stat b{font-size:1.5rem}
-.c-bad{color:#c4352b} .c-good{color:var(--done)}
-@media (prefers-color-scheme:dark){.c-bad{color:#ff8a7a}}
+.c-bad{color:var(--bad)} .c-good{color:var(--done)}
 .ntchip{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;text-align:left;background:var(--sky-soft);border:1px solid var(--sky);border-radius:14px;padding:10px 14px;cursor:pointer;font:inherit;color:var(--ink)}
 .ntchip .eyebrow{color:var(--sky)} .ntchip span:last-child{color:var(--muted);font-size:.88rem}
 .linkbtn{background:none;border:0;padding:6px 0;color:var(--sky);font:inherit;font-size:.9rem;cursor:pointer;text-align:left}
@@ -216,7 +224,7 @@ nav.tabs button[aria-selected="true"]{color:var(--bar-on)}
 .tview table{font-size:.85rem}
 .seg{display:flex;gap:0;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:3px;align-self:flex-start}
 .seg button{border:0;background:none;padding:8px 12px;border-radius:9px;font-size:.88rem;cursor:pointer;min-height:38px;color:var(--muted)}
-.seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"],.seg button[aria-checked="true"]{background:var(--ink);color:var(--bg);font-weight:700}
 .ctip{position:fixed;z-index:30;background:var(--ink);color:var(--paper);font-size:.82rem;padding:6px 10px;border-radius:8px;pointer-events:none;max-width:260px}
 .ntrow a,.nexttest a{color:var(--sky)}
 .stepst{grid-column:1/-1}
@@ -241,8 +249,8 @@ select{border:1px solid var(--line);background:var(--paper);border-radius:10px;p
 .dup{background:var(--sun-soft);border:1px solid var(--sun);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 /* report-linked reasons */
 .mk{display:inline-block;margin-top:3px;font-size:.7rem;font-weight:700;letter-spacing:.02em;padding:2px 8px;border-radius:999px;background:var(--sky-soft);color:var(--sky)}
-.next .pw{display:flex;gap:8px;align-items:flex-start;background:#2a3348;border-radius:12px;padding:8px 10px;font-size:.88rem;color:#dfe5ef}
-.next .pw b{color:var(--bar-on);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;padding-top:2px}
+.next .pw{display:flex;gap:8px;align-items:flex-start;background:#232836;border-radius:12px;padding:8px 10px;font-size:.88rem;color:#dfe5ef}
+.next .pw b{color:#7aa2ff;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;padding-top:2px}
 /* health */
 .hsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .notice{display:flex;gap:10px;align-items:flex-start;background:var(--sun-soft);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:.9rem}
@@ -256,15 +264,15 @@ select{border:1px solid var(--line);background:var(--paper);border-radius:10px;p
 .mval b{font-size:1.15rem}
 .pill2{font-family:var(--mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:6px;vertical-align:2px}
 .st-low .pill2{background:var(--sky-soft);color:var(--sky)}
-.st-high .pill2{background:#fbe2df;color:#b23b2e}
+.st-high .pill2{background:var(--bad-soft);color:var(--bad)}
 .st-ok .pill2{background:var(--done-soft);color:var(--done)}
 .rbar{position:relative;height:10px;border-radius:5px;background:var(--c0)}
 .rbar .band{position:absolute;top:0;bottom:0;background:var(--band);border-radius:5px}
 .rbar .pin{position:absolute;top:-4px;width:4px;height:18px;border-radius:2px;transform:translateX(-50%);background:var(--ink)}
-.st-low .rbar .pin{background:var(--sky)} .st-high .rbar .pin{background:#c4352b}
+.st-low .rbar .pin{background:var(--sky)} .st-high .rbar .pin{background:var(--bad)}
 .rlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.68rem;color:var(--muted)}
 .trend{font-size:.82rem;color:var(--muted)}
-.trend.better{color:var(--done)} .trend.worse{color:#c4352b}
+.trend.better{color:var(--done)} .trend.worse{color:var(--bad)}
 .mmore{display:flex;flex-direction:column;gap:8px;font-size:.9rem;border-top:1px solid var(--line);padding-top:10px;cursor:default}
 .mmore ul{margin:0;padding-left:1.1em}
 .hist svg{width:100%;height:auto;display:block}
@@ -275,8 +283,11 @@ select{border:1px solid var(--line);background:var(--paper);border-radius:10px;p
 .rep{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
 .rep:first-child{border-top:0}
 .rep>div{min-width:0}
+.rep>.row{flex-wrap:nowrap;flex:none;gap:6px}
+.rep .btn{min-height:40px;padding:6px 12px}
+.rep b{white-space:nowrap}
 .tag{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:999px;background:var(--c0);color:var(--muted);margin-left:6px}
-.btn.danger{color:#c4352b;border-color:#e9b8b2}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
 /* upload sheet */
 .sheet{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .sheet .in{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
@@ -316,7 +327,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
 .bp-root b{font-size:1rem}
 .bp-root span{font-size:.84rem;color:var(--muted)}
 .ra .bp-root{background:var(--sky-soft);border-color:var(--sky)} .ra .bp-root b{color:var(--sky)}
-.rb .bp-root{background:#fbe6e3;border-color:#c4352b} .rb .bp-root b{color:#b23b2e}
+.rb .bp-root{background:var(--bad-soft);border-color:var(--bad)} .rb .bp-root b{color:var(--bad)}
 .rc .bp-root{background:var(--sun-soft);border-color:var(--sun)} .rc .bp-root b{color:var(--sun)}
 .bp-arrow{width:2px;height:18px;background:var(--muted);margin:2px auto;position:relative;opacity:.6}
 .bp-arrow::after{content:"";position:absolute;left:-4px;bottom:-2px;border:5px solid transparent;border-top:6px solid var(--muted)}
@@ -327,29 +338,88 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
 .bp-leads .eyebrow{width:100%;text-align:center}
 .bp-lead{background:var(--paper);border:1px dashed var(--muted);border-radius:10px;padding:6px 10px;font-size:.86rem}
 .bp-link{font-size:.88rem;color:var(--sun);background:var(--sun-soft);border-radius:10px;padding:8px 10px}
-@media (prefers-color-scheme:dark){.rb .bp-root{background:#3a1f1d}}
-/* health search */
-.ask{display:flex;flex-direction:column;gap:10px}
-.askbox{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:6px 6px 6px 12px}
-.askbox:focus-within{border-color:var(--sky);box-shadow:0 0 0 2px var(--sky-soft)}
-.askbox svg{width:20px;height:20px;flex:none;color:var(--muted)}
-.askbox input{flex:1;min-width:0;border:0;background:none;padding:8px 0;outline:none}
-.askbox input::-webkit-search-cancel-button{display:none}
+
+/* ask screen (search) */
+.askopen{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:0 14px;border-radius:16px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;text-align:left;font-size:.95rem}
+.askopen svg{width:20px;height:20px;flex:none}
+.askscreen{position:fixed;inset:0;z-index:22;background:var(--bg);overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 14px) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.askscreen .in{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.askbox{display:flex;align-items:center;gap:8px}
+.askfield{flex:1;min-width:0;display:flex;align-items:center;gap:2px;background:var(--paper);border:2px solid var(--acc-fg);border-radius:16px;padding:0 4px 0 12px;min-height:48px}
+.askfield input{flex:1;min-width:0;border:0;background:none;outline:none;padding:8px 0;font-weight:600}
+.askfield input::-webkit-search-cancel-button{display:none}
 .askx{border:0;background:none;color:var(--muted);font-size:1.3rem;min-width:36px;min-height:36px;cursor:pointer}
-.askbox .btn{min-height:40px;border-radius:10px}
+.askbox .btn{min-height:48px}
 .askchips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
 .askchips::-webkit-scrollbar{display:none}
-.askchips button{flex:none;font-size:.84rem;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--ink);cursor:pointer;min-height:36px;white-space:nowrap}
+.askchips button{flex:none;font-size:.84rem;padding:7px 12px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;min-height:38px;white-space:nowrap}
 .ans{display:flex;flex-direction:column;gap:8px}
-.ans.nt{border-style:dashed}
+.ans.nt{border-style:dashed;border-width:1.5px}
 .ans .oklist{margin-bottom:4px}
 .askrow{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:.92rem}
 .askrow:first-child{border-top:0}
 .askrow span:last-child{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 .askrow:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+/* + quick add */
+.addsheet{position:fixed;inset:0;z-index:24}
+.addsheet .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+.addpanel{position:absolute;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));max-width:620px;margin:0 auto;background:var(--paper);border:1px solid var(--line);border-radius:28px;padding:16px;display:flex;flex-direction:column;gap:12px}
+@media (prefers-reduced-motion:no-preference){.addpanel{animation:up .2s ease-out}}
+.addmain{display:flex;align-items:center;gap:14px;text-align:left;border:0;background:var(--acc);color:var(--acc-ink);border-radius:20px;padding:16px;min-height:76px;cursor:pointer;font:inherit}
+.addmain .ic{width:46px;height:46px;border-radius:14px;background:var(--acc-ink);color:var(--acc);display:grid;place-items:center;flex:none}
+.addmain .ic svg{width:22px;height:22px}
+.addmain b{display:block;font-size:1rem}
+.addmain span span{font-size:.84rem}
+.addgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.addgrid button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:20px;padding:14px;min-height:104px;cursor:pointer;font:inherit}
+.addgrid svg{width:26px;height:26px;color:var(--sky);margin-bottom:4px}
+.addgrid b{font-weight:600}
+.addgrid span{font-size:.78rem;color:var(--muted)}
+/* today: week strip, rings, cards */
+.avatar{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--paper);color:var(--acc-fg);font-weight:700;font-size:1.05rem;display:grid;place-items:center;cursor:pointer;flex:none;font-family:var(--fh)}
+.avatar svg{width:22px;height:22px}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.week button{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;padding:0;cursor:pointer;color:var(--muted);font-size:.7rem;min-width:0}
+.week button i{font-style:normal;width:100%;max-width:42px;aspect-ratio:1;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:.9rem;background:var(--soft);color:var(--muted);font-family:var(--fh)}
+.week button.good i{background:var(--acc);color:var(--acc-ink)}
+.week button.some i{background:var(--acc-soft);color:var(--ink)}
+.week button.cur i{box-shadow:inset 0 0 0 2px var(--acc-fg)}
+.week button.today span{color:var(--ink);font-weight:700}
+.week button.future i{opacity:.55}
+.week button[disabled]{cursor:default}
+.rings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.rtile{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;min-width:0}
+.rtile svg{width:56px;height:56px;margin-bottom:6px}
+.rtile b{font-family:var(--fh);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.rtile>span{font-size:.72rem;color:var(--muted)}
+.rtile .stepper{margin-top:6px;width:100%;gap:6px}
+.rtile .stepper button{min-height:36px;font-size:1.05rem;border-radius:10px}
+.a1{stroke:var(--acc)} .a2{stroke:var(--sky)} .a3{stroke:var(--water)}
+:root:not([data-theme="dark"]) .a1{stroke:#8db51f}
+@media (prefers-reduced-motion:no-preference){.a1,.a2,.a3{transition:stroke-dasharray .4s ease}}
+.stepline{display:flex;justify-content:space-between;align-items:center;gap:4px 10px;flex-wrap:wrap;margin-top:-6px}
+.stepline .note{flex:1 1 180px;min-width:0}
+.h3{font-size:1.1rem;font-weight:700}
+.list.cards{display:flex;flex-direction:column;gap:8px}
+.list.cards .item,.list.cards .item:first-child{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:12px 14px}
+.streak{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.streak .k{display:block;font-size:.78rem;color:var(--muted)}
+.streak b{font-family:var(--fh);font-size:1.5rem}
+.streak small{font-size:.85rem;color:var(--muted);font-family:var(--f);font-weight:500}
+.streak .note{text-align:right}
+.iconbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--paper);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;font-size:1.3rem;padding:0}
+.iconbtn svg{width:20px;height:20px}
+.btn.icon{display:inline-flex;align-items:center;gap:6px}
+.btn.icon svg{width:18px;height:18px}
+.seg.wide{align-self:stretch;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.seg.wide button{padding:8px 4px}
+.seg.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:430px){.seg.four{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.upcard{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:16px;border-radius:20px;border:1.5px dashed var(--acc-fg);background:var(--acc-soft);color:var(--ink)}
+.upcard:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
 .sfoot{display:flex;gap:10px;position:sticky;bottom:0;background:var(--bg);padding:10px 0 4px}
 .sfoot .btn{flex:1;min-height:48px;border-radius:14px}
-@media (prefers-reduced-motion:no-preference){.ring circle,.mini-ring circle{transition:stroke-dasharray .4s ease}}
+@media (prefers-reduced-motion:no-preference){.ring circle{transition:stroke-dasharray .4s ease}}
 </style>
 </head>
 <body>
@@ -358,46 +428,32 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
   <section class="view" id="v-today">
     <div class="top">
       <div>
-        <span class="sub" id="sub"></span>
+        <span class="eyebrow" id="sub"></span>
         <h1 class="greet" id="greet">Good day</h1>
         <button class="sync" id="syncChip" type="button"><i></i><span id="syncTxt">Saved on this phone</span></button>
       </div>
-      <div class="mini-ring" aria-hidden="true">
-        <svg viewBox="0 0 58 58"><circle cx="29" cy="29" r="23" fill="none" stroke="var(--c0)" stroke-width="7"/><circle id="arc" cx="29" cy="29" r="23" fill="none" stroke="var(--done)" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 145" transform="rotate(-90 29 29)"/></svg>
-        <b id="ringTxt">0/6</b>
-      </div>
+      <button class="avatar" id="avatarBtn" type="button" aria-label="Profile and settings"><span id="avatarTxt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span></button>
     </div>
+    <div class="week" id="week" role="group" aria-label="This week of your plan"></div>
     <div class="viewing" id="viewing" hidden><span id="viewingTxt"></span><button class="btn" id="todayBtn" type="button">Back to today</button></div>
     <div class="next" id="nextCard" aria-live="polite"></div>
     <button class="retest" id="retestCard" type="button" hidden></button>
+    <div class="rings">
+      <div class="rtile"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="23" fill="none" stroke="var(--ringbg)" stroke-width="7"/><circle id="arc" class="a1" cx="28" cy="28" r="23" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 145" transform="rotate(-90 28 28)"/></svg><b id="ringTxt">0/6</b><span>habits</span></div>
+      <div class="rtile"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="23" fill="none" stroke="var(--ringbg)" stroke-width="7"/><circle id="stepsArc" class="a2" cx="28" cy="28" r="23" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 145" transform="rotate(-90 28 28)"/></svg><b id="stepsN">0</b><span>of <span id="stepsGoal">5,000</span> steps</span></div>
+      <div class="rtile"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="23" fill="none" stroke="var(--ringbg)" stroke-width="7"/><circle id="waterArc" class="a3" cx="28" cy="28" r="23" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 145" transform="rotate(-90 28 28)"/></svg><b><span id="waterN">0</span>/<span id="waterGoal">8</span></b><span>glasses</span>
+        <div class="stepper"><button type="button" id="waterMinus" aria-label="Remove a glass">−</button><button type="button" id="waterPlus" aria-label="Add a glass">+</button></div></div>
+    </div>
+    <div class="stepline"><span class="note" id="stepsMeta"></span><button class="linkbtn" type="button" id="stepsEdit">Enter steps from watch</button></div>
+    <form class="row" id="stepsForm" hidden><label class="sr" for="stepsInput">Today's steps from your watch</label><input type="number" inputmode="numeric" min="0" max="100000" id="stepsInput" placeholder="e.g. 7420" style="flex:1;min-width:0"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" id="stepsCancel">Cancel</button></form>
     <div class="sect" id="todoSect">
-      <span class="eyebrow" id="todoLbl">Still to do</span>
-      <div class="card" style="padding:2px 16px"><ul class="list tight" id="list"></ul></div>
+      <h2 class="h3" id="todoLbl">Still to do</h2>
+      <ul class="list cards" id="list"></ul>
     </div>
     <button class="donebar" id="doneBar" type="button" aria-expanded="false"><span id="doneTxt"></span><span id="doneAct">Show</span></button>
-    <div class="card" id="doneWrap" style="padding:2px 16px" hidden><ul class="list tight" id="doneList"></ul></div>
+    <ul class="list cards" id="doneList" hidden></ul>
     <div id="cheer" class="cheer" hidden></div>
-    <div class="tiles">
-      <div class="tile stepst">
-        <div class="row" style="justify-content:space-between"><span class="k">Steps today</span><button class="linkbtn" type="button" id="stepsEdit">Enter total from watch</button></div>
-        <span class="v"><span id="stepsN">0</span> <small>/ <span id="stepsGoal">5,000</span> goal</small></span>
-        <div class="pbar" aria-hidden="true"><i id="stepsBar"></i></div>
-        <span class="note" id="stepsMeta"></span>
-        <form class="row" id="stepsForm" hidden><label class="sr" for="stepsInput">Today's steps from your watch</label><input type="number" inputmode="numeric" min="0" max="100000" id="stepsInput" placeholder="e.g. 7420" style="flex:1;min-width:0"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" id="stepsCancel">Cancel</button></form>
-      </div>
-      <div class="tile">
-        <span class="k">Water today</span>
-        <span class="v"><span id="waterN">0</span> <small>/ <span id="waterGoal">8</span> glasses</small></span>
-        <div class="drops" id="drops" aria-hidden="true"></div>
-        <div class="stepper"><button type="button" id="waterMinus" aria-label="Remove a glass">−</button><button type="button" id="waterPlus" aria-label="Add a glass">+</button></div>
-      </div>
-      <div class="tile">
-        <span class="k">Streak</span>
-        <span class="v"><span id="streakN">0</span> <small>days</small></span>
-        <span class="note" id="dayOf">Day 1 of 84</span>
-        <span class="note" id="phaseOf"></span>
-      </div>
-    </div>
+    <div class="card streak"><div><span class="k">Streak</span><b><span id="streakN">0</span> <small>days</small></b></div><div class="note"><span id="dayOf">Day 1 of 84</span><br><span id="phaseOf"></span></div></div>
     <div class="daylinks"><button type="button" id="prev">‹ Previous day</button><button type="button" id="next">Next day ›</button></div>
     <div class="card" id="install" hidden>
       <h3>Install this app</h3>
@@ -406,32 +462,25 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
     </div>
   </section>
 
-  <!-- HEALTH -->
+  <!-- RESULTS (was Health) -->
   <section class="view" id="v-health" hidden>
-    <div><span class="eyebrow">Your results</span><h1>Health</h1><span class="sub" id="hSub"></span></div>
-    <div class="row">
-      <button class="btn primary" id="hUpload" type="button">Upload a report</button>
-      <button class="btn" id="hSample" type="button">Try sample reports</button>
+    <div class="top"><div><h1>Results</h1><span class="sub" id="hSub"></span></div><button class="btn primary icon" id="hUpload" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Upload</button></div>
+    <button class="askopen" id="askOpen" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Ask about your results</span></button>
+    <div class="seg wide" role="tablist" aria-label="Results sections" id="hSeg">
+      <button type="button" role="tab" data-pane="ov" aria-selected="true">Overview</button>
+      <button type="button" role="tab" data-pane="all" aria-selected="false">All results</button>
+      <button type="button" role="tab" data-pane="tests" aria-selected="false">Tests</button>
     </div>
     <input type="file" id="hFile" accept="application/pdf,image/*" hidden>
-    <div class="ask">
-      <form class="askbox" id="askForm" role="search">
-        <label class="sr" for="askQ">Ask about your results</label>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
-        <input type="search" id="askQ" placeholder="Ask about your results" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">
-        <button type="button" class="askx" id="askClear" aria-label="Clear search" hidden>×</button>
-        <button type="submit" class="btn primary">Ask</button>
-      </form>
-      <div id="askSuggest"></div>
-      <div id="askOut" class="view" style="gap:10px" aria-live="polite"></div>
-    </div>
     <div id="hBody" class="view"></div>
+    <button class="btn" id="hSample" type="button" style="align-self:flex-start">Try sample reports</button>
     <p class="note">The app reads numbers from your report and compares them with healthy ranges. It doesn't diagnose anything. Please discuss your results with your doctor.</p>
   </section>
 
   <!-- PROGRESS -->
   <section class="view" id="v-progress" hidden>
     <div><span class="eyebrow">84 days at a glance</span><h1>Progress</h1></div>
+    <div class="seg" role="tablist" aria-label="Progress views"><button type="button" role="tab" data-go="progress" aria-selected="true">Days</button><button type="button" role="tab" data-go="trends" aria-selected="false">Trends</button></div>
     <div class="stats">
       <div class="stat"><b id="sStreak">0</b><span>day streak</span></div>
       <div class="stat"><b id="sGood">0</b><span>good days</span></div>
@@ -445,12 +494,12 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
       </div>
       <p class="note">Tap a day to open it and fill in what you did. A good day is 70% or more.</p>
     </div>
-    <button class="btn" type="button" id="toTrends" style="align-self:flex-start">See your trends: graphs by week, habit and time of day</button>
   </section>
 
   <!-- TRENDS -->
   <section class="view" id="v-trends" hidden>
-    <div><span class="eyebrow">How your routine is going</span><h1>Trends</h1></div>
+    <div><span class="eyebrow">How your routine is going</span><h1>Progress</h1></div>
+    <div class="seg" role="tablist" aria-label="Progress views"><button type="button" role="tab" data-go="progress" aria-selected="false">Days</button><button type="button" role="tab" data-go="trends" aria-selected="true">Trends</button></div>
     <div id="charts"></div>
   </section>
 
@@ -480,9 +529,23 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
         </tbody>
       </table>
     </div>
-    <div class="card view" style="gap:12px">
-      <h2>Settings</h2>
-      <div class="acct" id="acct">
+  </section>
+
+  <!-- SETTINGS (opened from the profile button) -->
+  <section class="view" id="v-settings" hidden>
+    <div class="top"><button class="iconbtn" id="setBack" type="button" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h1 style="flex:1">Settings</h1></div>
+      <div class="card acct">
+        <h3>Theme</h3>
+        <p class="note">Match phone follows your phone's dark mode. On Samsung, set it to turn on from sunset to sunrise.</p>
+        <div class="seg wide four" role="radiogroup" aria-label="Theme" id="themeSeg">
+          <button type="button" role="radio" data-theme-mode="auto">Match phone</button>
+          <button type="button" role="radio" data-theme-mode="time">Day and night</button>
+          <button type="button" role="radio" data-theme-mode="dark">Dark</button>
+          <button type="button" role="radio" data-theme-mode="light">Light</button>
+        </div>
+        <p class="note" id="themeNote"></p>
+      </div>
+      <div class="card acct" id="acct">
         <h3>Backup and sync</h3>
         <p class="note" id="acctMsg">Sign in with Google to back up your progress and use it on more than one device.</p>
         <div class="row">
@@ -490,7 +553,7 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
           <button class="btn" id="signOut" type="button" hidden>Sign out</button>
         </div>
       </div>
-      <div class="acct">
+      <div class="card acct">
         <h3>Your profile</h3>
         <p class="note">Used only to estimate distance and calories from steps. Saved with your progress.</p>
         <div class="fields">
@@ -500,9 +563,11 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
           <label class="f" for="pfSex">Sex<select id="pfSex"><option value="">Choose</option><option value="m">Male</option><option value="f">Female</option></select></label>
         </div>
       </div>
-      <p class="note" id="appVer"></p>
-      <label class="f" for="start">Start date<input type="date" id="start"></label>
-      <div>
+      <div class="card acct">
+        <h3>Your 12 weeks</h3>
+        <label class="f" for="start">Start date<input type="date" id="start"></label>
+      </div>
+      <div class="card acct">
         <h3>Backup</h3>
         <p class="note" style="margin:2px 0 8px">A manual copy of your progress, for use without signing in. Copy it now and then, and paste it here to restore.</p>
         <textarea id="backup" aria-label="Backup text"></textarea>
@@ -511,17 +576,45 @@ ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;
           <button class="btn" id="restoreBk" type="button">Restore from text above</button>
         </div>
       </div>
-    </div>
+      <p class="note" id="appVer"></p>
   </section>
 </main>
 
-<nav class="tabs" role="tablist">
-  <button role="tab" id="t-today" aria-selected="true" data-v="today" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg>Today</button>
-  <button role="tab" id="t-health" aria-selected="false" data-v="health" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>Health</button>
-  <button role="tab" id="t-progress" aria-selected="false" data-v="progress" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="4" height="4" rx="1"/><rect x="10" y="4" width="4" height="4" rx="1"/><rect x="16" y="4" width="4" height="4" rx="1"/><rect x="4" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="4" y="16" width="4" height="4" rx="1"/></svg>Progress</button>
-  <button role="tab" id="t-trends" aria-selected="false" data-v="trends" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M5 15l4-4 3 3 7-7"/><path d="M15 7h4v4"/></svg>Trends</button>
-  <button role="tab" id="t-plan" aria-selected="false" data-v="plan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Plan</button>
+<nav class="tabs" aria-label="Main">
+  <button id="t-today" data-v="today" type="button" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12l3 3 5-6"/></svg>Today</button>
+  <button id="t-health" data-v="health" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>Results</button>
+  <button class="addbtn" id="addBtn" type="button" aria-label="Add" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button id="t-progress" data-v="progress" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>Progress</button>
+  <button id="t-plan" data-v="plan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Plan</button>
 </nav>
+<div class="askscreen" id="askScreen" hidden role="dialog" aria-modal="true" aria-label="Ask about your results">
+  <div class="in">
+    <form class="askbox" id="askForm" role="search">
+      <button type="button" class="iconbtn" id="askBack" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <div class="askfield">
+        <label class="sr" for="askQ">Ask about your results</label>
+        <input type="search" id="askQ" placeholder="Ask about your results" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button type="button" class="askx" id="askClear" aria-label="Clear search" hidden>×</button>
+      </div>
+      <button type="submit" class="btn primary">Ask</button>
+    </form>
+    <div id="askSuggest"></div>
+    <div id="askOut" class="view" style="gap:10px" aria-live="polite"></div>
+  </div>
+</div>
+<div class="addsheet" id="addSheet" hidden>
+  <div class="backdrop" data-add="close"></div>
+  <div class="addpanel" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+    <div class="top"><h2 id="addTitle">Add</h2><button class="iconbtn" type="button" data-add="close" aria-label="Close">×</button></div>
+    <button class="addmain" type="button" data-add="upload"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg></span><span><b>Upload a blood report</b><span>PDF or photo · your plan updates</span></span></button>
+    <div class="addgrid">
+      <button type="button" data-add="walk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="M10 22l2-8 3 3v6M9 12l3-4 4 2 2 3"/></svg><b>Start a walk</b><span>Counts steps</span></button>
+      <button type="button" data-add="steps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="5" width="10" height="14" rx="4"/><path d="M9 2h6M9 22h6M12 9v3l2 1"/></svg><b>Watch steps</b><span>Enter today's total</span></button>
+      <button type="button" data-add="water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10l-1.5 17a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2z"/><path d="M7.5 9h9"/></svg><b>Glass of water</b><span id="addWater">Add one</span></button>
+      <button type="button" data-add="ask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><b>Ask</b><span>About your results</span></button>
+    </div>
+  </div>
+</div>
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="in" id="sheetIn"></div></div>
 <div class="toast" id="toast" hidden></div>
 <script type="module" src="sync.js"></script>
@@ -602,7 +695,7 @@ function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.start&
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Couldn't save. Is storage full?")}}
 function save(change){persist();if(typeof window.onResetChange==="function")window.onResetChange(change,state)}
 // used by sync.js
-window.resetApp={getState:()=>state,applyRemote(s){state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[],steps:s.steps||{},walks:s.walks||[],profile:s.profile||{}};if(view<state.start)view=state.start;persist();render()},toast:m=>toast(m),save:c=>save(c),render:()=>render(),show:v=>show(v),setName(n){userName=n||"";renderToday()},showSettings:()=>{show("plan");document.getElementById("acct").scrollIntoView({block:"center"})}};
+window.resetApp={getState:()=>state,applyRemote(s){state={start:s.start,days:s.days,water:s.water||{},reports:s.reports||[],steps:s.steps||{},walks:s.walks||[],profile:s.profile||{}};if(view<state.start)view=state.start;persist();render()},toast:m=>toast(m),save:c=>save(c),render:()=>render(),show:v=>show(v),setName(n){userName=n||"";const a=document.getElementById("avatarTxt");if(userName)a.textContent=userName[0].toUpperCase();renderToday()},showSettings:()=>show("settings")};
 
 const phaseOf=n=>PHASES.find(p=>n>=p.from&&n<=p.to)||(n<1?PHASES[0]:PHASES[3]);
 // A day uses the reports that were in the app on that day, so a new report never re-scores past days.
@@ -629,11 +722,12 @@ function renderToday(){
   const prevTexts=prevPhase?new Set((window.ResetRules?ResetRules.apply(prevPhase.habits,prevPhase.to,0,repsOn(view)):prevPhase.habits).map(o=>o.t)):null;
   const isNew=h=>prevPhase&&n-p.from<7&&!prevTexts.has(h.t);
   const dateTxt=parse(view).toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
-  document.getElementById("sub").textContent=`${dateTxt} · Phase ${p.n}, ${p.name}`+(MILE[n]?" · "+MILE[n]:"");
+  document.getElementById("sub").textContent=(n<1?"Before day 1":n>TOTAL?"Plan complete":`Day ${n} · ${p.name}`)+(isToday?"":" · "+dateTxt)+(MILE[n]?" · "+MILE[n]:"");
+  renderWeek(n);
   document.getElementById("greet").textContent=isToday?greeting():(n<1?"Before your start":"Day "+n);
   document.getElementById("viewing").hidden=isToday;
   document.getElementById("viewingTxt").textContent=future?"A future day, preview only":"Filling in a past day";
-  const c=list.filter(h=>done.has(h.id)).length,C=2*Math.PI*23;
+  const c=list.filter(h=>done.has(h.id)).length,C=2*Math.PI*23,arc=(id,f)=>document.getElementById(id).setAttribute("stroke-dasharray",Math.min(1,f)*C+" "+C);
   document.getElementById("arc").setAttribute("stroke-dasharray",(list.length?c/list.length*C:0)+" "+C);
   document.getElementById("arc").style.opacity=c?1:0;
   document.getElementById("ringTxt").textContent=c+"/"+list.length;
@@ -664,7 +758,7 @@ function renderToday(){
   document.getElementById("doneTxt").textContent=`${doneList.length} done: `+doneList.map(h=>shortName(h)).join(", ");
   document.getElementById("doneAct").textContent=showDone?"Hide":"Show";
   bar.setAttribute("aria-expanded",showDone);
-  document.getElementById("doneWrap").hidden=!isToday||!showDone||!doneList.length;
+  document.getElementById("doneList").hidden=!isToday||!showDone||!doneList.length;
   document.getElementById("doneList").innerHTML=doneList.map(h=>itemHTML(h,true,false,false,false)).join("");
   const ch=document.getElementById("cheer");
   ch.hidden=future||!list.length||c/list.length<.7||(isToday&&!nx); ch.textContent="That's a good day. 70% or more counts.";
@@ -681,7 +775,7 @@ function renderToday(){
   const ds=daySteps(view),goal=p.steps||5000,pf=state.profile||{},S=window.ResetSteps;
   document.getElementById("stepsN").textContent=ds.n.toLocaleString();
   document.getElementById("stepsGoal").textContent=goal.toLocaleString();
-  document.getElementById("stepsBar").style.width=Math.min(100,ds.n/goal*100)+"%";
+  arc("stepsArc",ds.n/goal);
   const kc=S?S.kcal(ds.n,pf):null;
   document.getElementById("stepsMeta").textContent=ds.n?`${S?S.km(ds.n,pf).toFixed(1):"?"} km${kc!=null?` · about ${kc} kcal burned walking (estimate)`:" · add your weight in Settings for calories"} · ${ds.src==="watch"?"from your watch total":"from walks counted by the app"}`:(future?"":"Tap Start walk on a walking habit to count steps, or enter today's total from your watch.");
   document.getElementById("stepsEdit").hidden=future;
@@ -690,7 +784,7 @@ function renderToday(){
   const w=(state.water&&state.water[view])||0;
   document.getElementById("waterN").textContent=w;
   document.getElementById("waterGoal").textContent=WATER_GOAL;
-  document.getElementById("drops").innerHTML=Array.from({length:WATER_GOAL},(_,i)=>`<i${i<w?' class="f"':""}></i>`).join("");
+  arc("waterArc",w/WATER_GOAL);
   document.getElementById("waterMinus").disabled=future||w<=0; document.getElementById("waterPlus").disabled=future;
   document.getElementById("streakN").textContent=streakNow();
   document.getElementById("dayOf").textContent=n<1?"Not started yet":n>TOTAL?"All 84 days done":"Day "+n+" of "+TOTAL;
@@ -698,6 +792,13 @@ function renderToday(){
   document.getElementById("prev").disabled=diff(state.start,view)<=0;
   document.getElementById("next").disabled=diff(state.start,view)>=TOTAL-1;
 }
+// the 7 days of the plan week that holds the day on screen
+function renderWeek(n){const el=document.getElementById("week"),k=Math.min(Math.max(n,1),TOTAL),from=Math.floor((k-1)/7)*7+1;let h="";
+  for(let d=from;d<from+7&&d<=TOTAL;d++){const date=add(state.start,d-1),sc=score(date),fut=date>TODAY;
+    const cls=[fut?"future":sc>=.7?"good":sc>0?"some":"",date===view?"cur":"",date===TODAY?"today":""].filter(Boolean).join(" ");
+    h+=`<button type="button" class="${cls}" data-d="${date}" aria-label="Day ${d}, ${parse(date).toLocaleDateString(undefined,{weekday:"long"})}${fut?"":", "+Math.round(sc*100)+"%"}"${date===view?' aria-current="date"':""}><span>${DN[parse(date).getDay()]}</span><i>${d}</i></button>`}
+  el.innerHTML=h}
+document.getElementById("week").addEventListener("click",e=>{const b=e.target.closest("button[data-d]");if(b){view=b.dataset.d;render()}});
 const SHORT={water:"water",meds:"supplements",sun:"sun",walk:"walk",chai:"chai",sleep:"sleep",protein:"protein",nuts:"nuts",dinner:"early dinner",strength:"strength",plate:"veg plate",nofried:"no fried food",screens:"screens off",weigh:"weigh-in",millet:"millets",b12food:"B12 food",noalcohol:"no alcohol",calcium:"calcium food",ironfood:"iron food"};
 window.resetHabitName=id=>SHORT[id]||id;
 const shortName=h=>SHORT[h.id]||h.t;
@@ -734,8 +835,10 @@ document.getElementById("nextCard").addEventListener("click",e=>{const b=e.targe
   else if(act==="stop"){const n=stopCounting();setTimer(null);clearInterval(clockInt);renderToday();if(n)toast(`${n.toLocaleString()} steps saved to today`)}
   else if(act==="done"){let n=null;if(timer&&timer.id===b.dataset.id){n=stopCounting();setTimer(null);clearInterval(clockInt)}
     const s=new Set(state.days[TODAY]||[]);s.add(b.dataset.id);state.days[TODAY]=[...s];save({day:TODAY});if(navigator.vibrate)navigator.vibrate(12);render();if(n)toast(`${n.toLocaleString()} steps saved to today`)}});
-document.getElementById("retestCard").onclick=()=>{show("health");const el=document.getElementById("nextTest");if(el)el.scrollIntoView({block:"start"})};
-document.getElementById("toTrends").onclick=()=>show("trends");
+document.getElementById("retestCard").onclick=()=>{show("health");if(window.HealthUI&&HealthUI.showPane)HealthUI.showPane("tests")};
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>show(b.dataset.go));
+document.getElementById("avatarBtn").onclick=()=>show("settings");
+document.getElementById("setBack").onclick=()=>show(lastTab);
 document.getElementById("doneBar").onclick=()=>{showDone=!showDone;renderToday()};
 // daily steps: a total entered from the watch wins; otherwise the sum of walks counted by the app
 function daySteps(d){const man=state.steps&&state.steps[d];const walked=(state.walks||[]).filter(w=>w.date===d).reduce((a,w)=>a+w.steps,0);
@@ -750,7 +853,7 @@ function setWater(d){const w=Math.max(0,((state.water&&state.water[view])||0)+d)
 document.getElementById("waterPlus").onclick=()=>setWater(1);
 document.getElementById("waterMinus").onclick=()=>setWater(-1);
 function rollDay(){const now=iso(new Date());if(now===TODAY)return false;if(view===TODAY)view=now;TODAY=now;render();return true}
-setInterval(()=>{if(document.hidden)return;if(!rollDay()&&view===TODAY&&!timer)renderToday()},60000);
+setInterval(()=>{if(document.hidden)return;applyTheme();if(!rollDay()&&view===TODAY&&!timer)renderToday()},60000);
 
 function renderProgress(){
   const sw=parse(state.start).getDay();
@@ -814,9 +917,41 @@ document.getElementById("grid").addEventListener("click",e=>{const b=e.target.cl
 [["pfWeight","weight"],["pfHeight","height"],["pfAge","age"],["pfSex","sex"]].forEach(([id,k])=>document.getElementById(id).addEventListener("change",e=>{const v=e.target.value;state.profile={...(state.profile||{}),[k]:k==="sex"?v:(v===""?"":Number(v))};save({profile:true});renderToday();toast("Profile saved")}));
 document.getElementById("start").addEventListener("change",e=>{if(e.target.value){state.start=e.target.value;if(view<state.start)view=state.start;save({start:true});render();toast("Start date updated")}});
 
-function show(v){["today","health","progress","trends","plan"].forEach(x=>{document.getElementById("v-"+x).hidden=x!==v;document.getElementById("t-"+x).setAttribute("aria-selected",x===v)});
-  if(v==="plan")document.getElementById("backup").value=JSON.stringify(state);window.scrollTo(0,0)}
-document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dataset.v));
+// Trends lives under the Progress tab; Settings opens from the profile button and goes back to where you were.
+const TAB_OF={today:"today",health:"health",progress:"progress",trends:"progress",plan:"plan"};let lastTab="today";
+function show(v){["today","health","progress","trends","plan","settings"].forEach(x=>{document.getElementById("v-"+x).hidden=x!==v});
+  document.querySelectorAll("nav.tabs [data-v]").forEach(b=>b.dataset.v===TAB_OF[v]?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
+  if(v!=="settings")lastTab=v;
+  if(v==="settings"){document.getElementById("backup").value=JSON.stringify(state);renderTheme()}window.scrollTo(0,0)}
+document.querySelectorAll("nav.tabs [data-v]").forEach(b=>b.onclick=()=>show(b.dataset.v));
+
+// + quick add
+const addSheet=document.getElementById("addSheet");
+function openAdd(){document.getElementById("addWater").textContent=`${(state.water&&state.water[TODAY])||0} of ${WATER_GOAL} today`;addSheet.hidden=false;addSheet.querySelector(".addmain").focus()}
+function closeAdd(){addSheet.hidden=true}
+document.getElementById("addBtn").onclick=openAdd;
+addSheet.addEventListener("click",e=>{const b=e.target.closest("[data-add]");if(!b)return;const a=b.dataset.add;closeAdd();
+  if(a==="upload"){document.getElementById("hUpload").click()}
+  else if(a==="ask"){if(window.ResetSearch&&ResetSearch.open)ResetSearch.open()}
+  else if(a==="water"){if(view!==TODAY)view=TODAY;setWater(1);toast(`Water: ${state.water[TODAY]} of ${WATER_GOAL} glasses`)}
+  else if(a==="steps"){view=TODAY;show("today");render();const f=document.getElementById("stepsForm");if(f.hidden)document.getElementById("stepsEdit").click()}
+  else if(a==="walk"){view=TODAY;show("today");const w=habits(TODAY).list.find(h=>h.id==="walk");
+    if(timer)toast("A timer is already running");
+    else if(!w||(state.days[TODAY]||[]).includes("walk"))toast("No walk left in today's plan. Your watch total still counts.");
+    else{setTimer({id:"walk",min:w.min,start:Date.now(),end:Date.now()+w.min*60000,steps:0})}
+    render()}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!addSheet.hidden)closeAdd()});
+
+// theme setting
+const THEME_KEY="reset84theme";
+function themeMode(){try{return localStorage.getItem(THEME_KEY)||"auto"}catch(e){return"auto"}}
+function applyTheme(){const t=resetThemeOf(themeMode());if(document.documentElement.dataset.theme!==t){document.documentElement.dataset.theme=t;if(window.ResetCharts)ResetCharts.render()}
+  document.querySelector('meta[name="theme-color"]').content=t==="dark"?"#0b0d12":"#f3f4f7"}
+function renderTheme(){const m=themeMode();document.querySelectorAll("[data-theme-mode]").forEach(b=>b.setAttribute("aria-checked",b.dataset.themeMode===m));
+  document.getElementById("themeNote").textContent={auto:"Following your phone's setting.",time:"Light from 6:30 am, dark from 6:30 pm.",dark:"Always dark.",light:"Always light."}[m]}
+document.getElementById("themeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-theme-mode]");if(!b)return;try{localStorage.setItem(THEME_KEY,b.dataset.themeMode)}catch(err){}applyTheme();renderTheme()});
+if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
+applyTheme();
 
 document.getElementById("copyBk").onclick=async()=>{const t=document.getElementById("backup");t.value=JSON.stringify(state);
   try{await navigator.clipboard.writeText(t.value);toast("Backup copied")}catch(e){t.select();toast("Selected. Copy it manually.")}};
@@ -826,13 +961,13 @@ document.getElementById("restoreBk").onclick=()=>{try{const s=JSON.parse(documen
 let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)}
 
 // roll over to the new day if the app stays open past midnight
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)rollDay()});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){applyTheme();rollDay()}});
 
 // install prompt + offline
 let deferred;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("install").hidden=false});
 document.getElementById("installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById("install").hidden=true};
 window.addEventListener("appinstalled",()=>{document.getElementById("install").hidden=true;toast("Installed")});
-const APP_VERSION="2.3 (14 Nov 2026)";
+const APP_VERSION="3.0 (14 Nov 2026)";
 if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});

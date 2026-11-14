@@ -3,7 +3,7 @@
 A habit app that turns a blood report into a 12-week daily routine that starts easy and builds up. Installable web app (PWA) for Android, hosted on GitHub Pages. Owner: Anki (GitHub `ankushrai19`).
 
 - Live: https://ankushrai19.github.io/reset-app/
-- Current version: 2.3 (14 Nov 2026), offline cache `reset-v16`
+- Current version: 3.0 (14 Nov 2026), offline cache `reset-v17`
 - Owner's phone: Android, Samsung Galaxy Watch
 
 ## How to work on this repo
@@ -43,17 +43,17 @@ The GitHub API through this environment can't create repos or change Pages setti
 
 | File | What it does |
 |---|---|
-| `index.html` | All markup, CSS (tokens at the top, light + dark), and the main script: `PHASES` (habits per phase, step goals), state, Today, Progress grid, Plan, Settings, timers, water, steps tile, tab navigation. |
+| `index.html` | All markup, CSS (tokens at the top: light, then `:root[data-theme="dark"]`), a tiny head script that sets the theme before first paint, and the main script: `PHASES`, state, Today (week strip, Next up, rings), Progress grid, Plan, Settings screen, theme, + quick-add sheet, timers, water, steps, `show()` navigation. |
 | `rules.js` | `ResetRules`: results catalog (22 markers, ranges, aliases), name matching, status, history phases, rules that turn results into habits, maintenance versions, retest intervals with sources. |
-| `health.js` | Health tab (live summary of latest results), upload flow, review screen, duplicate check, slide-up result panel, after-upload "What changed" banner. `READER_MODE = "test"`. |
-| `search.js` | `ResetSearch`: "Ask about your results" box on the Health tab. Fixed answers (no AI): everyday words and misspellings → tests (`MARKER`, `TOPICS`), untracked tests (`OTHER`), test to ask for when missing (`TEST_NAME`), overview, "which tests haven't I done" (`BASIC`). `answer()` returns plain data; the screen part is separate. |
+| `health.js` | Results tab (was Health): three sections `ov` / `all` / `tests` switched by `HealthUI.showPane()` without re-rendering, upload flow, review screen, duplicate check, slide-up result panel, after-upload "What changed" banner. `READER_MODE = "test"`. |
+| `search.js` | `ResetSearch`: the full-screen Ask screen (`#askScreen`, opened from the Results search bar or the + sheet; `ResetSearch.open(q)`). Fixed answers (no AI): everyday words and misspellings → tests (`MARKER`, `TOPICS`), untracked tests (`OTHER`), test to ask for when missing (`TEST_NAME`), overview, "which tests haven't I done" (`BASIC`). `answer()` returns plain data; the screen part is separate. |
 | `summary.js` | `ReportSummary`: per-report summary sheet, big-picture cause map, "What to fix" list, eat/avoid, result detail panel content, "When to test again" block. |
 | `charts.js` | `ResetCharts`: Trends tab graphs, hand-drawn SVG, range switch, tooltips, table views. |
 | `steps.js` | `ResetSteps`: motion-sensor step counting during walk timers, screen wake lock, stride/distance/calorie estimates. |
 | `sync.js` | Firebase Google sign-in and Firestore sync (ES module). |
 | `pdftext.js` | Reads PDF text on the device with pdf.js and keeps only pages with results (cuts AI tokens). |
 | `firebase.js` | Bundled Firebase SDK (app, auth, firestore) built with esbuild from `firebase@11`. Rebuild only if needed. |
-| `vendor/` | pdf.js 4.10.38 (`pdf.min.mjs`, `pdf.worker.min.mjs`). |
+| `vendor/` | pdf.js 4.10.38 (`pdf.min.mjs`, `pdf.worker.min.mjs`); `fonts/` Inter and Space Grotesk (Latin, variable, OFL), self-hosted so the app works offline and makes no Google font requests. |
 | `sw.js` | Service worker: offline cache, network-first for app files. |
 
 Script order in `index.html`: `sync.js` (module), `rules.js`, `steps.js`, main inline script, `charts.js`, `summary.js`, `health.js`, `search.js` (uses `HealthUI.openPanel/bar/fmtDate`). Top-level `const`s in the main script (`state`, `habits`, `add`, `diff`, `parse`, `TODAY`, `PHASES`, `mins`, `esc`...) are used by the later scripts.
@@ -115,13 +115,13 @@ Firebase project: `reset-app-17bdb`, Blaze plan, Firestore in asia-south1, Googl
 
 **Report reading:** AI only extracts numbers; fixed rules decide everything else. Only extracted numbers are kept, never the file. The user reviews and can correct every value before saving. Duplicate check on save.
 
-**Health tab** is a live summary of the latest results: glance counts + next test chip → What to fix (top 3) → big picture cause map → results grouped (Needs attention / Back in range / Normal) with a slide-up detail panel → eat/avoid/tests (folded) → link to Plan → When to test again → reports history. After an upload, return to Health with a "What changed" banner.
+**Results tab** (was Health; element ids still `v-health`, `t-health`, `hBody`) is a live summary of the latest results in three sections: **Overview** (What changed banner after an upload, glance counts + next test chip, What to fix top 3, notes, big picture cause map, eat/avoid/tests folded, link to Plan), **All results** (grouped Needs attention / Back in range / Normal, tap for the slide-up detail panel), **Tests** (When to test again, reports history with Summary and delete, upload card). The search bar at the top opens the Ask screen. After an upload, Results opens on Overview.
 
 **Health search (decided: fixed answers now, AI later):** answers come from the user's latest results plus fixed text. "Do I have…" questions always show a note that one test can't confirm or rule out a condition; never yes/no on a condition. Medicine or dose questions → "ask your doctor". A test not in the reports → its healthy range and the test to ask for, "Ask your doctor whether you need it". After Stage 2, AI may answer only the questions the fixed answers can't match (`kind: "unknown"`).
 
 **Safety and tone:** general wellness, not diagnosis. Never suggest medicines or doses. Plain language, no emoji, keep "not medical advice" notes.
 
-**Design:** Today = "Next up" card (option A). Tabs: Today, Health, Progress, Trends, Plan. Chart colours validated for colour-blind readers: light `#3a5a9c` / `#c8740f` / `#2f8a5b`, dark `#5a82e0` / `#d07a22` / `#36a56b` (tokens `--ch1 --ch2 --chg`). Every chart has a tooltip, a key for orange, and a table view.
+**Design (3.0, "Night" look chosen on the design canvas https://claude.ai/artifact/6FgSUqBEddMLxt3VSKKqfN):** dark graphite with a lime accent (`--acc #c6f24e`, text on it `--acc-ink`; accent as text uses `--acc-fg`: lime in dark, olive `#4a6600` in light), Space Grotesk headings, Inter body. A matching light version exists. Theme setting in Settings, kept per device in `localStorage` `reset84theme` (not synced): `auto` (match phone, default), `time` (light 6:30 am to 6:30 pm), `dark`, `light`; re-checked every minute and on return to the app. Navigation: floating bar Today · Results · **+** · Progress · Plan. **+** opens quick add (upload report, start walk, watch steps, add water, ask). Progress has Days / Trends switch (Trends is `v-trends`). Settings opens from the profile button on Today (and the sync chip), with a back button. Today: week strip of the current plan week (tap a day to open it), "Next up" card, rings for habits / steps / water (water has −/+), still to do as cards, streak card. Status colours: low blue `--sky`, high `--bad`, back in range / OK green `--done`, caution amber `--sun`. Chart colours validated for colour-blind readers: light `#3a5a9c` / `#c8740f` / `#2f8a5b`, dark `#5a82e0` / `#d07a22` / `#36a56b` (tokens `--ch1 --ch2 --chg`). Every chart has a tooltip, a key for orange, and a table view.
 
 ## Related documents (owner's private Claude artifacts; ask the owner if you can't open them)
 

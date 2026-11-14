@@ -243,13 +243,23 @@
     $("askOut").innerHTML = last ? view(answer(last, app.getState().reports || [])) : "";
     $("askClear").hidden = !last;
   }
+  const screen = $("askScreen");
+  function open(q) {
+    screen.hidden = false; document.body.style.overflow = "hidden";
+    if (q) { $("askQ").value = q; run(q); } else { $("askQ").focus(); }
+  }
+  function close() { screen.hidden = true; document.body.style.overflow = ""; }
+  API.open = open; API.close = close;
+  $("askOpen").onclick = () => open();
+  $("askBack").onclick = close;
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !screen.hidden && !e.defaultPrevented) close(); });
   $("askForm").addEventListener("submit", e => { e.preventDefault(); $("askQ").blur(); run($("askQ").value); });
   $("askQ").addEventListener("input", e => { if (!e.target.value.trim()) run(""); });
   $("askClear").onclick = () => { $("askQ").value = ""; run(""); $("askQ").focus(); };
-  $("v-health").addEventListener("click", e => {
+  screen.addEventListener("click", e => {
     const chip = e.target.closest("[data-ask]");
     if (chip) { $("askQ").value = chip.dataset.ask; run(chip.dataset.ask); $("askOut").scrollIntoView({ block: "nearest" }); return; }
-    if (e.target.closest("[data-ask-upload]")) { $("hUpload").click(); return; }
+    if (e.target.closest("[data-ask-upload]")) { close(); $("hUpload").click(); return; }
     const m = e.target.closest("#askOut [data-m]");
     if (m) H.openPanel(m.dataset.m);
   });

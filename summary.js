@@ -152,7 +152,7 @@
       <div class="shead"><div><span class="eyebrow">Report summary</span><h2 id="sheetTitle">${esc(fmtDate(report.date))}${report.lab ? " · " + esc(report.lab) : ""}</h2></div><button class="btn" type="button" data-x="close">Done</button></div>
       ${report.sample ? `<p class="testmode">This summary is built from sample results.</p>` : ""}
       <div class="hsum" style="grid-template-columns:repeat(4,minmax(0,1fr))">
-        <div class="stat"><b style="color:#c4352b">${above}</b><span>above range</span></div>
+        <div class="stat"><b style="color:var(--bad)">${above}</b><span>above range</span></div>
         <div class="stat"><b style="color:var(--sky)">${below}</b><span>below range</span></div>
         <div class="stat"><b style="color:var(--sun)">${close.length}</b><span>near the limit</span></div>
         <div class="stat"><b style="color:var(--done)">${ok.length}</b><span>normal</span></div>
@@ -166,7 +166,7 @@
       ${close.length ? `<div class="sect"><span class="eyebrow">In range but close to the limit</span>${close.map(t => card(t, true)).join("")}</div>` : ""}
       ${eat.length || avoid.length ? `<div class="cols2">
         ${eat.length ? `<div class="card"><h3 style="color:var(--done);margin-bottom:6px">Eat more</h3><ul class="clean">${eat.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-        ${avoid.length ? `<div class="card"><h3 style="color:#c4352b;margin-bottom:6px">Cut down</h3><ul class="clean">${avoid.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}</div>` : ""}
+        ${avoid.length ? `<div class="card"><h3 style="color:var(--bad);margin-bottom:6px">Cut down</h3><ul class="clean">${avoid.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}</div>` : ""}
       ${habits.length ? `<div class="card"><h3 style="margin-bottom:6px">Daily habits that help</h3><table><thead><tr><th>Habit</th><th>Target</th></tr></thead><tbody>${habits.map(h => `<tr><td style="color:var(--ink)">${esc(h.habit)}</td><td>${esc(h.target)}</td></tr>`).join("")}</tbody></table>
         <p class="note" style="margin-top:8px">Your Today list already builds these up gradually.</p></div>` : ""}
       ${retestHTML(R.retest(all.filter(r => r.date <= report.date), report.date), report.date)}
